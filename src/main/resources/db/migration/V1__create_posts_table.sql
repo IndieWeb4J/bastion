@@ -181,4 +181,9 @@ create table posts
     post           jsonb           not null,
     created_at_utc timestamptz     not null generated always as (iso8601_ts(post #>> '{properties,published,0}')) stored,
     updated_at_utc timestamptz     not null generated always as (iso8601_ts(post #>> '{properties,updated,0}')) stored
-)
+);
+
+create index idx_post_slug on posts (slug);
+create index idx_post_status_visibility_deleted on posts (status, visibility, deleted);
+create index idx_post_created_at_utc ON posts (created_at_utc);
+create index idx_post_updated_at_utc ON posts (updated_at_utc);
