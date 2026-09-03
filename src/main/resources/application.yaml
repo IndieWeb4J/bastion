@@ -1,0 +1,52 @@
+bastion:
+  timezone: ${BASTION_TIMEZONE}
+  public-url: ${BASTION_PUBLIC_URL}
+  content:
+    base-url: ${BASTION_CONTENT_BASE_URL}
+    path-pattern: ${BASTION_PATH_PATTERN}
+  media:
+    base-url: ${BASTION_MEDIA_BASE_URL}
+    s3:
+      access-key-id: ${BASTION_MEDIA_S3_ACCESS_KEY_ID}
+      secret-access-key: ${BASTION_MEDIA_S3_SECRET_ACCESS_KEY}
+      endpoint: ${BASTION_MEDIA_S3_ENDPOINT}
+      region: ${BASTION_MEDIA_S3_REGION}
+      bucket: ${BASTION_MEDIA_S3_BUCKET}
+  indieauth:
+    validate-token-url: ${BASTION_INDIEAUTH_VALIDATE_TOKEN_URL}
+
+
+logging:
+  level:
+    root: ${LOGGING_LEVEL_ROOT:info}
+
+spring:
+  application:
+    name: bastion
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+  datasource:
+    url: jdbc:postgresql://${SPRING_PG_HOST}:${SPRING_PG_PORT:5432}/${SPRING_PG_DB}
+    username: ${SPRING_PG_USERNAME}
+    password: ${SPRING_PG_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+        type:
+          json_format_mapper: org.hibernate.type.format.jackson.Jackson3JsonFormatMapper
+  flyway:
+    baseline-version: 0
+    baseline-on-migrate: true
+
+jobrunr:
+  background-job-server:
+    enabled: ${JOBRUNR_BACKGROUND_JOB_SERVER:true}
+  dashboard:
+    enabled: ${JOBRUNR_DASHBOARD_ENABLE:true}
+  database:
+    type: sql
