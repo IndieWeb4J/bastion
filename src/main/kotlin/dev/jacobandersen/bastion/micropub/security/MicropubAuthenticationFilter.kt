@@ -38,7 +38,8 @@ class MicropubAuthenticationFilter(
         SecurityContextHolder.getContext().authentication = try {
             logger.info("Micropub authentication filter: begin validating token")
             validator.validateToken(token)
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            e.printStackTrace()
             logger.warn("Micropub authentication filter: failed to validate token")
             ApiResponse.Error.Forbidden().toResponseEntity().writeResponse(response, objectMapper)
             return

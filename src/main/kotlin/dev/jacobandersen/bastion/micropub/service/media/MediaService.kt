@@ -14,7 +14,7 @@ private val logger = KotlinLogging.logger { }
 class MediaService(
     val fileUploadService: FileUploadService
 ) {
-    @PreAuthorize("hasAuthority('MEDIA')")
+    @PreAuthorize("hasAnyAuthority('MEDIA', 'CREATE')")
     fun handle(file: MultipartFile): ApiResponse<*> {
         return when (val result = fileUploadService.upload(file)) {
             is FileUploadResult.Success -> {
