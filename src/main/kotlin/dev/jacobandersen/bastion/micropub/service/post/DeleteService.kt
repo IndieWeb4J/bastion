@@ -33,7 +33,11 @@ class DeleteService(
         val post = postService.findBySlug(slug)
             ?: return ApiResponse.Error.InvalidRequest(errorDescription = "Post not found for URL: $url")
 
-        postService.updatePost(post.copy(deleted = delete), post.post)
+        try {
+            postService.updatePost(post.copy(deleted = delete), post.post)
+        } catch (e: IllegalArgumentException) {
+            return ApiResponse.Error.InvalidRequest(errorDescription = "Invalid published value: ${e.message}")
+        }
 
         return ApiResponse.Success.NoContent
     }

@@ -88,7 +88,11 @@ class UpdateService(
             visibility = commands.visibility ?: post.visibility,
         )
 
-        postService.updatePost(updated, postObj)
+        try {
+            postService.updatePost(updated, postObj)
+        } catch (e: IllegalArgumentException) {
+            return ApiResponse.Error.InvalidRequest(errorDescription = "Invalid published value: ${e.message}")
+        }
 
         return if (targetSlug != post.slug) {
             ApiResponse.Success.Created(urlService.generatePostUrl(updated))

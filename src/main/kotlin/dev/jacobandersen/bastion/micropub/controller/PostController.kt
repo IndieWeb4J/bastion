@@ -6,6 +6,7 @@ import dev.jacobandersen.bastion.micropub.type.PostAction
 import dev.jacobandersen.bastion.micropub.type.resp.toResponseEntity
 import dev.jacobandersen.bastion.micropub.service.post.PostDispatchService
 import dev.jacobandersen.bastion.micropub.util.MicropubParamNormalizer
+import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.util.MultiValueMap
@@ -38,8 +39,8 @@ class PostController(val service: PostDispatchService) {
     }
 
     @PostMapping(consumes = [MediaType.APPLICATION_FORM_URLENCODED_VALUE])
-    fun onUrlEncoded(@RequestBody data: MultiValueMap<String, String>): ResponseEntity<*> {
-        return onFormDataLike(data.entries.associate { it.key to it.value.toTypedArray() }, null)
+    fun onUrlEncoded(request: HttpServletRequest): ResponseEntity<*> {
+        return onFormDataLike(request.parameterMap, null)
     }
 
     @PostMapping(consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
@@ -58,6 +59,8 @@ class PostController(val service: PostDispatchService) {
                 ?: return ApiResponse.Error.InvalidRequest(errorDescription = "Unknown action").toResponseEntity()
         }
         normalizedData.remove("action")
+
+        normalizedData.remove("access_token")
 
         return service.handleMicropubPost(action, MicropubPayload.Form(normalizedData), files).toResponseEntity()
     }

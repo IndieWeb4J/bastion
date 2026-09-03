@@ -19,15 +19,17 @@ class UrlService(val config: BastionContentUrlConfig) {
     }
 
     fun generatePostUrl(post: Post): String {
-        return "${config.baseUrl}/${generatePostPath(post)}"
+        return "${config.baseUrl.trimEnd('/')}/${generatePostPath(post)}"
     }
 
     fun generatePostPath(post: Post): String {
-        val time = post.createdAt
+        val published = post.publishedAt
+            ?: throw IllegalStateException("Post '${post.slug}' has no parseable published timestamp")
+
         return config.pathPattern
-            .replace("{year}", time.year.toString())
-            .replace("{month}", time.month.value.toString().padStart(2, '0'))
-            .replace("{day}", time.dayOfMonth.toString().padStart(2, '0'))
+            .replace("{year}", published.year.toString())
+            .replace("{month}", published.monthValue.toString().padStart(2, '0'))
+            .replace("{day}", published.dayOfMonth.toString().padStart(2, '0'))
             .replace("{slug}", post.slug)
     }
 

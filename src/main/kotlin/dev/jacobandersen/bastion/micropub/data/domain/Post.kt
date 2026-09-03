@@ -1,11 +1,11 @@
 package dev.jacobandersen.bastion.micropub.data.domain
 
 import dev.jacobandersen.bastion.micropub.data.entity.PostEntity
-import dev.jacobandersen.bastion.micropub.type.mf2.Mf2Object
 import dev.jacobandersen.bastion.micropub.type.PostStatus
 import dev.jacobandersen.bastion.micropub.type.PostVisibility
-import java.time.Instant
-import java.time.LocalDateTime
+import dev.jacobandersen.bastion.micropub.type.mf2.Mf2Object
+import dev.jacobandersen.bastion.micropub.type.mf2.Mf2Value
+import java.time.OffsetDateTime
 import java.util.UUID
 
 data class Post(
@@ -17,25 +17,20 @@ data class Post(
     val type: String,
     val subtype: String? = null,
     val post: Mf2Object,
-    val createdAt: LocalDateTime,
-    val createdAtUtc: Instant,
-    val updatedAt: LocalDateTime,
-    val updatedAtUtc: Instant
 ) {
+    val publishedAt: OffsetDateTime?
+        get() = (post.getFirstProperty("published") as? Mf2Value.String)
+            ?.value
+            ?.let { runCatching { OffsetDateTime.parse(it) }.getOrNull() }
+
     /**
      * Map this domain Post to a PostEntity for persisting or updating.
-     * `type` and `subtype` are database-generated (`generated always as ... stored`)
-     * columns, so they are intentionally not set here - Postgres recomputes them
-     * from the `post` JSON on INSERT/UPDATE and Hibernate refetches them after flush.
-     * Timestamps are carried over so `createdAt` survives a persist; the
-     * DateTrackingListener still bumps `updatedAt` on write.
+     * `type`, `subtype`, `created_at_utc` and `updated_at_utc` are
+     * database-generated columns, so they are intentionally not set here -
+     * Postgres recomputes them from the `post` JSON on INSERT/UPDATE and
+     * Hibernate refetches them after flush.
      */
     fun toEntity(): PostEntity {
-        return PostEntity(id = id, slug = slug, status = status, visibility = visibility, deleted = deleted, post = post).also {
-            it.createdAt = createdAt
-            it.createdAtUtc = createdAtUtc
-            it.updatedAt = updatedAt
-            it.updatedAtUtc = updatedAtUtc
-        }
+        return PostEntity(id = id, slug = slug, status = status, visibility = visibility, deleted = deleted, post = post)
     }
 }
