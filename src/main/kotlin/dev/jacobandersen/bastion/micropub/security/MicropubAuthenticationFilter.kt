@@ -66,7 +66,6 @@ class MicropubAuthenticationFilter(
             parts[1]
         } else if (!bodyToken.isNullOrBlank()) {
             logger.info("Micropub authentication filter: found body token")
-            request.parameterMap.remove("access_token")
             bodyToken
         } else {
             logger.info("Micropub authentication filter: no access token")

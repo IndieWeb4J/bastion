@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Import
+import java.time.Instant
 
 @Import(TestcontainersConfiguration::class)
 @SpringBootTest
@@ -27,6 +28,7 @@ class PostEntityJsonRoundTripTest {
             properties = mutableMapOf(
                 "name" to listOf(Mf2Value.String("hello world")),
                 "published" to listOf(Mf2Value.String("2026-08-31T00:00:00Z")),
+                "updated" to listOf(Mf2Value.String("2026-08-31T00:00:00Z")),
                 "draft" to listOf(Mf2Value.Boolean(false)),
                 "count" to listOf(Mf2Value.Number(42)),
                 "rating" to listOf(Mf2Value.Float(4.5)),
@@ -52,5 +54,7 @@ class PostEntityJsonRoundTripTest {
         assertEquals("h-entry", saved.type)
         assertEquals("h-entry", reloaded.type)
         assertEquals("note", reloaded.subtype)
+        assertEquals(Instant.parse("2026-08-31T00:00:00Z"), reloaded.createdAtUtc)
+        assertEquals(Instant.parse("2026-08-31T00:00:00Z"), reloaded.updatedAtUtc)
     }
 }

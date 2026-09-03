@@ -24,7 +24,7 @@ spring:
   application:
     name: bastion
   jackson:
-    property-naming-strategy: SNAKE_CASE
+    default-property-inclusion: non_null
   datasource:
     url: jdbc:postgresql://${SPRING_PG_HOST}:${SPRING_PG_PORT:5432}/${SPRING_PG_DB}
     username: ${SPRING_PG_USERNAME}

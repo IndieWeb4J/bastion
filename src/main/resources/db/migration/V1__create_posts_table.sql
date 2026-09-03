@@ -1,3 +1,12 @@
+create function iso8601_ts(value text)
+    returns timestamptz
+    language sql
+    immutable
+as
+$$
+    select value::timestamptz
+$$;
+
 create function is_valid_url(url text)
     returns boolean
     language plpgsql
@@ -170,8 +179,6 @@ create table posts
     type           varchar generated always as (post -> 'type' ->> 0) stored,
     subtype        varchar generated always as (post_type_discovery(post)) stored,
     post           jsonb           not null,
-    created_at     timestamp       not null,
-    created_at_utc timestamptz     not null,
-    updated_at     timestamp       not null,
-    updated_at_utc timestamptz     not null
+    created_at_utc timestamptz     not null generated always as (iso8601_ts(post #>> '{properties,published,0}')) stored,
+    updated_at_utc timestamptz     not null generated always as (iso8601_ts(post #>> '{properties,updated,0}')) stored
 )

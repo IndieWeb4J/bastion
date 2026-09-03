@@ -2,7 +2,6 @@ package dev.jacobandersen.bastion.micropub.data.entity
 
 import dev.jacobandersen.bastion.micropub.type.mf2.Mf2Object
 import dev.jacobandersen.bastion.micropub.data.domain.Post
-import dev.jacobandersen.bastion.micropub.data.tz.DateTracked
 import dev.jacobandersen.bastion.micropub.type.PostStatus
 import dev.jacobandersen.bastion.micropub.type.PostVisibility
 import jakarta.persistence.Column
@@ -17,6 +16,7 @@ import org.hibernate.annotations.Generated
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.generator.EventType
 import org.hibernate.type.SqlTypes
+import java.time.Instant
 import java.util.UUID
 
 @Entity
@@ -45,7 +45,7 @@ class PostEntity(
     @Column(nullable = false)
     @JdbcTypeCode(SqlTypes.JSON)
     var post: Mf2Object,
-) : DateTracked() {
+) {
     @Generated(event = [EventType.INSERT, EventType.UPDATE])
     @Column(name = "type", nullable = false)
     var type: String? = null
@@ -53,6 +53,14 @@ class PostEntity(
     @Generated(event = [EventType.INSERT, EventType.UPDATE])
     @Column(name = "subtype", nullable = true)
     var subtype: String? = null
+
+    @Generated(event = [EventType.INSERT, EventType.UPDATE])
+    @Column(name = "created_at_utc", nullable = false)
+    var createdAtUtc: Instant? = null
+
+    @Generated(event = [EventType.INSERT, EventType.UPDATE])
+    @Column(name = "updated_at_utc", nullable = false)
+    var updatedAtUtc: Instant? = null
 
     constructor(slug: String, status: PostStatus, visibility: PostVisibility, deleted: Boolean = false, post: Mf2Object) : this(null, slug, status, visibility, deleted, post)
 
@@ -74,10 +82,6 @@ class PostEntity(
             type = requireNotNull(type),
             subtype = subtype,
             post = post,
-            createdAt = requireNotNull(createdAt),
-            createdAtUtc = requireNotNull(createdAtUtc),
-            updatedAt = requireNotNull(updatedAt),
-            updatedAtUtc = requireNotNull(updatedAtUtc),
         )
     }
 }

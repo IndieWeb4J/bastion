@@ -17,7 +17,7 @@ enum class PostVisibility {
             return when (str.lowercase(Locale.getDefault())) {
                 "public" -> PUBLIC
                 "private" -> PRIVATE
-                "unlinked" -> UNLISTED
+                "unlisted" -> UNLISTED
                 else -> UNKNOWN
             }
         }

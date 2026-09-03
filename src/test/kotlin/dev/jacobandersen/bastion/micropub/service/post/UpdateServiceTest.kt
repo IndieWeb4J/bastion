@@ -12,8 +12,10 @@ import dev.jacobandersen.bastion.micropub.type.PostVisibility
 import dev.jacobandersen.bastion.micropub.url.UrlService
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
+import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -21,6 +23,7 @@ import org.springframework.context.annotation.Import
 import org.springframework.security.test.context.support.WithMockUser
 import tools.jackson.databind.json.JsonMapper
 import tools.jackson.databind.node.ObjectNode
+import java.time.OffsetDateTime
 
 @Import(TestcontainersConfiguration::class)
 @SpringBootTest
@@ -232,5 +235,34 @@ class UpdateServiceTest {
         val newSlug = urlService.extractPostSlug(location)!!
         assertNotNull(postService.findBySlug(newSlug))
         assertNull(postService.findBySlug(post.slug))
+    }
+
+    @Test
+    fun updateBumpsUpdatedButNotPublished() {
+        val slug = uniqueSlug("timestamp")
+        val obj = Mf2Object(
+            type = listOf("h-entry"),
+            properties = mutableMapOf(
+                "name" to listOf(Mf2Value.String("Original")),
+                "content" to listOf(Mf2Value.String("Original content")),
+                "published" to listOf(Mf2Value.String("2020-01-01T00:00:00Z")),
+            ),
+            children = null,
+        )
+        val post = postService.create(slug, PostStatus.PUBLISHED, PostVisibility.PUBLIC, false, obj)
+
+        val response = updateService.update(
+            updateJson(urlService.generatePostUrl(post), """ "replace": {"content": ["Updated content"]} """)
+        )
+
+        assertEquals(ApiResponse.Success.NoContent, response)
+        val updated = postService.findBySlug(slug)!!
+        assertEquals(
+            listOf(Mf2Value.String("2020-01-01T00:00:00Z")),
+            updated.post.getProperty("published")
+        )
+        val updatedProp = (updated.post.getFirstProperty("updated") as Mf2Value.String).value
+        assertTrue(OffsetDateTime.parse(updatedProp).year >= 2020)
+        assertNotEquals("2020-01-01T00:00:00Z", updatedProp)
     }
 }

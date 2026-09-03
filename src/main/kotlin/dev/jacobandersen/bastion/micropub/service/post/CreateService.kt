@@ -62,7 +62,12 @@ class CreateService(
         }
 
         logger.info { "Creating post..." }
-        val post = postService.create(slug, status, visibility, deleted = false, post = obj)
+        val post = try {
+            postService.create(slug, status, visibility, deleted = false, post = obj)
+        } catch (e: IllegalArgumentException) {
+            logger.warn { "Failed to create post: ${e.message}" }
+            return ApiResponse.Error.InvalidRequest(errorDescription = "Invalid published value: ${e.message}")
+        }
         val url = urlService.generatePostUrl(post)
 
         logger.info { "Post created: $url" }

@@ -11,6 +11,8 @@ import dev.jacobandersen.bastion.micropub.type.PostVisibility
 import dev.jacobandersen.bastion.micropub.url.UrlService
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -18,6 +20,7 @@ import org.springframework.context.annotation.Import
 import org.springframework.security.test.context.support.WithMockUser
 import tools.jackson.databind.json.JsonMapper
 import tools.jackson.databind.node.ObjectNode
+import java.time.OffsetDateTime
 
 @Import(TestcontainersConfiguration::class)
 @SpringBootTest
@@ -168,5 +171,63 @@ class CreateServiceTest {
             listOf(Mf2Value.Json(mapper.readTree("""{"html": "<p>hi</p>"}"""))),
             post.post.getProperty("content")
         )
+    }
+
+    @Test
+    fun acceptsUnlistedVisibility() {
+        val slug = uniqueSlug("unlisted")
+        val response = createService.create(
+            createPayload("""{"name": ["Hello"], "mp-slug": ["$slug"], "visibility": ["unlisted"]}"""),
+            null,
+        )
+
+        assertInstanceOf(ApiResponse.Success.Created::class.java, response)
+        assertEquals(PostVisibility.UNLISTED, postService.findBySlug(slug)!!.visibility)
+    }
+
+    @Test
+    fun stampsPublishedAndUpdatedOnCreate() {
+        val response = createService.create(
+            createPayload("""{"name": ["Hello ${System.nanoTime()}"]}"""),
+            null,
+        )
+
+        assertInstanceOf(ApiResponse.Success.Created::class.java, response)
+        val slug = urlService.extractPostSlug((response as ApiResponse.Success.Created).location)!!
+        val post = postService.findBySlug(slug)!!
+
+        val published = post.post.getFirstProperty("published") as? Mf2Value.String
+        val updated = post.post.getFirstProperty("updated") as? Mf2Value.String
+        assertNotNull(published)
+        assertNotNull(updated)
+        assertTrue(OffsetDateTime.parse(published!!.value).year > 2020)
+        assertTrue(OffsetDateTime.parse(updated!!.value).year > 2020)
+    }
+
+    @Test
+    fun preservesAndNormalizesBackdatedPublished() {
+        val response = createService.create(
+            createPayload("""{"name": ["Old"], "published": ["2019-06-01T10:00:00"]}"""),
+            null,
+        )
+
+        assertInstanceOf(ApiResponse.Success.Created::class.java, response)
+        val location = (response as ApiResponse.Success.Created).location
+        val slug = urlService.extractPostSlug(location)!!
+        val post = postService.findBySlug(slug)!!
+
+        assertTrue(location.contains("/2019/06/01/"), "expected backdated date in location, got $location")
+        val published = (post.post.getFirstProperty("published") as Mf2Value.String).value
+        assertEquals("2019-06-01T10:00:00+08:00", published)
+    }
+
+    @Test
+    fun rejectsInvalidPublishedValue() {
+        val response = createService.create(
+            createPayload("""{"name": ["X"], "published": ["not-a-date"]}"""),
+            null,
+        )
+
+        assertInstanceOf(ApiResponse.Error.InvalidRequest::class.java, response)
     }
 }
