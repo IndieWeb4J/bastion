@@ -53,6 +53,7 @@ dependencies {
     }
     implementation("software.amazon.awssdk:s3:2.10.53")
     implementation("org.nibor.autolink:autolink:0.12.0")
+    implementation("org.jsoup:jsoup:1.23.2")
     testImplementation("org.springframework.security:spring-security-test")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     runtimeOnly("org.postgresql:postgresql")
