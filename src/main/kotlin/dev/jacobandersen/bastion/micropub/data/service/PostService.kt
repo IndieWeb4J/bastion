@@ -68,6 +68,34 @@ class PostService(
         return results.content.map { filterPostFields(it.toDomain(), requestedProperties) }
     }
 
+    /**
+     * Published, public, non-deleted posts for the public feed, optionally
+     * restricted to the given discovered post types (subtypes).
+     */
+    @Transactional(readOnly = true)
+    fun findFeedPosts(subtypes: Collection<String>?, limit: Int, offset: Int): List<Post> {
+        require(offset % limit == 0) { "offset must be a multiple of limit" }
+
+        val pageRequest = PageRequest.of(offset / limit, limit, Sort.by("createdAtUtc").descending())
+
+        val results = if (subtypes.isNullOrEmpty()) {
+            repository.findByStatusAndVisibilityAndDeletedFalse(
+                PostStatus.PUBLISHED,
+                PostVisibility.PUBLIC,
+                pageRequest
+            )
+        } else {
+            repository.findByStatusAndVisibilityAndDeletedFalseAndSubtypeIn(
+                PostStatus.PUBLISHED,
+                PostVisibility.PUBLIC,
+                subtypes,
+                pageRequest
+            )
+        }
+
+        return results.content.map { it.toDomain() }
+    }
+
     fun filterPostFields(post: Post, requestedProperties: Array<String>? = null): Post {
         val mf2 = post.post
         val filteredProperties = mf2.properties.filter { requestedProperties?.contains(it.key) ?: true }

@@ -16,4 +16,11 @@ interface PostRepository : JpaRepository<PostEntity, UUID> {
     fun findBySlug(slug: String): PostEntity?
 
     fun findByStatusAndVisibilityAndDeletedFalse(status: PostStatus, visibility: PostVisibility, page: Pageable): Page<PostEntity>
+
+    fun findByStatusAndVisibilityAndDeletedFalseAndSubtypeIn(
+        status: PostStatus,
+        visibility: PostVisibility,
+        subtypes: Collection<String>,
+        page: Pageable,
+    ): Page<PostEntity>
 }
