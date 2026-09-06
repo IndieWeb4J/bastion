@@ -10,7 +10,7 @@ plugins {
 }
 
 group = "dev.jacobandersen"
-version = "0.0.1-SNAPSHOT"
+version = file("version.txt").readText().trim()
 description = "bastion"
 
 java {
