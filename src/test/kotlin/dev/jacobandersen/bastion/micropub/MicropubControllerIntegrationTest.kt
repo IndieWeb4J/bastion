@@ -73,6 +73,12 @@ class MicropubControllerIntegrationTest {
     // ---------------------------------------------------------------- config
 
     @Test
+    fun rootPathIsNotSecuredByMicropubFilter() {
+        mockMvc.perform(get("/"))
+            .andExpect(status().isNotFound)
+    }
+
+    @Test
     fun configReturnsSpecKeys() {
         mockMvc.perform(get("/micropub").param("q", "config").header(HttpHeaders.AUTHORIZATION, bearer))
             .andExpect(status().isOk)
