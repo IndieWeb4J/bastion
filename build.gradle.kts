@@ -81,6 +81,14 @@ hibernate {
     }
 }
 
+graalvmNative {
+    binaries {
+        named("main") {
+            buildArgs.add("-J-Xmx6800m")
+        }
+    }
+}
+
 allOpen {
     annotation("jakarta.persistence.Entity")
     annotation("jakarta.persistence.MappedSuperclass")
