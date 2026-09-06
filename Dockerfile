@@ -1,7 +1,7 @@
-FROM gcr.io/distroless/base-debian12
+FROM gcr.io/distroless/java25-debian13
 
 WORKDIR /app
-COPY bastion /app/bastion
+COPY bastion.jar /app/bastion.jar
 
 EXPOSE 8080
-ENTRYPOINT ["/app/bastion"]
+CMD ["/app/bastion.jar"]
