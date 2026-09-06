@@ -3,7 +3,7 @@ package dev.jacobandersen.bastion.micropub.service.post
 import dev.jacobandersen.bastion.micropub.type.req.MicropubPayload
 import dev.jacobandersen.bastion.micropub.type.resp.ApiResponse
 import dev.jacobandersen.bastion.micropub.data.service.PostService
-import dev.jacobandersen.bastion.micropub.url.UrlService
+import dev.jacobandersen.bastion.url.UrlService
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 

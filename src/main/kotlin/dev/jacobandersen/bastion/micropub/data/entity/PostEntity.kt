@@ -1,6 +1,6 @@
 package dev.jacobandersen.bastion.micropub.data.entity
 
-import dev.jacobandersen.bastion.micropub.type.mf2.Mf2Object
+import dev.jacobandersen.bastion.microformats2.Mf2Object
 import dev.jacobandersen.bastion.micropub.data.domain.Post
 import dev.jacobandersen.bastion.micropub.type.PostStatus
 import dev.jacobandersen.bastion.micropub.type.PostVisibility

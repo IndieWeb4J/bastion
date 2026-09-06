@@ -1,7 +1,7 @@
 package dev.jacobandersen.bastion.micropub.data.service
 
-import dev.jacobandersen.bastion.micropub.type.mf2.Mf2Object
-import dev.jacobandersen.bastion.micropub.type.mf2.Mf2Value
+import dev.jacobandersen.bastion.microformats2.Mf2Object
+import dev.jacobandersen.bastion.microformats2.Mf2Value
 import org.springframework.stereotype.Service
 import java.time.Instant
 import java.time.LocalDate

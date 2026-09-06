@@ -1,4 +1,4 @@
-package dev.jacobandersen.bastion.micropub.url
+package dev.jacobandersen.bastion.url
 
 import dev.jacobandersen.bastion.micropub.data.domain.Post
 import jakarta.annotation.PostConstruct

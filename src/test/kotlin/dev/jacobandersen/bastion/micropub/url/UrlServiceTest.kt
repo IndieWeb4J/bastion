@@ -1,6 +1,7 @@
 package dev.jacobandersen.bastion.micropub.url
 
-import dev.jacobandersen.bastion.micropub.url.UrlService.BastionContentUrlConfig
+import dev.jacobandersen.bastion.url.UrlService
+import dev.jacobandersen.bastion.url.UrlService.BastionContentUrlConfig
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test

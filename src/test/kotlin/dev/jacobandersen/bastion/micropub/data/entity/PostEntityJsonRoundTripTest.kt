@@ -1,8 +1,8 @@
 package dev.jacobandersen.bastion.micropub.data.entity
 
 import dev.jacobandersen.bastion.TestcontainersConfiguration
-import dev.jacobandersen.bastion.micropub.type.mf2.Mf2Object
-import dev.jacobandersen.bastion.micropub.type.mf2.Mf2Value
+import dev.jacobandersen.bastion.microformats2.Mf2Object
+import dev.jacobandersen.bastion.microformats2.Mf2Value
 import dev.jacobandersen.bastion.micropub.data.repository.PostRepository
 import dev.jacobandersen.bastion.micropub.type.PostStatus
 import dev.jacobandersen.bastion.micropub.type.PostVisibility
