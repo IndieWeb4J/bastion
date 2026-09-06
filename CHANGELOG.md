@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/jacobsandersen/bastion/compare/v1.0.0...v1.0.1) (2026-09-06)
+
+
+### Bug Fixes
+
+* scope the micropub auth filter to the micropub security chain ([88a39a1](https://github.com/jacobsandersen/bastion/commit/88a39a18df8eac11bc83bdd17514ac71245806e0))
+
 ## 1.0.0 (2026-09-06)
 
 
