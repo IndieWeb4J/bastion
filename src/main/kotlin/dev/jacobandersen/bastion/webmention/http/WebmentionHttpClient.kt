@@ -1,5 +1,6 @@
 package dev.jacobandersen.bastion.webmention.http
 
+import dev.jacobandersen.bastion.util.StringUtil.excerpt
 import dev.jacobandersen.bastion.webmention.config.WebmentionConfig
 import dev.jacobandersen.bastion.webmention.util.HttpUtil
 import dev.jacobandersen.bastion.webmention.util.HttpUtil.isTransientStatus
@@ -15,10 +16,9 @@ import org.springframework.http.client.ClientHttpRequestFactory
 import org.springframework.http.client.JdkClientHttpRequestFactory
 import org.springframework.stereotype.Service
 import org.springframework.util.LinkedMultiValueMap
-import org.springframework.web.client.HttpClientErrorException
-import org.springframework.web.client.HttpServerErrorException
 import org.springframework.web.client.RestClient
 import org.springframework.web.client.RestClientException
+import org.springframework.web.client.RestClientResponseException
 import kotlin.collections.firstOrNull
 
 private val logger = KotlinLogging.logger {}
@@ -79,15 +79,18 @@ class WebmentionHttpClient(
             } else {
                 SendWebmentionResult.Failure(statusCode, "HTTP $statusCode", isTransientStatus(statusCode))
             }
-        } catch (e: HttpClientErrorException) {
+        } catch (e: RestClientResponseException) {
             val statusCode = e.statusCode.value()
-            SendWebmentionResult.Failure(statusCode, "HTTP $statusCode", isTransientStatus(statusCode))
-        } catch (e: HttpServerErrorException) {
-            val statusCode = e.statusCode.value()
-            SendWebmentionResult.Failure(statusCode, "HTTP $statusCode", isTransientStatus(statusCode))
+            val message = describeHttpError(statusCode, e.getResponseBodyAsString())
+            SendWebmentionResult.Failure(statusCode, message, isTransientStatus(statusCode))
         } catch (e: RestClientException) {
             SendWebmentionResult.Failure(null, e.message ?: e::class.simpleName ?: "Request failed", true)
         }
+    }
+
+    private fun describeHttpError(statusCode: Int, responseBody: String?): String {
+        val body = responseBody?.takeIf { it.isNotBlank() }?.excerpt(MAX_ERROR_BODY_LENGTH)
+        return if (body != null) "HTTP $statusCode: $body" else "HTTP $statusCode"
     }
 
     internal fun discoverWebmentionEndpoint(url: String): EndpointDiscovery {
@@ -142,5 +145,6 @@ class WebmentionHttpClient(
 
     companion object {
         const val USER_AGENT = "BastionWebmentionHttpClient/0.0.1"
+        const val MAX_ERROR_BODY_LENGTH = 2000
     }
 }
