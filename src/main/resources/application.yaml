@@ -37,8 +37,6 @@ spring:
       hibernate:
         jdbc:
           time_zone: UTC
-        type:
-          json_format_mapper: org.hibernate.type.format.jackson.Jackson3JsonFormatMapper
   flyway:
     baseline-version: 0
     baseline-on-migrate: true
