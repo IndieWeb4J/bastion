@@ -23,6 +23,9 @@ data class Post(
             ?.value
             ?.let { runCatching { OffsetDateTime.parse(it) }.getOrNull() }
 
+    val publiclyReachable: Boolean
+        get() = status == PostStatus.PUBLISHED && visibility.canGetByUrl()
+
     /**
      * Map this domain Post to a PostEntity for persisting or updating.
      * `type`, `subtype`, `created_at_utc` and `updated_at_utc` are

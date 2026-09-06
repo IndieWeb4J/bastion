@@ -7,6 +7,7 @@ import dev.jacobandersen.bastion.micropub.data.service.PostService
 import dev.jacobandersen.bastion.micropub.service.MicropubCommandResolver
 import dev.jacobandersen.bastion.micropub.type.MicropubCommand
 import dev.jacobandersen.bastion.url.UrlService
+import dev.jacobandersen.bastion.webmention.service.WebmentionService
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 
@@ -15,6 +16,7 @@ class UpdateService(
     val urlService: UrlService,
     private val postService: PostService,
     private val commandResolver: MicropubCommandResolver,
+    private val webmentionService: WebmentionService,
 ) {
     @PreAuthorize("hasAuthority('UPDATE')")
     fun update(payload: MicropubPayload): ApiResponse<*> {
@@ -39,6 +41,9 @@ class UpdateService(
         } ?: return ApiResponse.Error.InvalidRequest(errorDescription = "Invalid command parameters in update")
 
         val postObj = post.post
+        val previousUrl = urlService.generatePostUrl(post)
+        val wasPublic = post.publiclyReachable
+        val previousTargetUrls = webmentionService.targetUrlsOf(postObj)
 
         update.replacements?.replacements?.forEach { (key, values) ->
             if (!MicropubCommand.isCommandProperty(key)) {
@@ -92,6 +97,20 @@ class UpdateService(
             postService.updatePost(updated, postObj)
         } catch (e: IllegalArgumentException) {
             return ApiResponse.Error.InvalidRequest(errorDescription = "Invalid published value: ${e.message}")
+        }
+
+        val updatedUrl = urlService.generatePostUrl(updated)
+        val isPublic = updated.publiclyReachable
+        when {
+            wasPublic && !isPublic -> webmentionService.deactivateWebmentions(previousUrl)
+
+            isPublic -> {
+                if (updatedUrl != previousUrl || !wasPublic) {
+                    webmentionService.processWebmentions(updatedUrl, postObj)
+                } else {
+                    webmentionService.processUpdatedWebmentions(updatedUrl, previousTargetUrls, postObj)
+                }
+            }
         }
 
         return if (targetSlug != post.slug) {
