@@ -3,27 +3,13 @@ package dev.jacobandersen.bastion.webmention.service
 import dev.jacobandersen.bastion.microformats2.Mf2Object
 import dev.jacobandersen.bastion.microformats2.Mf2ParseResult
 import dev.jacobandersen.bastion.microformats2.Mf2Value
+import dev.jacobandersen.bastion.webmention.data.domain.ReceivedWebmentionAnalysis
 import dev.jacobandersen.bastion.webmention.data.domain.WebmentionInteraction
 import dev.jacobandersen.bastion.webmention.data.domain.WebmentionInteraction.BOOKMARK
 import dev.jacobandersen.bastion.webmention.data.domain.WebmentionInteraction.LIKE
 import dev.jacobandersen.bastion.webmention.data.domain.WebmentionInteraction.MENTION
 import dev.jacobandersen.bastion.webmention.data.domain.WebmentionInteraction.REPLY
 import dev.jacobandersen.bastion.webmention.data.domain.WebmentionInteraction.REPOST
-
-/**
- * The result of analyzing a received webmention's source document: the
- * detected interaction type plus the normalized author and content extracted
- * from its primary microformats object.
- */
-data class ReceivedWebmentionAnalysis(
-    val interaction: WebmentionInteraction,
-    val primary: Mf2Object?,
-    val authorName: String? = null,
-    val authorUrl: String? = null,
-    val authorPhoto: String? = null,
-    val contentText: String? = null,
-    val contentHtml: String? = null,
-)
 
 /**
  * Analyzes a parsed source document for webmention purposes: picks the primary
