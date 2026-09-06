@@ -4,7 +4,7 @@ import dev.jacobandersen.bastion.micropub.data.entity.PostEntity
 import dev.jacobandersen.bastion.micropub.data.repository.PostRepository
 import dev.jacobandersen.bastion.micropub.type.PostStatus
 import dev.jacobandersen.bastion.micropub.type.PostVisibility
-import dev.jacobandersen.bastion.micropub.type.mf2.Mf2Object
+import dev.jacobandersen.bastion.microformats2.Mf2Object
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service

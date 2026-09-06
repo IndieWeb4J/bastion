@@ -1,7 +1,7 @@
 package dev.jacobandersen.bastion.micropub.service
 
 import com.github.slugify.Slugify
-import dev.jacobandersen.bastion.micropub.type.mf2.Mf2Value
+import dev.jacobandersen.bastion.microformats2.Mf2Value
 import dev.jacobandersen.bastion.micropub.type.MicropubCommand
 import dev.jacobandersen.bastion.micropub.type.PostStatus
 import dev.jacobandersen.bastion.micropub.type.PostVisibility

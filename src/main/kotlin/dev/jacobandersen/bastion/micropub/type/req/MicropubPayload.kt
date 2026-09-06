@@ -1,9 +1,9 @@
 package dev.jacobandersen.bastion.micropub.type.req
 
-import dev.jacobandersen.bastion.micropub.type.mf2.Mf2Object
-import dev.jacobandersen.bastion.micropub.type.mf2.Mf2Value
-import dev.jacobandersen.bastion.micropub.type.mf2.asMf2Object
-import dev.jacobandersen.bastion.micropub.type.mf2.asMf2ValueOrNull
+import dev.jacobandersen.bastion.microformats2.Mf2Object
+import dev.jacobandersen.bastion.microformats2.Mf2Value
+import dev.jacobandersen.bastion.microformats2.asMf2Object
+import dev.jacobandersen.bastion.microformats2.asMf2ValueOrNull
 import tools.jackson.databind.node.ArrayNode
 import tools.jackson.databind.node.ObjectNode
 

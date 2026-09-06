@@ -1,7 +1,7 @@
 package dev.jacobandersen.bastion.micropub.data.model
 
-import dev.jacobandersen.bastion.micropub.type.mf2.Mf2Object
-import dev.jacobandersen.bastion.micropub.type.mf2.Mf2Value
+import dev.jacobandersen.bastion.microformats2.Mf2Object
+import dev.jacobandersen.bastion.microformats2.Mf2Value
 import dev.jacobandersen.bastion.micropub.type.req.MicropubPayload
 import dev.jacobandersen.bastion.micropub.type.req.MicropubUpdatePayload
 import org.junit.jupiter.api.Assertions.assertEquals

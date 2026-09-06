@@ -1,4 +1,4 @@
-package dev.jacobandersen.bastion.micropub.type.mf2
+package dev.jacobandersen.bastion.microformats2
 
 import tools.jackson.core.JsonGenerator
 import tools.jackson.databind.JsonNode
