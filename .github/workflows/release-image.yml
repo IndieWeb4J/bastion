@@ -28,8 +28,8 @@ env:
   SPRING_PG_PASSWORD: postgres
 
 jobs:
-  native-image:
-    name: Verify and build distroless native image
+  image:
+    name: Verify and build distroless image
     runs-on: ubuntu-22.04
     timeout-minutes: 45
     steps:
@@ -37,7 +37,7 @@ jobs:
 
       - uses: actions/setup-java@v6
         with:
-          distribution: graalvm
+          distribution: temurin
           java-version: '25'
 
       - uses: gradle/actions/setup-gradle@v4
@@ -45,11 +45,11 @@ jobs:
       - name: Run full integration tests
         run: ./gradlew test
 
-      - name: Build native image
-        run: ./gradlew nativeCompile
+      - name: Build application jar
+        run: ./gradlew bootJar
 
-      - name: Stage native binary for docker
-        run: cp build/native/nativeCompile/bastion ./bastion
+      - name: Stage jar for docker
+        run: cp build/libs/bastion.jar ./bastion.jar
 
       - name: Generate image tags
         id: meta
