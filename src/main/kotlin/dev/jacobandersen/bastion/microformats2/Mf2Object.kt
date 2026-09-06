@@ -7,12 +7,20 @@ import kotlin.collections.get
 import kotlin.collections.iterator
 
 data class Mf2Object(val type: List<String>, val properties: MutableMap<String, List<Mf2Value>>, val children: List<Mf2Object>?) {
+    fun primaryType(): String {
+        return type.firstOrNull() ?: throw IllegalStateException("Mf2Object has no type")
+    }
+
     fun getProperty(key: String): List<Mf2Value> {
         return properties[key] ?: listOf()
     }
 
     fun getFirstProperty(key: String): Mf2Value? {
         return getProperty(key).firstOrNull()
+    }
+
+    operator fun get(key: String): List<Mf2Value> {
+        return getProperty(key)
     }
 
     fun deleteProperty(key: String) {
@@ -23,8 +31,16 @@ data class Mf2Object(val type: List<String>, val properties: MutableMap<String, 
         properties[key] = listOf(value)
     }
 
+    operator fun set(key: String, value: Mf2Value) {
+        setProperty(key, value)
+    }
+
     fun setProperty(key: String, value: List<Mf2Value>) {
         properties[key] = value
+    }
+
+    operator fun set(key: String, value: List<Mf2Value>) {
+        setProperty(key, value)
     }
 
     fun addProperty(key: String, value: Mf2Value) {
