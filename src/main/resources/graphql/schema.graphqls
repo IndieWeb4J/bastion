@@ -1,0 +1,33 @@
+enum PostType {
+    NOTE
+    ARTICLE
+    REPLY
+    REPOST
+    LIKE
+    VIDEO
+    PHOTO
+    RSVP
+}
+
+type Query {
+    posts(types: [PostType!], limit: Int = 10, offset: Int = 0): [Post!]!
+    post(slug: String, url: String): Post
+}
+
+type Post {
+    id: ID!
+    slug: String!
+    url: String
+    type: String!
+    subtype: String
+    published: String
+    updated: String
+    name: String
+    summary: String
+    content: String
+    contentHtml: String
+    category: [String!]
+    properties(names: [String!]): JSON
+}
+
+scalar JSON
