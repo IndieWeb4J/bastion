@@ -9,10 +9,29 @@ permissions:
   contents: read
   packages: write
 
+env:
+  BASTION_TIMEZONE: Asia/Manila
+  BASTION_PUBLIC_URL: https://bastion.test
+  BASTION_CONTENT_BASE_URL: https://bastion.test
+  BASTION_PATH_PATTERN: "{year}/{month}/{day}/{slug}"
+  BASTION_MEDIA_BASE_URL: https://media.bastion.test
+  BASTION_MEDIA_S3_ACCESS_KEY_ID: test-access-key
+  BASTION_MEDIA_S3_SECRET_ACCESS_KEY: test-secret-key
+  BASTION_MEDIA_S3_ENDPOINT: https://s3.bastion.test
+  BASTION_MEDIA_S3_REGION: us-east-1
+  BASTION_MEDIA_S3_BUCKET: bastion-test
+  BASTION_INDIEAUTH_VALIDATE_TOKEN_URL: https://tokens.indieauth.com/token
+  SPRING_PG_HOST: localhost
+  SPRING_PG_PORT: "5432"
+  SPRING_PG_DB: bastion
+  SPRING_PG_USERNAME: postgres
+  SPRING_PG_PASSWORD: postgres
+
 jobs:
   native-image:
-    name: Build distroless native image
+    name: Verify and build distroless native image
     runs-on: ubuntu-22.04
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
 
@@ -22,6 +41,9 @@ jobs:
           java-version: '25'
 
       - uses: gradle/actions/setup-gradle@v4
+
+      - name: Run full integration tests
+        run: ./gradlew test
 
       - name: Build native image
         run: ./gradlew nativeCompile
