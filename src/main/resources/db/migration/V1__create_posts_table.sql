@@ -22,18 +22,55 @@ begin
 end;
 $$;
 
-create function is_nonempty(data text)
-    returns boolean
+create function jsonb_element_url(elem jsonb)
+    returns text
     language plpgsql
     immutable
 as
 $$
+declare
+    candidate text;
+    url_elem  jsonb;
 begin
-    return data is not null and data <> '';
+    if elem is null then
+        return null;
+    end if;
+
+    if jsonb_typeof(elem) = 'string' then
+        return btrim(elem #>> '{}');
+    end if;
+
+    if jsonb_typeof(elem) = 'object' then
+        if jsonb_typeof(elem -> 'value') = 'string' then
+            candidate := btrim(elem ->> 'value');
+            if candidate <> '' then
+                return candidate;
+            end if;
+        end if;
+
+        if jsonb_typeof(elem -> 'url') = 'string' then
+            candidate := btrim(elem ->> 'url');
+            if candidate <> '' then
+                return candidate;
+            end if;
+        end if;
+
+        if jsonb_typeof(elem -> 'properties' -> 'url') = 'array' then
+            for url_elem in select * from jsonb_array_elements(elem -> 'properties' -> 'url')
+                loop
+                    candidate := jsonb_element_url(url_elem);
+                    if candidate is not null and candidate <> '' then
+                        return candidate;
+                    end if;
+                end loop;
+        end if;
+    end if;
+
+    return null;
 end;
 $$;
 
-create function jsonb_array_any_match(payload jsonb, array_path text, check_function regproc)
+create function jsonb_array_any_url(payload jsonb, array_path text)
     returns boolean
     language plpgsql
     immutable
@@ -43,7 +80,7 @@ declare
     path_array  text[] := string_to_array(array_path, '.');
     target_node jsonb;
     elem        jsonb;
-    is_match    boolean;
+    candidate   text;
 begin
     target_node := payload #> path_array;
     if target_node is null or jsonb_typeof(target_node) != 'array' or jsonb_array_length(target_node) = 0 then
@@ -52,11 +89,8 @@ begin
 
     for elem in select * from jsonb_array_elements(target_node)
         loop
-            execute format('select %I($1)', check_function)
-                into is_match
-                using elem #>> '{}';
-
-            if is_match is true then
+            candidate := jsonb_element_url(elem);
+            if candidate is not null and is_valid_url(candidate) then
                 return true;
             end if;
         end loop;
@@ -65,8 +99,45 @@ begin
 end;
 $$;
 
-create function jsonb_array_first_match(payload jsonb, array_path text, check_function regproc)
-    returns jsonb
+create function jsonb_element_text(elem jsonb)
+    returns text
+    language plpgsql
+    immutable
+as
+$$
+declare
+    value_text text;
+begin
+    if elem is null then
+        return null;
+    end if;
+
+    if jsonb_typeof(elem) = 'string' then
+        return elem #>> '{}';
+    end if;
+
+    if jsonb_typeof(elem) = 'object' then
+        if jsonb_typeof(elem -> 'value') = 'string' then
+            value_text := elem ->> 'value';
+            if btrim(value_text) <> '' then
+                return value_text;
+            end if;
+        end if;
+
+        if jsonb_typeof(elem -> 'html') = 'string' then
+            value_text := elem ->> 'html';
+            if btrim(value_text) <> '' then
+                return value_text;
+            end if;
+        end if;
+    end if;
+
+    return null;
+end;
+$$;
+
+create function jsonb_array_first_text(payload jsonb, array_path text)
+    returns text
     language plpgsql
     immutable
 as
@@ -75,7 +146,7 @@ declare
     path_array  text[] := string_to_array(array_path, '.');
     target_node jsonb;
     elem        jsonb;
-    is_match    boolean;
+    value_text  text;
 begin
     target_node := payload #> path_array;
     if target_node is null or jsonb_typeof(target_node) != 'array' or jsonb_array_length(target_node) = 0 then
@@ -84,12 +155,9 @@ begin
 
     for elem in select * from jsonb_array_elements(target_node)
         loop
-            execute format('select %I($1)', check_function)
-                into is_match
-                using elem #>> '{}';
-
-            if is_match is true then
-                return elem;
+            value_text := jsonb_element_text(elem);
+            if value_text is not null and btrim(value_text) <> '' then
+                return value_text;
             end if;
         end loop;
 
@@ -97,14 +165,14 @@ begin
 end;
 $$;
 
-create function jsonb_array_empty_or_missing(payload jsonb, array_path text)
+create function jsonb_array_has_text(payload jsonb, array_path text)
     returns boolean
     language plpgsql
     immutable
 as
 $$
 begin
-    return not jsonb_array_any_match(payload, array_path, 'is_nonempty');
+    return jsonb_array_first_text(payload, array_path) is not null;
 end;
 $$;
 
@@ -127,21 +195,23 @@ begin
         return null;
     end if;
 
-    if jsonb_array_any_match(post, 'properties.rsvp', 'is_valid_url') then
+    if jsonb_array_has_text(post, 'properties.rsvp') then
         return 'rsvp';
-    elsif jsonb_array_any_match(post, 'properties.repost-of', 'is_valid_url') then
+    elsif jsonb_array_any_url(post, 'properties.in-reply-to') then
+        return 'reply';
+    elsif jsonb_array_any_url(post, 'properties.repost-of') then
         return 'repost';
-    elsif jsonb_array_any_match(post, 'properties.like-of', 'is_valid_url') then
+    elsif jsonb_array_any_url(post, 'properties.like-of') then
         return 'like';
-    elsif jsonb_array_any_match(post, 'properties.video', 'is_valid_url') then
+    elsif jsonb_array_any_url(post, 'properties.video') then
         return 'video';
-    elsif jsonb_array_any_match(post, 'properties.photo', 'is_valid_url') then
+    elsif jsonb_array_any_url(post, 'properties.photo') then
         return 'photo';
     end if;
 
-    content := (jsonb_array_first_match(post, 'properties.content', 'is_nonempty')) #>> '{}';
+    content := jsonb_array_first_text(post, 'properties.content');
     if content is null then
-        content := (jsonb_array_first_match(post, 'properties.summary', 'is_nonempty')) #>> '{}';
+        content := jsonb_array_first_text(post, 'properties.summary');
     end if;
 
     if content is null then
@@ -150,11 +220,11 @@ begin
 
     content := btrim(regexp_replace(content, '\s+', ' ', 'g'));
 
-    if jsonb_array_empty_or_missing(post, 'properties.name') then
+    name := jsonb_array_first_text(post, 'properties.name');
+    if name is null then
         return 'note';
     end if;
 
-    name := (jsonb_array_first_match(post, 'properties.name', 'is_nonempty')) #>> '{}';
     name := btrim(regexp_replace(name, '\s+', ' ', 'g'));
 
     if not starts_with(content, name) then
