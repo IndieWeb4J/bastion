@@ -4,7 +4,6 @@ plugins {
     id("org.springframework.boot") version "4.1.1"
     id("io.spring.dependency-management") version "1.1.7"
     id("org.hibernate.orm") version "7.4.5.Final"
-    id("org.graalvm.buildtools.native") version "1.1.8"
     kotlin("plugin.jpa") version "2.3.21"
     kotlin("plugin.serialization") version "2.3.21"
 }
@@ -81,12 +80,8 @@ hibernate {
     }
 }
 
-graalvmNative {
-    binaries {
-        named("main") {
-            buildArgs.add("-J-Xmx6800m")
-        }
-    }
+tasks.bootJar {
+    archiveFileName.set("bastion.jar")
 }
 
 allOpen {
