@@ -14,6 +14,7 @@ import dev.jacobandersen.bastion.micropub.type.PostStatus
 import dev.jacobandersen.bastion.micropub.type.PostVisibility
 import dev.jacobandersen.bastion.url.UrlService
 import dev.jacobandersen.bastion.util.StringUtil.excerpt
+import dev.jacobandersen.bastion.webmention.service.WebmentionService
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
@@ -30,6 +31,7 @@ class CreateService(
     private val fileUploadService: FileUploadService,
     private val urlService: UrlService,
     private val commandResolver: MicropubCommandResolver,
+    private val webmentionService: WebmentionService
 ) {
     @PreAuthorize("hasAuthority('CREATE')")
     fun create(payload: MicropubPayload, files: MultiValueMap<String, MultipartFile>?): ApiResponse<*> {
@@ -68,6 +70,11 @@ class CreateService(
             return ApiResponse.Error.InvalidRequest(errorDescription = "Invalid published value: ${e.message}")
         }
         val url = urlService.generatePostUrl(post)
+
+        logger.info { "Dispatching webmention processing..." }
+        if (post.publiclyReachable) {
+            webmentionService.processWebmentions(url, post.post)
+        }
 
         logger.info { "Post created: $url" }
         return ApiResponse.Success.Created(url)
