@@ -7,12 +7,15 @@ import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.access.AccessDeniedHandler
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
+import tools.jackson.databind.ObjectMapper
 
 @Configuration
 class SecurityConfig(
-    val authFilter: MicropubAuthenticationFilter,
     val accessDeniedHandler: MicropubAccessDeniedHandler,
+    validator: MicropubTokenValidator,
+    objectMapper: ObjectMapper,
 ) {
+    private val authFilter = MicropubAuthenticationFilter(validator, objectMapper)
     @Bean
     fun micropubSecurityFilterChain(http: HttpSecurity): SecurityFilterChain {
         return http
