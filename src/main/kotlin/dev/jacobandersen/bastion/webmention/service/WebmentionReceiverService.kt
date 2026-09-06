@@ -1,5 +1,6 @@
 package dev.jacobandersen.bastion.webmention.service
 
+import dev.jacobandersen.bastion.microformats2.Mf2Parser
 import dev.jacobandersen.bastion.webmention.data.domain.ReceivedWebmentionAnalysis
 import dev.jacobandersen.bastion.webmention.data.domain.WebmentionInteraction.MENTION
 import dev.jacobandersen.bastion.webmention.data.service.ReceivedWebmentionService
@@ -20,13 +21,14 @@ private val logger = KotlinLogging.logger {}
 class WebmentionReceiverService(
     private val notificationService: ReceivedWebmentionService,
     private val sourceFetcher: WebmentionSourceFetcher,
+    private val parser: Mf2Parser,
 ) {
     fun verify(sourceUrl: String, targetUrl: String, postId: UUID) {
         logger.info { "Verifying received webmention from $sourceUrl for $targetUrl" }
         notificationService.ensurePending(sourceUrl, targetUrl, postId)
 
         val fetch = sourceFetcher.fetch(sourceUrl)
-        val verification = WebmentionSourceVerifier.verify(fetch, targetUrl)
+        val verification = WebmentionSourceVerifier.verify(fetch, targetUrl, parser)
 
         when (verification.verdict) {
             SourceVerdict.GONE -> {

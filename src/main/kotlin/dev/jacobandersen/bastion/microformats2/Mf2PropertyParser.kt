@@ -3,7 +3,6 @@ package dev.jacobandersen.bastion.microformats2
 import org.jsoup.nodes.Element
 import org.jsoup.nodes.Node
 import org.jsoup.nodes.TextNode
-import tools.jackson.databind.JsonNode
 import tools.jackson.databind.node.JsonNodeFactory
 import tools.jackson.databind.node.ObjectNode
 
@@ -101,11 +100,7 @@ internal object Mf2PropertyParser {
                             }
                             sb.append(' ').append(replacement).append(' ')
                         }
-                        else -> {
-                            if (tag != TAG_AREA) {
-                                collectText(node, sb, resolver)
-                            }
-                        }
+                        else -> collectText(node, sb, resolver)
                     }
                 }
             }
@@ -334,16 +329,11 @@ internal object Mf2PropertyParser {
         val out = mutableListOf<Element>()
         fun scan(node: Node) {
             if (node !is Element) return
-            val classes = node.classNames()
-            if (CLASS_VALUE in classes || CLASS_VALUE_TITLE in classes) {
+            if (CLASS_VALUE in node.classNames() || CLASS_VALUE_TITLE in node.classNames()) {
                 out.add(node)
                 return
             }
-            if (node === el) {
-                for (child in node.children()) scan(child)
-            } else {
-                for (child in node.children()) scan(child)
-            }
+            for (child in node.children()) scan(child)
         }
         for (child in el.children()) scan(child)
         return out
@@ -380,17 +370,7 @@ internal object Mf2PropertyParser {
     private fun normalizeUrl(raw: String, resolver: (String) -> String?): String? {
         val trimmed = raw.trim()
         if (trimmed.isEmpty()) return null
-        if (trimmed.startsWith("//")) {
-            return resolver("https:$trimmed")
-        }
-        if (isAbsolute(trimmed)) {
-            return trimmed
-        }
         return resolver(trimmed)
-    }
-
-    private fun isAbsolute(raw: String): Boolean {
-        return raw.contains(":") && runCatching { java.net.URI(raw).isAbsolute }.getOrDefault(false)
     }
 }
 

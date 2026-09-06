@@ -1,5 +1,6 @@
 package dev.jacobandersen.bastion.webmention.service
 
+import dev.jacobandersen.bastion.microformats2.Mf2ParserImpl
 import dev.jacobandersen.bastion.webmention.http.SourceFetch
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -9,6 +10,7 @@ import org.junit.jupiter.api.Test
 class WebmentionSourceVerifierTest {
 
     private val target = "https://blog.example/2026/01/01/post"
+    private val parser = Mf2ParserImpl()
 
     private fun html(body: String, status: Int = 200, type: String = "text/html") = SourceFetch(
         statusCode = status,
@@ -22,6 +24,7 @@ class WebmentionSourceVerifierTest {
         val result = WebmentionSourceVerifier.verify(
             html("""<div class="h-entry"><p>see <a href="$target">this</a></p></div>"""),
             target,
+            parser,
         )
         assertEquals(SourceVerdict.VERIFIED, result.verdict)
         assertNotNull(result.parse)
@@ -32,6 +35,7 @@ class WebmentionSourceVerifierTest {
         val result = WebmentionSourceVerifier.verify(
             html("""<div class="h-entry"><p>no links here</p></div>"""),
             target,
+            parser,
         )
         assertEquals(SourceVerdict.NO_LINK, result.verdict)
     }
@@ -41,6 +45,7 @@ class WebmentionSourceVerifierTest {
         val result = WebmentionSourceVerifier.verify(
             html("""<div class="h-entry"><img src="$target" alt="post"/></div>"""),
             target,
+            parser,
         )
         assertEquals(SourceVerdict.VERIFIED, result.verdict)
     }
@@ -50,16 +55,17 @@ class WebmentionSourceVerifierTest {
         val result = WebmentionSourceVerifier.verify(
             html("""<a href="$target#reply-1">reply</a>"""),
             target,
+            parser,
         )
         assertEquals(SourceVerdict.VERIFIED, result.verdict)
     }
 
     @Test
     fun `a gone source marks the webmention deleted`() {
-        val gone = WebmentionSourceVerifier.verify(html("gone", status = 410), target)
+        val gone = WebmentionSourceVerifier.verify(html("gone", status = 410), target, parser)
         assertEquals(SourceVerdict.GONE, gone.verdict)
 
-        val notFound = WebmentionSourceVerifier.verify(html("missing", status = 404), target)
+        val notFound = WebmentionSourceVerifier.verify(html("missing", status = 404), target, parser)
         assertEquals(SourceVerdict.GONE, notFound.verdict)
     }
 
@@ -68,6 +74,7 @@ class WebmentionSourceVerifierTest {
         val result = WebmentionSourceVerifier.verify(
             SourceFetch(0, target, null, "", error = "connection refused"),
             target,
+            parser,
         )
         assertEquals(SourceVerdict.UNREACHABLE, result.verdict)
         assertEquals("connection refused", result.reason)
@@ -78,6 +85,7 @@ class WebmentionSourceVerifierTest {
         val matching = WebmentionSourceVerifier.verify(
             SourceFetch(200, "https://source.example/note", "text/plain", "Reading $target today"),
             target,
+            parser,
         )
         assertEquals(SourceVerdict.VERIFIED, matching.verdict)
         assertNull(matching.parse)
@@ -85,6 +93,7 @@ class WebmentionSourceVerifierTest {
         val notMatching = WebmentionSourceVerifier.verify(
             SourceFetch(200, "https://source.example/note", "text/plain", "nothing here"),
             target,
+            parser,
         )
         assertEquals(SourceVerdict.NO_LINK, notMatching.verdict)
     }
