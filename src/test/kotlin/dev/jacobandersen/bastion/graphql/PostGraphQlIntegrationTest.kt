@@ -13,6 +13,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.context.annotation.Import
 import org.springframework.graphql.test.tester.GraphQlTester
+import org.springframework.security.test.context.support.WithMockUser
 import tools.jackson.databind.node.ObjectNode
 import tools.jackson.databind.json.JsonMapper
 
@@ -25,6 +26,7 @@ import tools.jackson.databind.json.JsonMapper
 )
 @AutoConfigureMockMvc
 @AutoConfigureGraphQlTester
+@WithMockUser(authorities = ["CREATE", "UPDATE", "DELETE", "UNDELETE"])
 class PostGraphQlIntegrationTest {
 
     @Autowired
