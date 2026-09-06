@@ -41,7 +41,7 @@ internal object WebmentionSourceVerifier {
         "object" to "data",
     )
 
-    fun verify(fetch: SourceFetch, targetUrl: String): SourceVerification {
+    fun verify(fetch: SourceFetch, targetUrl: String, parser: Mf2Parser): SourceVerification {
         when {
             fetch.statusCode == 410 || fetch.statusCode == 404 ->
                 return SourceVerification(SourceVerdict.GONE)
@@ -64,7 +64,7 @@ internal object WebmentionSourceVerifier {
             }
             return SourceVerification(
                 SourceVerdict.VERIFIED,
-                parse = Mf2Parser.parse(fetch.body, fetch.finalUrl),
+                parse = parser.parse(fetch.body, fetch.finalUrl),
             )
         }
 

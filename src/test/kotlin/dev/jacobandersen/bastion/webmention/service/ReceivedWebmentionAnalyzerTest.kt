@@ -1,6 +1,6 @@
 package dev.jacobandersen.bastion.webmention.service
 
-import dev.jacobandersen.bastion.microformats2.Mf2Parser
+import dev.jacobandersen.bastion.microformats2.Mf2ParserImpl
 import dev.jacobandersen.bastion.webmention.data.domain.WebmentionInteraction
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test
 class ReceivedWebmentionAnalyzerTest {
 
     private fun analyze(html: String, baseUrl: String = "https://source.example/post/1") =
-        ReceivedWebmentionAnalyzer.analyze(Mf2Parser.parse(html, baseUrl))
+        ReceivedWebmentionAnalyzer.analyze(Mf2ParserImpl().parse(html, baseUrl))
 
     @Test
     fun `classifies an in-reply-to as a reply and extracts author`() {

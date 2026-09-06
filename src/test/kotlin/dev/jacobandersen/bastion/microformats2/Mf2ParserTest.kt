@@ -5,8 +5,10 @@ import org.junit.jupiter.api.Test
 
 class Mf2ParserTest {
 
+    private val parser = Mf2ParserImpl()
+
     private fun singleItem(html: String, baseUrl: String = "http://example.com"): Mf2Object {
-        val result = Mf2Parser.parse(html, baseUrl)
+        val result = parser.parse(html, baseUrl)
         assertEquals(1, result.items.size, "expected a single microformat item")
         return result.items.single()
     }
@@ -133,7 +135,7 @@ class Mf2ParserTest {
 
     @Test
     fun `parses classic hentry with nested vcard author`() {
-        val result = Mf2Parser.parse(
+        val result = parser.parse(
             """
             <div class="hentry">
               <h1 class="entry-title">My post</h1>
@@ -159,7 +161,7 @@ class Mf2ParserTest {
 
     @Test
     fun `parses rel microformats including rel-urls details`() {
-        val result = Mf2Parser.parse(
+        val result = parser.parse(
             """
             <a rel="author" href="http://example.com/a">author a</a>
             <a rel="in-reply-to" href="http://example.com/1">post 1</a>
@@ -180,7 +182,7 @@ class Mf2ParserTest {
 
     @Test
     fun `bare nested microformats become children`() {
-        val result = Mf2Parser.parse(
+        val result = parser.parse(
             """
             <div class="h-feed">
               <div class="h-entry">

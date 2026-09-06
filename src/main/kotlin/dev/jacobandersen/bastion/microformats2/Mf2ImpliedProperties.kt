@@ -1,8 +1,7 @@
 package dev.jacobandersen.bastion.microformats2
 
 import org.jsoup.nodes.Element
-import tools.jackson.databind.JsonNode
-import tools.jackson.databind.node.ObjectNode
+import tools.jackson.databind.node.JsonNodeFactory
 
 /**
  * Implied `name`, `photo` and `url` property parsing per the microformats2
@@ -29,11 +28,10 @@ internal object Mf2ImpliedProperties {
         onlyChild(children)?.let { child ->
             if (!hasRootClass(child)) {
                 val deeper = onlyChild(child.children())
-                val matched = imageAlt(child) ?: areaAlt(child) ?: abbrTitle(child)
+                val matched = imageAlt(child) ?: abbrTitle(child)
                 if (matched != null) return matched
                 if (deeper != null && !hasRootClass(deeper)) {
                     imageAlt(deeper)?.let { return it }
-                    areaAlt(deeper)?.let { return it }
                     abbrTitle(deeper)?.let { return it }
                 }
             }
@@ -98,11 +96,6 @@ internal object Mf2ImpliedProperties {
         return null
     }
 
-    fun hasNestedMicroformats(properties: Map<String, List<Mf2Value>>, children: List<Mf2Object>): Boolean {
-        if (children.isNotEmpty()) return true
-        return properties.values.flatten().any { it is Mf2Value.Object }
-    }
-
     private fun onlyChild(children: org.jsoup.select.Elements): Element? {
         return if (children.size == 1) children.first() else null
     }
@@ -121,8 +114,6 @@ internal object Mf2ImpliedProperties {
         }
     }
 
-    private fun areaAlt(el: Element): String? = imageAlt(el)
-
     private fun abbrTitle(el: Element): String? {
         return if (el.tagName() == "abbr" && el.hasAttr("title") && el.attr("title").isNotBlank()) {
             el.attr("title").trim()
@@ -134,7 +125,7 @@ internal object Mf2ImpliedProperties {
     private fun imgValue(el: Element, resolver: (String) -> String?): Mf2Value {
         val src = el.attr("src")
         return if (el.hasAttr("alt")) {
-            val node = tools.jackson.databind.node.JsonNodeFactory.instance.objectNode()
+            val node = JsonNodeFactory.instance.objectNode()
             node.put("value", resolve(src, resolver) ?: src)
             node.put("alt", el.attr("alt"))
             Mf2Value.Json(node)
@@ -150,12 +141,6 @@ internal object Mf2ImpliedProperties {
     private fun resolve(raw: String, resolver: (String) -> String?): String? {
         val trimmed = raw.trim()
         if (trimmed.isEmpty()) return null
-        if (trimmed.startsWith("//")) {
-            return resolver("https:$trimmed")
-        }
-        if (trimmed.contains(":") && runCatching { java.net.URI(trimmed).isAbsolute }.getOrDefault(false)) {
-            return trimmed
-        }
         return resolver(trimmed)
     }
 
