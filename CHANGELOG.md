@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/jacobsandersen/bastion/compare/v1.0.1...v1.1.0) (2026-09-07)
+
+
+### Features
+
+* expose published posts over a public graphql api ([5c94376](https://github.com/jacobsandersen/bastion/commit/5c94376c99edbeb0fa2523d471f2a05fe4fbe0ad))
+
 ## [1.0.1](https://github.com/jacobsandersen/bastion/compare/v1.0.0...v1.0.1) (2026-09-06)
 
 
