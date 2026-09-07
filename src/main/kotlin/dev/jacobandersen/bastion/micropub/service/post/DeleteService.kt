@@ -5,6 +5,7 @@ import dev.jacobandersen.bastion.micropub.type.req.MicropubPayload
 import dev.jacobandersen.bastion.micropub.type.resp.ApiResponse
 import dev.jacobandersen.bastion.url.UrlService
 import dev.jacobandersen.bastion.webmention.service.WebmentionService
+import dev.jacobandersen.bastion.websub.service.WebsubPublisher
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 
@@ -13,6 +14,7 @@ class DeleteService(
     val urlService: UrlService,
     val postService: PostService,
     private val webmentionService: WebmentionService,
+    private val websubPublisher: WebsubPublisher,
 ) {
     @PreAuthorize("hasAuthority('DELETE')")
     fun delete(payload: MicropubPayload): ApiResponse<*> = commonDelete(payload, true)
@@ -50,8 +52,15 @@ class DeleteService(
         }
 
         when {
-            delete && !wasDeleted && isPublic -> webmentionService.processDeletedWebmentions(postUrl)
-            !delete && wasDeleted && isPublic -> webmentionService.processWebmentions(postUrl, post.post)
+            delete && !wasDeleted && isPublic -> {
+                webmentionService.processDeletedWebmentions(postUrl)
+                websubPublisher.publish()
+            }
+
+            !delete && wasDeleted && isPublic -> {
+                webmentionService.processWebmentions(postUrl, post.post)
+                websubPublisher.publish()
+            }
         }
 
         return ApiResponse.Success.NoContent
