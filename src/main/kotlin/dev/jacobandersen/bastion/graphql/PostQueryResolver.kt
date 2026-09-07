@@ -2,6 +2,7 @@ package dev.jacobandersen.bastion.graphql
 
 import dev.jacobandersen.bastion.micropub.data.domain.Post
 import dev.jacobandersen.bastion.micropub.data.service.PostService
+import dev.jacobandersen.bastion.micropub.type.PostType
 import dev.jacobandersen.bastion.url.UrlService
 import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.graphql.data.method.annotation.QueryMapping
