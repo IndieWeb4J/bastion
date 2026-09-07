@@ -5,7 +5,13 @@ import dev.jacobandersen.bastion.micropub.type.req.MicropubPayload
 import dev.jacobandersen.bastion.micropub.type.resp.ApiResponse
 import dev.jacobandersen.bastion.micropub.service.post.CreateService
 import dev.jacobandersen.bastion.micropub.data.repository.PostRepository
+import dev.jacobandersen.bastion.webmention.data.domain.WebmentionInteraction
+import dev.jacobandersen.bastion.webmention.data.domain.ReceivedWebmentionState
+import dev.jacobandersen.bastion.webmention.data.entity.ReceivedWebmentionEntity
+import dev.jacobandersen.bastion.webmention.data.repository.ReceivedWebmentionRepository
+import java.time.Instant
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -37,6 +43,9 @@ class PostGraphQlIntegrationTest {
     lateinit var postRepository: PostRepository
 
     @Autowired
+    lateinit var receivedWebmentionRepository: ReceivedWebmentionRepository
+
+    @Autowired
     lateinit var graphQlTester: GraphQlTester
 
     private val mapper = JsonMapper.builderWithJackson2Defaults().build()
@@ -52,6 +61,7 @@ class PostGraphQlIntegrationTest {
 
     @BeforeEach
     fun seed() {
+        receivedWebmentionRepository.deleteAll()
         postRepository.deleteAll()
 
         publicNote = uniqueSlug("gql-public-note")
@@ -65,6 +75,11 @@ class PostGraphQlIntegrationTest {
         createPost(unlistedNote, visibility = "unlisted")
         createPost(privateNote, visibility = "private")
         createPost(draftNote, status = "draft")
+
+        val noteId = postRepository.findBySlug(publicNote)!!.id!!
+        saveWebmention(noteId, "https://reply.example/1", WebmentionInteraction.REPLY, ReceivedWebmentionState.VERIFIED, "Reply author")
+        saveWebmention(noteId, "https://rsvp.example/1", WebmentionInteraction.RSVP, ReceivedWebmentionState.VERIFIED, "RSVP author")
+        saveWebmention(noteId, "https://rejected.example/1", WebmentionInteraction.REPLY, ReceivedWebmentionState.REJECTED, "Rejected author")
     }
 
     @Test
@@ -122,6 +137,73 @@ class PostGraphQlIntegrationTest {
             .path("post.properties")
             .entity<Map<*, *>>(mapClass)
             .satisfies { props -> assertEquals(setOf("name"), props.keys) }
+    }
+
+    @Test
+    fun singlePostReturnsVerifiedWebmentionsOnly() {
+        val webmentions = graphQlTester.document(
+            """query { post(slug: "$publicNote") { webmentions { sourceUrl interaction authorName } } }"""
+        )
+            .execute()
+            .path("post.webmentions")
+            .entityList<Map<*, *>>(mapClass)
+            .get()
+
+        assertEquals(2, webmentions.size)
+        val interactions = webmentions.map { it["interaction"] }.toSet()
+        assertEquals(setOf("REPLY", "RSVP"), interactions)
+        assertTrue(webmentions.none { it["sourceUrl"] == "https://rejected.example/1" })
+    }
+
+    @Test
+    fun webmentionCountsAreReportedPerPost() {
+        val posts = graphQlTester.document(
+            """query { posts { slug webmentionCounts { total reply rsvp like } } }"""
+        )
+            .execute()
+            .path("posts")
+            .entityList<Map<*, *>>(mapClass)
+            .get()
+
+        val countsBySlug = posts.associate { it["slug"] to it["webmentionCounts"] as Map<*, *> }
+
+        val noteCounts = countsBySlug.getValue(publicNote)
+        assertEquals(2, noteCounts["total"])
+        assertEquals(1, noteCounts["reply"])
+        assertEquals(1, noteCounts["rsvp"])
+        assertEquals(0, noteCounts["like"])
+
+        val photoCounts = countsBySlug.getValue(publicPhoto)
+        assertEquals(0, photoCounts["total"])
+    }
+
+    private fun saveWebmention(
+        postId: java.util.UUID,
+        sourceUrl: String,
+        interaction: WebmentionInteraction,
+        state: ReceivedWebmentionState,
+        authorName: String,
+    ) {
+        val now = Instant.now()
+        receivedWebmentionRepository.save(
+            ReceivedWebmentionEntity(
+                postId = postId,
+                sourceUrl = sourceUrl,
+                targetUrl = "https://bastion.test/post",
+                state = state,
+                interaction = interaction,
+                authorName = authorName,
+                authorUrl = "https://$authorName.example".lowercase().replace(" ", ""),
+                authorPhoto = null,
+                contentText = "content of $authorName",
+                contentHtml = null,
+                rawMf2 = null,
+                lastError = null,
+                firstSeenAt = now,
+                verifiedAt = if (state == ReceivedWebmentionState.VERIFIED) now else null,
+                updatedAtUtc = now,
+            )
+        )
     }
 
     private fun createPost(slug: String, visibility: String = "public", status: String = "published", extra: String = "") {
