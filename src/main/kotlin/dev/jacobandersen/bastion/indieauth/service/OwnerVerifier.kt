@@ -38,7 +38,12 @@ class OwnerVerifier(
 
         val document =
             try {
-                Jsoup.connect(config.me).userAgent(USER_AGENT).followRedirects(true).timeout(READ_TIMEOUT_MS).get()
+                Jsoup
+                    .connect(config.me)
+                    .userAgent(USER_AGENT)
+                    .followRedirects(true)
+                    .timeout(READ_TIMEOUT_MS)
+                    .get()
             } catch (e: IOException) {
                 logger.warn(e) { "Failed to fetch ${config.me} for owner verification" }
                 return OwnerVerification.Unavailable

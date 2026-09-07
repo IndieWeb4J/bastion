@@ -162,7 +162,9 @@ class AuthorizationService(
                 )
             }
 
-            OwnerVerification.Verified -> Unit
+            OwnerVerification.Verified -> {
+                Unit
+            }
         }
 
         val authorizationCode = Tokens.random()
