@@ -42,7 +42,7 @@ class SalmentionResponseServiceTest {
 
     @Test
     fun `ingest stores a new nested response`() {
-        `when`(repository.findBySourceUrlAndResponseUrl(sourceUrl, responseUrl)).thenReturn(null)
+        `when`(repository.findByReceivedWebmentionIdAndResponseUrl(receivedWebmentionId, responseUrl)).thenReturn(null)
 
         val result = service.ingest(sourceUrl, receivedWebmentionId, responseUrl, analysis)
 
@@ -54,7 +54,7 @@ class SalmentionResponseServiceTest {
     }
 
     @Test
-    fun `ingest is a no-op for an already seen response`() {
+    fun `ingest is a no-op for an already seen response on the same received webmention`() {
         val existing =
             SalmentionResponseEntity(
                 receivedWebmentionId = receivedWebmentionId,
@@ -71,7 +71,7 @@ class SalmentionResponseServiceTest {
                 updatedAtUtc = Instant.now(),
             )
         existing.id = UUID.randomUUID()
-        `when`(repository.findBySourceUrlAndResponseUrl(sourceUrl, responseUrl)).thenReturn(existing)
+        `when`(repository.findByReceivedWebmentionIdAndResponseUrl(receivedWebmentionId, responseUrl)).thenReturn(existing)
 
         val result = service.ingest(sourceUrl, receivedWebmentionId, responseUrl, analysis)
 
@@ -80,7 +80,21 @@ class SalmentionResponseServiceTest {
     }
 
     @Test
-    fun `responseUrlsBySourceUrl returns the stored response urls`() {
+    fun `ingest stores the same response for a different received webmention`() {
+        val otherReceivedWebmentionId = UUID.randomUUID()
+        `when`(repository.findByReceivedWebmentionIdAndResponseUrl(receivedWebmentionId, responseUrl)).thenReturn(null)
+        `when`(repository.findByReceivedWebmentionIdAndResponseUrl(otherReceivedWebmentionId, responseUrl)).thenReturn(null)
+
+        service.ingest(sourceUrl, receivedWebmentionId, responseUrl, analysis)
+        val result = service.ingest(sourceUrl, otherReceivedWebmentionId, responseUrl, analysis)
+
+        verify(repository, times(2)).save(any())
+        assertEquals(responseUrl, result?.responseUrl)
+        assertEquals(otherReceivedWebmentionId, result?.receivedWebmentionId)
+    }
+
+    @Test
+    fun `responseUrlsByReceivedWebmention returns the stored response urls`() {
         val entity =
             SalmentionResponseEntity(
                 receivedWebmentionId = receivedWebmentionId,
@@ -96,9 +110,9 @@ class SalmentionResponseServiceTest {
                 firstSeenAt = Instant.now(),
                 updatedAtUtc = Instant.now(),
             )
-        `when`(repository.findBySourceUrl(sourceUrl)).thenReturn(listOf(entity))
+        `when`(repository.findByReceivedWebmentionId(receivedWebmentionId)).thenReturn(listOf(entity))
 
-        assertEquals(setOf(responseUrl), service.responseUrlsBySourceUrl(sourceUrl))
+        assertEquals(setOf(responseUrl), service.responseUrlsByReceivedWebmention(receivedWebmentionId))
     }
 
     @Test

@@ -25,8 +25,6 @@ bastion:
     salmention:
       enabled: ${BASTION_WEBMENTION_SALMENTION_ENABLED:true}
       max-nested-responses-per-source: ${BASTION_WEBMENTION_SALMENTION_MAX_NESTED_RESPONSES_PER_SOURCE:20}
-      recheck-cooldown-minutes: ${BASTION_WEBMENTION_SALMENTION_RECHECK_COOLDOWN_MINUTES:15}
-
 
 logging:
   level:

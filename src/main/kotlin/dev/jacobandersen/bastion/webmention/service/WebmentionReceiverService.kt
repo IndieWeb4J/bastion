@@ -64,9 +64,9 @@ class WebmentionReceiverService(
                     sourceUrl = sourceUrl,
                     receivedWebmentionId = received.id,
                     postId = postId,
-                    lastRecheckedAt = received.lastRecheckedAt,
                     parseResult = verification.parse,
                     isReReceipt = isReReceipt,
+                    receivedResponseUpdated = isReReceipt && !received.matchesAnalysis(analysis),
                 )
             }
         }

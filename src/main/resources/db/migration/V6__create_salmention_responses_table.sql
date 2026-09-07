@@ -14,8 +14,4 @@ create table salmention_responses (
     updated_at_utc timestamptz not null default now()
 );
 
-create unique index uq_salmention_source_response on salmention_responses (source_url, response_url);
-create index idx_salmention_received_webmention on salmention_responses (received_webmention_id);
-create index idx_salmention_source on salmention_responses (source_url);
-
-alter table received_webmentions add column last_rechecked_at timestamptz;
+create unique index uq_salmention_received_response on salmention_responses (received_webmention_id, response_url);

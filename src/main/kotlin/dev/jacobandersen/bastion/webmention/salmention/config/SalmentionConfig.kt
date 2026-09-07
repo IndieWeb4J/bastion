@@ -6,5 +6,4 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 data class SalmentionConfig(
     val enabled: Boolean = true,
     val maxNestedResponsesPerSource: Int = 20,
-    val recheckCooldownMinutes: Long = 15,
 )

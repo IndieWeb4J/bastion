@@ -11,8 +11,9 @@ import java.util.UUID
 
 /**
  * Persistence for Salmention nested responses. Idempotent ingestion is
- * guaranteed by the `(source_url, response_url)` unique index, mirrored here by
- * a lookup before insert so a repeated identical Salmention is a no-op.
+ * guaranteed by the `(received_webmention_id, response_url)` unique index,
+ * mirrored here by a lookup before insert so a repeated identical re-receipt
+ * is a no-op.
  */
 @Service
 class SalmentionResponseService(
@@ -25,7 +26,7 @@ class SalmentionResponseService(
         responseUrl: String,
         analysis: ReceivedWebmentionAnalysis,
     ): SalmentionResponse? {
-        if (repository.findBySourceUrlAndResponseUrl(sourceUrl, responseUrl) != null) return null
+        if (repository.findByReceivedWebmentionIdAndResponseUrl(receivedWebmentionId, responseUrl) != null) return null
 
         val now = Instant.now()
         val entity =
@@ -47,10 +48,10 @@ class SalmentionResponseService(
     }
 
     @Transactional(readOnly = true)
-    fun responseUrlsBySourceUrl(sourceUrl: String): Set<String> = repository.findBySourceUrl(sourceUrl).map { it.responseUrl }.toSet()
+    fun responseUrlsByReceivedWebmention(receivedWebmentionId: UUID): Set<String> = repository.findByReceivedWebmentionId(receivedWebmentionId).map { it.responseUrl }.toSet()
 
     @Transactional(readOnly = true)
-    fun bySourceUrl(sourceUrl: String): List<SalmentionResponse> = repository.findBySourceUrl(sourceUrl).map { it.toDomain() }
+    fun byReceivedWebmention(receivedWebmentionId: UUID): List<SalmentionResponse> = repository.findByReceivedWebmentionId(receivedWebmentionId).map { it.toDomain() }
 
     @Transactional
     fun retireByReceivedWebmention(receivedWebmentionId: UUID): Int = repository.deleteByReceivedWebmentionId(receivedWebmentionId)

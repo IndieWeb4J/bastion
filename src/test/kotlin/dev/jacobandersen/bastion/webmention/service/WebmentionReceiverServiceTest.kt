@@ -38,7 +38,10 @@ class WebmentionReceiverServiceTest {
         contentType: String = "text/html",
     ) = SourceFetch(status, sourceUrl, contentType, body)
 
-    private fun givenPending(interaction: WebmentionInteraction? = null) {
+    private fun givenPending(
+        interaction: WebmentionInteraction? = null,
+        contentText: String? = null,
+    ) {
         val now = Instant.now()
         `when`(notificationService.ensurePending(anyString(), anyString(), any()))
             .thenReturn(
@@ -52,17 +55,29 @@ class WebmentionReceiverServiceTest {
                     authorName = null,
                     authorUrl = null,
                     authorPhoto = null,
-                    contentText = null,
+                    contentText = contentText,
                     contentHtml = null,
                     rawMf2 = null,
                     lastError = null,
                     firstSeenAt = now,
                     verifiedAt = null,
-                    lastRecheckedAt = null,
                     updatedAtUtc = now,
                 ),
             )
     }
+
+    private fun replyParse(content: String): Mf2ParseResult =
+        Mf2ParseResult(
+            items =
+                listOf(
+                    Mf2Object(
+                        type = listOf("h-entry"),
+                        properties = mapOf("content" to listOf(Mf2Value.String(content))),
+                    ),
+                ),
+            rels = mapOf("in-reply-to" to listOf(targetUrl)),
+            relUrls = emptyMap(),
+        )
 
     @Test
     fun `verifies a linking html source and stores the analysis`() {
@@ -144,6 +159,60 @@ class WebmentionReceiverServiceTest {
                 org.junit.jupiter.api.Assertions
                     .assertNull(analysis.primary)
             },
+        )
+    }
+
+    @Test
+    fun `first acceptance reports no received-response update to the salmention receiver`() {
+        givenPending()
+        `when`(sourceFetcher.fetch(sourceUrl)).thenReturn(fetch())
+        `when`(parser.parse(anyString(), anyString())).thenReturn(replyParse("new"))
+
+        receiver.verify(sourceUrl, targetUrl, postId)
+
+        verify(salmentionReceiver).handleVerified(
+            org.mockito.kotlin.eq(sourceUrl),
+            org.mockito.kotlin.any(),
+            org.mockito.kotlin.eq(postId),
+            org.mockito.kotlin.any(),
+            org.mockito.kotlin.eq(false),
+            org.mockito.kotlin.eq(false),
+        )
+    }
+
+    @Test
+    fun `re-verification with changed content reports a received-response update`() {
+        givenPending(interaction = WebmentionInteraction.REPLY, contentText = "old")
+        `when`(sourceFetcher.fetch(sourceUrl)).thenReturn(fetch())
+        `when`(parser.parse(anyString(), anyString())).thenReturn(replyParse("new"))
+
+        receiver.verify(sourceUrl, targetUrl, postId)
+
+        verify(salmentionReceiver).handleVerified(
+            org.mockito.kotlin.eq(sourceUrl),
+            org.mockito.kotlin.any(),
+            org.mockito.kotlin.eq(postId),
+            org.mockito.kotlin.any(),
+            org.mockito.kotlin.eq(true),
+            org.mockito.kotlin.eq(true),
+        )
+    }
+
+    @Test
+    fun `re-verification with identical content reports no received-response update`() {
+        givenPending(interaction = WebmentionInteraction.REPLY, contentText = "same")
+        `when`(sourceFetcher.fetch(sourceUrl)).thenReturn(fetch())
+        `when`(parser.parse(anyString(), anyString())).thenReturn(replyParse("same"))
+
+        receiver.verify(sourceUrl, targetUrl, postId)
+
+        verify(salmentionReceiver).handleVerified(
+            org.mockito.kotlin.eq(sourceUrl),
+            org.mockito.kotlin.any(),
+            org.mockito.kotlin.eq(postId),
+            org.mockito.kotlin.any(),
+            org.mockito.kotlin.eq(true),
+            org.mockito.kotlin.eq(false),
         )
     }
 }

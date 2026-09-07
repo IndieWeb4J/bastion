@@ -10,7 +10,6 @@ import dev.jacobandersen.bastion.micropub.type.PostStatus
 import dev.jacobandersen.bastion.micropub.type.PostVisibility
 import dev.jacobandersen.bastion.url.UrlService
 import dev.jacobandersen.bastion.webmention.data.domain.ReceivedWebmentionAnalysis
-import dev.jacobandersen.bastion.webmention.data.service.ReceivedWebmentionService
 import dev.jacobandersen.bastion.webmention.salmention.config.SalmentionConfig
 import dev.jacobandersen.bastion.webmention.salmention.data.service.SalmentionResponseService
 import org.junit.jupiter.api.Test
@@ -21,17 +20,17 @@ import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 import org.mockito.kotlin.any
 import org.mockito.kotlin.eq
-import java.time.Instant
 import java.util.UUID
 
 class SalmentionReceiverTest {
     private val salmentionResponseService = mock(SalmentionResponseService::class.java)
     private val salmentionSender = mock(SalmentionSender::class.java)
-    private val receivedWebmentionService = mock(ReceivedWebmentionService::class.java)
     private val postService = mock(PostService::class.java)
     private val urlService = mock(UrlService::class.java)
 
     private val sourceUrl = "https://source.example/reply"
+    private val carolUrl = "https://carol.example/reply"
+    private val daveUrl = "https://dave.example/reply"
     private val postId = UUID.randomUUID()
     private val receivedWebmentionId = UUID.randomUUID()
     private val postUrl = "https://bastion.test/2026/09/07/post"
@@ -39,17 +38,14 @@ class SalmentionReceiverTest {
     private fun receiver(
         enabled: Boolean = true,
         maxNestedResponsesPerSource: Int = 20,
-        recheckCooldownMinutes: Long = 15,
     ) = SalmentionReceiver(
         salmentionResponseService,
         salmentionSender,
-        receivedWebmentionService,
         postService,
         urlService,
         SalmentionConfig(
             enabled = enabled,
             maxNestedResponsesPerSource = maxNestedResponsesPerSource,
-            recheckCooldownMinutes = recheckCooldownMinutes,
         ),
     )
 
@@ -96,9 +92,9 @@ class SalmentionReceiverTest {
             sourceUrl = sourceUrl,
             receivedWebmentionId = receivedWebmentionId,
             postId = postId,
-            lastRecheckedAt = null,
-            parseResult = parse(listOf("https://carol.example/reply")),
+            parseResult = parse(listOf(carolUrl)),
             isReReceipt = false,
+            receivedResponseUpdated = false,
         )
 
         verify(salmentionSender).resendToActiveTargets(postUrl)
@@ -108,38 +104,63 @@ class SalmentionReceiverTest {
     @Test
     fun `re-receipt ingests new nested responses and resends`() {
         stubPost()
-        `when`(salmentionResponseService.responseUrlsBySourceUrl(sourceUrl)).thenReturn(emptySet())
+        `when`(salmentionResponseService.responseUrlsByReceivedWebmention(receivedWebmentionId)).thenReturn(emptySet())
 
         receiver().handleVerified(
             sourceUrl = sourceUrl,
             receivedWebmentionId = receivedWebmentionId,
             postId = postId,
-            lastRecheckedAt = null,
-            parseResult = parse(listOf("https://carol.example/reply")),
+            parseResult = parse(listOf(carolUrl)),
             isReReceipt = true,
+            receivedResponseUpdated = false,
         )
 
         verify(
             salmentionResponseService,
             times(1),
-        ).ingest(eq(sourceUrl), eq(receivedWebmentionId), eq("https://carol.example/reply"), any())
-        verify(receivedWebmentionService).markRechecked(eq(sourceUrl), eq(postId), any())
+        ).ingest(eq(sourceUrl), eq(receivedWebmentionId), eq(carolUrl), any())
         verify(salmentionSender).resendToActiveTargets(postUrl)
     }
 
     @Test
-    fun `re-receipt with no new responses is a no-op`() {
+    fun `a re-receipt right after another still ingests newly appeared nested responses`() {
         stubPost()
-        `when`(salmentionResponseService.responseUrlsBySourceUrl(sourceUrl))
-            .thenReturn(setOf("https://carol.example/reply"))
+        `when`(salmentionResponseService.responseUrlsByReceivedWebmention(receivedWebmentionId)).thenReturn(emptySet())
 
         receiver().handleVerified(
             sourceUrl = sourceUrl,
             receivedWebmentionId = receivedWebmentionId,
             postId = postId,
-            lastRecheckedAt = null,
-            parseResult = parse(listOf("https://carol.example/reply")),
+            parseResult = parse(emptyList()),
             isReReceipt = true,
+            receivedResponseUpdated = false,
+        )
+        receiver().handleVerified(
+            sourceUrl = sourceUrl,
+            receivedWebmentionId = receivedWebmentionId,
+            postId = postId,
+            parseResult = parse(listOf(carolUrl)),
+            isReReceipt = true,
+            receivedResponseUpdated = false,
+        )
+
+        verify(salmentionResponseService, times(1)).ingest(eq(sourceUrl), eq(receivedWebmentionId), eq(carolUrl), any())
+        verify(salmentionSender).resendToActiveTargets(postUrl)
+    }
+
+    @Test
+    fun `re-receipt with no new responses and no content update is a no-op`() {
+        stubPost()
+        `when`(salmentionResponseService.responseUrlsByReceivedWebmention(receivedWebmentionId))
+            .thenReturn(setOf(carolUrl))
+
+        receiver().handleVerified(
+            sourceUrl = sourceUrl,
+            receivedWebmentionId = receivedWebmentionId,
+            postId = postId,
+            parseResult = parse(listOf(carolUrl)),
+            isReReceipt = true,
+            receivedResponseUpdated = false,
         )
 
         verify(salmentionResponseService, never()).ingest(any(), any(), any(), any())
@@ -147,35 +168,36 @@ class SalmentionReceiverTest {
     }
 
     @Test
-    fun `re-receipt within the cooldown window is skipped`() {
+    fun `re-receipt that only updates the received response resends`() {
         stubPost()
+        `when`(salmentionResponseService.responseUrlsByReceivedWebmention(receivedWebmentionId))
+            .thenReturn(setOf(carolUrl))
 
         receiver().handleVerified(
             sourceUrl = sourceUrl,
             receivedWebmentionId = receivedWebmentionId,
             postId = postId,
-            lastRecheckedAt = Instant.now(),
-            parseResult = parse(listOf("https://carol.example/reply")),
+            parseResult = parse(listOf(carolUrl)),
             isReReceipt = true,
+            receivedResponseUpdated = true,
         )
 
         verify(salmentionResponseService, never()).ingest(any(), any(), any(), any())
-        verify(receivedWebmentionService, never()).markRechecked(any(), any(), any())
-        verify(salmentionSender, never()).resendToActiveTargets(postUrl)
+        verify(salmentionSender).resendToActiveTargets(postUrl)
     }
 
     @Test
     fun `re-receipt respects the per-source nested response limit`() {
         stubPost()
-        `when`(salmentionResponseService.responseUrlsBySourceUrl(sourceUrl)).thenReturn(emptySet())
+        `when`(salmentionResponseService.responseUrlsByReceivedWebmention(receivedWebmentionId)).thenReturn(emptySet())
 
         receiver(maxNestedResponsesPerSource = 1).handleVerified(
             sourceUrl = sourceUrl,
             receivedWebmentionId = receivedWebmentionId,
             postId = postId,
-            lastRecheckedAt = null,
-            parseResult = parse(listOf("https://carol.example/reply", "https://dave.example/reply")),
+            parseResult = parse(listOf(carolUrl, daveUrl)),
             isReReceipt = true,
+            receivedResponseUpdated = false,
         )
 
         verify(salmentionResponseService, times(1)).ingest(any(), any(), any(), any())
@@ -194,9 +216,9 @@ class SalmentionReceiverTest {
             sourceUrl = sourceUrl,
             receivedWebmentionId = receivedWebmentionId,
             postId = postId,
-            lastRecheckedAt = null,
             parseResult = null,
             isReReceipt = false,
+            receivedResponseUpdated = false,
         )
         receiver(enabled = false).handleGone(sourceUrl, receivedWebmentionId)
 
@@ -207,13 +229,13 @@ class SalmentionReceiverTest {
 
     @Test
     fun `diffAndIngest analyzes and ingests each new response`() {
-        `when`(salmentionResponseService.responseUrlsBySourceUrl(sourceUrl)).thenReturn(emptySet())
+        `when`(salmentionResponseService.responseUrlsByReceivedWebmention(receivedWebmentionId)).thenReturn(emptySet())
 
         val ingested =
             receiver().diffAndIngest(
                 sourceUrl = sourceUrl,
                 receivedWebmentionId = receivedWebmentionId,
-                parseResult = parse(listOf("https://carol.example/reply")),
+                parseResult = parse(listOf(carolUrl)),
             )
 
         org.junit.jupiter.api.Assertions
@@ -222,7 +244,7 @@ class SalmentionReceiverTest {
             .ingest(
                 eq(sourceUrl),
                 eq(receivedWebmentionId),
-                eq("https://carol.example/reply"),
+                eq(carolUrl),
                 org.mockito.kotlin.check<ReceivedWebmentionAnalysis> {
                     it.interaction ==
                         dev.jacobandersen.bastion.webmention.data.domain.WebmentionInteraction.MENTION

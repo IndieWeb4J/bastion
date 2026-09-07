@@ -248,7 +248,6 @@ class PostGraphQlIntegrationTest {
                 lastError = null,
                 firstSeenAt = now,
                 verifiedAt = if (state == ReceivedWebmentionState.VERIFIED) now else null,
-                lastRecheckedAt = null,
                 updatedAtUtc = now,
             ),
         )

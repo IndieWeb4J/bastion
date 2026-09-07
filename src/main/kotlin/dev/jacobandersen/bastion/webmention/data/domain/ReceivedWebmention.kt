@@ -21,9 +21,20 @@ data class ReceivedWebmention(
     val lastError: String?,
     val firstSeenAt: Instant,
     val verifiedAt: Instant?,
-    val lastRecheckedAt: Instant?,
     val updatedAtUtc: Instant,
 ) {
+    /**
+     * Whether this record already stores [analysis]'s content and interaction,
+     * i.e. re-verifying the source would not change what is displayed.
+     */
+    fun matchesAnalysis(analysis: ReceivedWebmentionAnalysis): Boolean =
+        interaction == analysis.interaction &&
+            authorName == analysis.authorName &&
+            authorUrl == analysis.authorUrl &&
+            authorPhoto == analysis.authorPhoto &&
+            contentText == analysis.contentText &&
+            contentHtml == analysis.contentHtml
+
     fun toEntity(): ReceivedWebmentionEntity =
         ReceivedWebmentionEntity(
             id = id,
@@ -41,7 +52,6 @@ data class ReceivedWebmention(
             lastError = lastError,
             firstSeenAt = firstSeenAt,
             verifiedAt = verifiedAt,
-            lastRecheckedAt = lastRecheckedAt,
             updatedAtUtc = updatedAtUtc,
         )
 }

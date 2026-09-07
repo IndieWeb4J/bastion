@@ -49,7 +49,6 @@ class ReceivedWebmentionService(
                     lastError = null,
                     firstSeenAt = now,
                     verifiedAt = null,
-                    lastRecheckedAt = null,
                     updatedAtUtc = now,
                 )
             return repository.save(created).toDomain()
@@ -108,19 +107,6 @@ class ReceivedWebmentionService(
         postId: UUID,
         reason: String,
     ): ReceivedWebmention = setTerminal(sourceUrl, postId, ERROR, reason)
-
-    @Transactional
-    fun markRechecked(
-        sourceUrl: String,
-        postId: UUID,
-        at: Instant,
-    ): ReceivedWebmention {
-        val entity =
-            repository.findBySourceUrlAndPostId(sourceUrl, postId)
-                ?: throw IllegalStateException("No received webmention for $sourceUrl on post $postId")
-        entity.lastRecheckedAt = at
-        return repository.save(entity).toDomain()
-    }
 
     @Transactional(readOnly = true)
     fun notification(

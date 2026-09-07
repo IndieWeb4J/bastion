@@ -56,8 +56,6 @@ class ReceivedWebmentionEntity(
     var firstSeenAt: Instant,
     @Column(nullable = true)
     var verifiedAt: Instant?,
-    @Column(nullable = true)
-    var lastRecheckedAt: Instant?,
     @Column(nullable = false)
     var updatedAtUtc: Instant,
 ) {
@@ -78,7 +76,6 @@ class ReceivedWebmentionEntity(
             lastError = lastError,
             firstSeenAt = firstSeenAt,
             verifiedAt = verifiedAt,
-            lastRecheckedAt = lastRecheckedAt,
             updatedAtUtc = updatedAtUtc,
         )
 }

@@ -30,7 +30,6 @@ import java.util.UUID
     properties = [
         "jobrunr.dashboard.enabled=false",
         "jobrunr.background-job-server.enabled=false",
-        "bastion.webmention.salmention.recheck-cooldown-minutes=0",
     ],
 )
 class SalmentionIntegrationTest {
@@ -83,7 +82,10 @@ class SalmentionIntegrationTest {
         postUrl = urlService.generatePostUrl(post)
     }
 
-    private fun sourceHtml(nested: List<String> = emptyList()): String {
+    private fun sourceHtml(
+        nested: List<String> = emptyList(),
+        content: String = "Bob's reply",
+    ): String {
         val nestedHtml =
             nested.joinToString("\n") { url ->
                 """<div class="h-entry"><a class="u-url" href="$url">reply</a></div>"""
@@ -91,13 +93,16 @@ class SalmentionIntegrationTest {
         return """
             <article class="h-entry">
               <a href="$postUrl">the post</a>
-              <div class="e-content">Bob's reply</div>
+              <div class="e-content">$content</div>
               $nestedHtml
             </article>
             """.trimIndent()
     }
 
     private fun fetch(body: String): SourceFetch = SourceFetch(200, sourceUrl, "text/html", body)
+
+    private fun receivedWebmentionId(): UUID =
+        requireNotNull(requireNotNull(receivedWebmentionRepository.findBySourceUrlAndPostId(sourceUrl, postId)).id)
 
     @Test
     fun `first acceptance resends but does not ingest nested responses`() {
@@ -106,7 +111,7 @@ class SalmentionIntegrationTest {
         receiverService.verify(sourceUrl, postUrl, postId)
 
         verify(salmentionSender, times(1)).resendToActiveTargets(postUrl)
-        assertEquals(0, salmentionResponseRepository.findBySourceUrl(sourceUrl).size)
+        assertEquals(0, salmentionResponseRepository.findByReceivedWebmentionId(receivedWebmentionId()).size)
     }
 
     @Test
@@ -118,7 +123,23 @@ class SalmentionIntegrationTest {
         receiverService.verify(sourceUrl, postUrl, postId)
         receiverService.verify(sourceUrl, postUrl, postId)
 
-        val responses = salmentionResponseRepository.findBySourceUrl(sourceUrl)
+        val responses = salmentionResponseRepository.findByReceivedWebmentionId(receivedWebmentionId())
+        assertEquals(listOf(carolUrl), responses.map { it.responseUrl })
+        verify(salmentionSender, times(2)).resendToActiveTargets(postUrl)
+    }
+
+    @Test
+    fun `consecutive re-receipts ingest nested responses that appear only on a later ping`() {
+        `when`(sourceFetcher.fetch(sourceUrl))
+            .thenReturn(fetch(sourceHtml()))
+            .thenReturn(fetch(sourceHtml()))
+            .thenReturn(fetch(sourceHtml(listOf(carolUrl))))
+
+        receiverService.verify(sourceUrl, postUrl, postId)
+        receiverService.verify(sourceUrl, postUrl, postId)
+        receiverService.verify(sourceUrl, postUrl, postId)
+
+        val responses = salmentionResponseRepository.findByReceivedWebmentionId(receivedWebmentionId())
         assertEquals(listOf(carolUrl), responses.map { it.responseUrl })
         verify(salmentionSender, times(2)).resendToActiveTargets(postUrl)
     }
@@ -128,12 +149,13 @@ class SalmentionIntegrationTest {
         `when`(sourceFetcher.fetch(sourceUrl))
             .thenReturn(fetch(sourceHtml(listOf(carolUrl))))
             .thenReturn(fetch(sourceHtml(listOf(carolUrl))))
+            .thenReturn(fetch(sourceHtml(listOf(carolUrl))))
 
         receiverService.verify(sourceUrl, postUrl, postId)
         receiverService.verify(sourceUrl, postUrl, postId)
         receiverService.verify(sourceUrl, postUrl, postId)
 
-        val responses = salmentionResponseRepository.findBySourceUrl(sourceUrl)
+        val responses = salmentionResponseRepository.findByReceivedWebmentionId(receivedWebmentionId())
         assertEquals(listOf(carolUrl), responses.map { it.responseUrl })
         verify(salmentionSender, times(2)).resendToActiveTargets(postUrl)
     }
@@ -149,7 +171,20 @@ class SalmentionIntegrationTest {
         receiverService.verify(sourceUrl, postUrl, postId)
         receiverService.verify(sourceUrl, postUrl, postId)
 
-        val responses = salmentionResponseRepository.findBySourceUrl(sourceUrl)
+        val responses = salmentionResponseRepository.findByReceivedWebmentionId(receivedWebmentionId())
         assertEquals(setOf(carolUrl, daveUrl), responses.map { it.responseUrl }.toSet())
+    }
+
+    @Test
+    fun `re-receipt that only updates the received response content resends`() {
+        `when`(sourceFetcher.fetch(sourceUrl))
+            .thenReturn(fetch(sourceHtml()))
+            .thenReturn(fetch(sourceHtml(content = "Bob's edited reply")))
+
+        receiverService.verify(sourceUrl, postUrl, postId)
+        receiverService.verify(sourceUrl, postUrl, postId)
+
+        verify(salmentionSender, times(2)).resendToActiveTargets(postUrl)
+        assertEquals(0, salmentionResponseRepository.findByReceivedWebmentionId(receivedWebmentionId()).size)
     }
 }

@@ -54,7 +54,6 @@ class ReceivedWebmentionServiceTest {
         lastError = null,
         firstSeenAt = Instant.now(),
         verifiedAt = null,
-        lastRecheckedAt = null,
         updatedAtUtc = Instant.now(),
     )
 

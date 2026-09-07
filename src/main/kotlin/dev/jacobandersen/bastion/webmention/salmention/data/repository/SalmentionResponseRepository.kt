@@ -7,12 +7,10 @@ import java.util.UUID
 
 @Repository
 interface SalmentionResponseRepository : JpaRepository<SalmentionResponseEntity, UUID> {
-    fun findBySourceUrlAndResponseUrl(
-        sourceUrl: String,
+    fun findByReceivedWebmentionIdAndResponseUrl(
+        receivedWebmentionId: UUID,
         responseUrl: String,
     ): SalmentionResponseEntity?
-
-    fun findBySourceUrl(sourceUrl: String): List<SalmentionResponseEntity>
 
     fun findByReceivedWebmentionId(receivedWebmentionId: UUID): List<SalmentionResponseEntity>
 

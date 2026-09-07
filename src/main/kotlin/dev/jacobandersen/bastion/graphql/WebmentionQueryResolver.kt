@@ -47,5 +47,5 @@ class WebmentionQueryResolver(
 
     @SchemaMapping(typeName = "Webmention", field = "nestedResponses")
     fun nestedResponses(webmention: ReceivedWebmention): List<SalmentionResponse> =
-        salmentionResponseService.bySourceUrl(webmention.sourceUrl).sortedBy { it.firstSeenAt }
+        salmentionResponseService.byReceivedWebmention(webmention.id).sortedBy { it.firstSeenAt }
 }
