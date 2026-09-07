@@ -26,6 +26,16 @@ class IndieAuthRowPurgeService(
     private val authorizationCodeRepository: AuthorizationCodeRepository,
     private val accessTokenRepository: AccessTokenRepository,
 ) {
+    /**
+     * No-argument entry point for the recurring JobRunr job. JobRunr stores the
+     * job lambda's parameters at registration time and replays them on every
+     * fire, so [Instant.now] is computed here inside the invoked method rather
+     * than being passed through the scheduled lambda, keeping the purge cutoff
+     * fresh on every run.
+     */
+    @Transactional
+    fun purge(): Int = purge(Instant.now())
+
     @Transactional
     fun purge(now: Instant): Int {
         val authRequests = authRequestRepository.deleteExpired(now)

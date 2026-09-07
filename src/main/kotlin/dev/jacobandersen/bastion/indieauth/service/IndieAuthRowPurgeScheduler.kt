@@ -4,7 +4,6 @@ import dev.jacobandersen.bastion.indieauth.config.IndieAuthConfig
 import jakarta.annotation.PostConstruct
 import org.jobrunr.scheduling.JobScheduler
 import org.springframework.stereotype.Component
-import java.time.Instant
 
 /**
  * Periodically runs [IndieAuthRowPurgeService.purge] so the IndieAuth
@@ -20,7 +19,7 @@ class IndieAuthRowPurgeScheduler(
     @PostConstruct
     fun schedulePurge() {
         jobScheduler.scheduleRecurrently(RECURRING_JOB_ID, config.purgeInterval) {
-            rowPurgeService.purge(Instant.now())
+            rowPurgeService.purge()
         }
     }
 
