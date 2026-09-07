@@ -4,6 +4,7 @@ import dev.jacobandersen.bastion.TestcontainersConfiguration
 import dev.jacobandersen.bastion.micropub.type.req.MicropubPayload
 import dev.jacobandersen.bastion.micropub.type.resp.ApiResponse
 import dev.jacobandersen.bastion.micropub.service.post.CreateService
+import dev.jacobandersen.bastion.micropub.data.repository.PostRepository
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -33,6 +34,9 @@ class PostGraphQlIntegrationTest {
     lateinit var createService: CreateService
 
     @Autowired
+    lateinit var postRepository: PostRepository
+
+    @Autowired
     lateinit var graphQlTester: GraphQlTester
 
     private val mapper = JsonMapper.builderWithJackson2Defaults().build()
@@ -48,6 +52,8 @@ class PostGraphQlIntegrationTest {
 
     @BeforeEach
     fun seed() {
+        postRepository.deleteAll()
+
         publicNote = uniqueSlug("gql-public-note")
         publicPhoto = uniqueSlug("gql-public-photo")
         unlistedNote = uniqueSlug("gql-unlisted")
