@@ -13,8 +13,13 @@ bastion:
       region: ${BASTION_MEDIA_S3_REGION}
       bucket: ${BASTION_MEDIA_S3_BUCKET}
   indieauth:
-    validate-token-url: ${BASTION_INDIEAUTH_VALIDATE_TOKEN_URL}
     me: ${BASTION_INDIEAUTH_ME}
+    herald:
+      base-url: ${BASTION_INDIEAUTH_HERALD_BASE_URL:}
+      authorize-path: ${BASTION_INDIEAUTH_HERALD_AUTHORIZE_PATH:/auth}
+    github:
+      client-id: ${BASTION_INDIEAUTH_GITHUB_CLIENT_ID:}
+      client-secret: ${BASTION_INDIEAUTH_GITHUB_CLIENT_SECRET:}
   webmention:
     retry-interval-minutes: ${BASTION_WEBMENTION_RETRY_INTERVAL_MINUTES:30}
     max-attempts: ${BASTION_WEBMENTION_MAX_ATTEMPTS:5}

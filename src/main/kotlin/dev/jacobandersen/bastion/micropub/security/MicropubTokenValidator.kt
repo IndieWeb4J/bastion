@@ -1,63 +1,36 @@
 package dev.jacobandersen.bastion.micropub.security
 
-import dev.jacobandersen.bastion.micropub.data.service.TokenService
-import dev.jacobandersen.bastion.micropub.security.auth.IndieAuthService
+import dev.jacobandersen.bastion.indieauth.service.AccessTokenService
 import dev.jacobandersen.bastion.url.UrlNormalizer
-import dev.jacobandersen.bastion.util.StringUtil.excerpt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
-import org.springframework.web.client.RestClientResponseException
 
 private val logger = KotlinLogging.logger {}
 
+/**
+ * Validates a Micropub bearer token against the access tokens Bastion itself
+ * issued (via the IndieAuth token endpoint). Bastion is now its own IndieAuth
+ * provider, so validation is a local, hash-based lookup of issued tokens rather
+ * than a call to an external token endpoint.
+ */
 @Component
 class MicropubTokenValidator(
-    private val tokenService: TokenService,
-    private val service: IndieAuthService,
+    private val accessTokenService: AccessTokenService,
     @Value("\${bastion.indieauth.me}") private val expectedMe: String,
 ) {
     fun validateToken(rawToken: String): MicropubAuthentication {
-        val existingToken = tokenService.checkToken(rawToken)
-        if (existingToken != null) {
-            if (sameIdentity(expectedMe, existingToken.decoded.me)) {
-                logger.info { "Previously seen token is still valid, using it" }
-                return MicropubAuthentication(
-                    rawToken,
-                    existingToken.decoded,
-                    true,
-                )
-            }
-            logger.warn { "Cached token belongs to a different identity, evicting and re-validating" }
-            tokenService.forgetToken(rawToken)
-        }
+        val issued =
+            accessTokenService.resolve(rawToken)
+                ?: throw IllegalArgumentException("Access token is not valid")
 
-        logger.info { "New token, validate it..." }
-
-        val token =
-            try {
-                logger.info { "Micropub token validator: try modern validation" }
-                service.modernValidation(rawToken)
-            } catch (e: RestClientResponseException) {
-                logger.info { "Micropub token validator: modern validation failed (HTTP ${e.statusCode.value()})${describeBody(e)}" }
-                try {
-                    service.legacyValidation("Bearer $rawToken")
-                } catch (e2: RestClientResponseException) {
-                    logger.warn { "Micropub token validator: legacy validation failed (HTTP ${e2.statusCode.value()})${describeBody(e2)}" }
-                    throw e2
-                }
-            } catch (_: Exception) {
-                logger.info { "Micropub token validator: modern validation failed, try legacy validation" }
-                service.legacyValidation("Bearer $rawToken")
-            }
-
-        if (!sameIdentity(expectedMe, token.me)) {
-            logger.warn { "Token is not for the expected identity (expected $expectedMe, got ${token.me})" }
+        if (!sameIdentity(expectedMe, issued.me)) {
+            logger.warn { "Token belongs to a different identity (expected $expectedMe, got ${issued.me})" }
             throw IllegalArgumentException("Token is not for the expected identity")
         }
 
-        logger.info { "Micropub token validated: $token" }
-        tokenService.rememberToken(rawToken, token)
+        val scopes = issued.scope.mapNotNull { MicropubTokenScope.fromStringOrNull(it) }
+        val token = MicropubToken(issued.me, issued.clientId, scopes)
 
         return MicropubAuthentication(rawToken, token, true)
     }
@@ -74,14 +47,5 @@ class MicropubTokenValidator(
         val normalizedExpected = UrlNormalizer.identity(expected) ?: return false
         val normalizedActual = UrlNormalizer.identity(actual) ?: return false
         return normalizedExpected == normalizedActual
-    }
-
-    private fun describeBody(e: RestClientResponseException): String {
-        val body = e.getResponseBodyAsString()?.takeIf { it.isNotBlank() }?.excerpt(MAX_ERROR_BODY_LENGTH)
-        return if (body != null) ": $body" else ""
-    }
-
-    companion object {
-        const val MAX_ERROR_BODY_LENGTH = 2000
     }
 }
