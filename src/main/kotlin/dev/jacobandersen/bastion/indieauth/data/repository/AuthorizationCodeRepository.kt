@@ -27,4 +27,19 @@ interface AuthorizationCodeRepository : JpaRepository<AuthorizationCodeEntity, U
         @Param("codeHash") codeHash: String,
         @Param("now") now: Instant,
     ): Int
+
+    /**
+     * Deletes authorization codes that are dead - claimed before [cutoff], or
+     * unclaimed but expired before [cutoff] - returning the number of rows
+     * removed. The [cutoff] retention keeps recently used codes around for a
+     * short window while bounding the table's growth.
+     */
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query(
+        "delete from AuthorizationCodeEntity c where " +
+            "(c.usedAt is not null and c.usedAt < :cutoff) or (c.usedAt is null and c.expiresAt < :cutoff)",
+    )
+    fun deleteDead(
+        @Param("cutoff") cutoff: Instant,
+    ): Int
 }
