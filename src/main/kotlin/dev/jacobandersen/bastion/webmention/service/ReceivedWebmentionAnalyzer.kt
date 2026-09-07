@@ -10,17 +10,19 @@ import dev.jacobandersen.bastion.webmention.data.domain.WebmentionInteraction.LI
 import dev.jacobandersen.bastion.webmention.data.domain.WebmentionInteraction.MENTION
 import dev.jacobandersen.bastion.webmention.data.domain.WebmentionInteraction.REPLY
 import dev.jacobandersen.bastion.webmention.data.domain.WebmentionInteraction.REPOST
+import dev.jacobandersen.bastion.webmention.data.domain.WebmentionInteraction.RSVP
 
 /**
  * Analyzes a parsed source document for webmention purposes: picks the primary
  * object (the first h-entry in document order), classifies the interaction from
- * its `in-reply-to`/`like-of`/`repost-of`/`bookmark-of` properties (falling
- * back to document-level `rel` attributes when the object declares none) and
- * extracts author/content data.
+ * its `rsvp`/`in-reply-to`/`like-of`/`repost-of`/`bookmark-of` properties
+ * (falling back to document-level `rel` attributes when the object declares
+ * none) and extracts author/content data.
  */
 object ReceivedWebmentionAnalyzer {
 
     private val interactionProperties: List<Pair<String, WebmentionInteraction>> = listOf(
+        "rsvp" to RSVP,
         "in-reply-to" to REPLY,
         "like-of" to LIKE,
         "repost-of" to REPOST,

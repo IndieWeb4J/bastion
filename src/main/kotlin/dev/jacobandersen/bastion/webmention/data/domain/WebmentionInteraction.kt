@@ -9,5 +9,6 @@ enum class WebmentionInteraction {
     LIKE,
     REPOST,
     BOOKMARK,
+    RSVP,
     MENTION,
 }

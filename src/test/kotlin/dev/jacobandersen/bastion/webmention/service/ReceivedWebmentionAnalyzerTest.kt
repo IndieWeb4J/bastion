@@ -47,6 +47,20 @@ class ReceivedWebmentionAnalyzerTest {
     }
 
     @Test
+    fun `classifies an rsvp even when it also replies`() {
+        val analysis = analyze(
+            """
+            <div class="h-entry">
+              <a class="u-in-reply-to" href="https://events.example/2026/01/01/party">the party</a>
+              <span class="p-rsvp">yes</span>
+            </div>
+            """.trimIndent()
+        )
+
+        assertEquals(WebmentionInteraction.RSVP, analysis.interaction)
+    }
+
+    @Test
     fun `classifies repost and bookmark properties`() {
         val repost = analyze(
             """
