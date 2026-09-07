@@ -152,17 +152,34 @@ class WebmentionControllerTest {
     }
 
 
+    @Test
+    fun `rejects a target whose post is deleted`() {
+        `when`(postService.findBySlug("hello")).thenReturn(
+            post(slug = "hello", status = PostStatus.PUBLISHED, visibility = PostVisibility.PUBLIC, deleted = true)
+        )
+
+        mockMvc.perform(
+            post("/webmention")
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .param("source", sourceUrl)
+                .param("target", targetUrl)
+        )
+            .andExpect(status().isBadRequest)
+
+    }
+
+
     private fun publicPost(slug: String): Post {
         return post(slug, PostStatus.PUBLISHED, PostVisibility.PUBLIC)
     }
 
-    private fun post(slug: String, status: PostStatus, visibility: PostVisibility): Post {
+    private fun post(slug: String, status: PostStatus, visibility: PostVisibility, deleted: Boolean = false): Post {
         return Post(
             id = postId,
             slug = slug,
             status = status,
             visibility = visibility,
-            deleted = false,
+            deleted = deleted,
             type = "h-entry",
             subtype = null,
             post = Mf2Object(
