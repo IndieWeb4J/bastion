@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.3](https://github.com/jacobsandersen/bastion/compare/v1.2.2...v1.2.3) (2026-09-07)
+
+
+### Bug Fixes
+
+* skip webmention rel elements without an href during discovery ([237582b](https://github.com/jacobsandersen/bastion/commit/237582b0f1e9c97f50d798c8ef8dcdf56bb84609))
+
 ## [1.2.2](https://github.com/jacobsandersen/bastion/compare/v1.2.1...v1.2.2) (2026-09-07)
 
 
