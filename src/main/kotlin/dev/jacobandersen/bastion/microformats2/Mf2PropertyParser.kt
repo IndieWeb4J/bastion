@@ -97,7 +97,9 @@ internal object Mf2PropertyParser {
 
                 is Element -> {
                     when (node.tagName()) {
-                        TAG_SCRIPT, TAG_STYLE, TAG_TEMPLATE -> Unit
+                        TAG_SCRIPT, TAG_STYLE, TAG_TEMPLATE -> {
+                            Unit
+                        }
 
                         TAG_IMG -> {
                             val alt = node.attr("alt")

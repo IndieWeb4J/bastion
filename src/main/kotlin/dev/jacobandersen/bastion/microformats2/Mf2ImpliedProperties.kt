@@ -17,7 +17,7 @@ internal object Mf2ImpliedProperties {
         el: Element,
         explicitName: Boolean,
         otherPOrE: Boolean,
-        hasNested: Boolean
+        hasNested: Boolean,
     ): String? {
         if (explicitName || otherPOrE || hasNested) return null
 
@@ -169,9 +169,7 @@ internal object Mf2ImpliedProperties {
     private fun hasRootClass(el: Element): Boolean = el.classNames().any { H_ROOT.matches(it) }
 
     /** Text for an implied name: like p- text but images are replaced only by alt. */
-    private fun nameText(
-        el: Element,
-    ): String {
+    private fun nameText(el: Element): String {
         val sb = StringBuilder()
         collectNameText(el, sb)
         return sb.toString().replace(Regex("\\s+"), " ").trim()
@@ -189,7 +187,9 @@ internal object Mf2ImpliedProperties {
 
                 is Element -> {
                     when (node.tagName()) {
-                        in TEXT_TAGS -> Unit
+                        in TEXT_TAGS -> {
+                            Unit
+                        }
 
                         "img" -> {
                             if (node.hasAttr("alt") && node.attr("alt").isNotBlank()) {
