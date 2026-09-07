@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.4](https://github.com/jacobsandersen/bastion/compare/v1.2.3...v1.2.4) (2026-09-07)
+
+
+### Bug Fixes
+
+* cache discovery only when advertised, rediscover on updates, and add cleanup job ([60be18e](https://github.com/jacobsandersen/bastion/commit/60be18e5b98bacfeda24f3528adaa9d2f6bc3a17))
+
 ## [1.2.3](https://github.com/jacobsandersen/bastion/compare/v1.2.2...v1.2.3) (2026-09-07)
 
 
