@@ -6,8 +6,6 @@ import dev.jacobandersen.bastion.webmention.util.HttpUtil
 import dev.jacobandersen.bastion.webmention.util.HttpUtil.isTransientStatus
 import dev.jacobandersen.bastion.webmention.util.WebmentionUtil
 import io.github.oshai.kotlinlogging.KotlinLogging
-import java.net.http.HttpClient
-import java.time.Duration
 import org.jsoup.Jsoup
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
@@ -18,14 +16,22 @@ import org.springframework.util.LinkedMultiValueMap
 import org.springframework.web.client.RestClient
 import org.springframework.web.client.RestClientException
 import org.springframework.web.client.RestClientResponseException
+import java.net.http.HttpClient
+import java.time.Duration
 import kotlin.collections.firstOrNull
 
 private val logger = KotlinLogging.logger {}
 
 sealed interface SendWebmentionResult {
-    data class Success(val statusCode: Int) : SendWebmentionResult
+    data class Success(
+        val statusCode: Int,
+    ) : SendWebmentionResult
 
-    data class Failure(val statusCode: Int?, val message: String, val retryable: Boolean) : SendWebmentionResult
+    data class Failure(
+        val statusCode: Int?,
+        val message: String,
+        val retryable: Boolean,
+    ) : SendWebmentionResult
 }
 
 data class EndpointDiscovery(
@@ -38,35 +44,45 @@ data class EndpointDiscovery(
 class WebmentionHttpClient(
     private val config: WebmentionConfig,
 ) {
-    private val client: RestClient = RestClient.builder()
-        .requestFactory(requestFactory(config))
-        .requestInterceptor(WebmentionHttpLoggingInterceptor())
-        .build()
+    private val client: RestClient =
+        RestClient
+            .builder()
+            .requestFactory(requestFactory(config))
+            .requestInterceptor(WebmentionHttpLoggingInterceptor())
+            .build()
 
     private fun requestFactory(config: WebmentionConfig): ClientHttpRequestFactory {
-        val httpClient = HttpClient.newBuilder()
-            .connectTimeout(Duration.ofSeconds(config.connectTimeoutSeconds))
-            .build()
+        val httpClient =
+            HttpClient
+                .newBuilder()
+                .connectTimeout(Duration.ofSeconds(config.connectTimeoutSeconds))
+                .build()
 
         return JdkClientHttpRequestFactory(httpClient).apply {
             setReadTimeout(Duration.ofSeconds(config.readTimeoutSeconds))
         }
     }
 
-    internal fun sendWebmention(sourceUrl: String, targetUrl: String, endpointUrl: String): SendWebmentionResult {
+    internal fun sendWebmention(
+        sourceUrl: String,
+        targetUrl: String,
+        endpointUrl: String,
+    ): SendWebmentionResult {
         val payload = LinkedMultiValueMap<String, String>()
         payload.add("source", sourceUrl)
         payload.add("target", targetUrl)
 
         return try {
-            val statusCode = client.post()
-                .uri(endpointUrl)
-                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .body(payload)
-                .retrieve()
-                .toBodilessEntity()
-                .statusCode
-                .value()
+            val statusCode =
+                client
+                    .post()
+                    .uri(endpointUrl)
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                    .body(payload)
+                    .retrieve()
+                    .toBodilessEntity()
+                    .statusCode
+                    .value()
 
             if (statusCode in 200..299) {
                 SendWebmentionResult.Success(statusCode)
@@ -82,7 +98,10 @@ class WebmentionHttpClient(
         }
     }
 
-    private fun describeHttpError(statusCode: Int, responseBody: String?): String {
+    private fun describeHttpError(
+        statusCode: Int,
+        responseBody: String?,
+    ): String {
         val body = responseBody?.takeIf { it.isNotBlank() }?.excerpt(MAX_ERROR_BODY_LENGTH)
         return if (body != null) "HTTP $statusCode: $body" else "HTTP $statusCode"
     }
@@ -90,19 +109,23 @@ class WebmentionHttpClient(
     internal fun discoverWebmentionEndpoint(url: String): EndpointDiscovery {
         logger.info { "Discovering webmention endpoint for $url" }
         return runCatching {
-            val res = Jsoup.connect(url)
-                .userAgent(USER_AGENT)
-                .followRedirects(true)
-                .timeout((config.readTimeoutSeconds * 1000).toInt())
-                .execute()
+            val res =
+                Jsoup
+                    .connect(url)
+                    .userAgent(USER_AGENT)
+                    .followRedirects(true)
+                    .timeout((config.readTimeoutSeconds * 1000).toInt())
+                    .execute()
 
             val cacheControl = firstHeader(res, "Cache-Control")
             val expires = firstHeader(res, "Expires")
 
             val baseUrl = res.url().toExternalForm()
 
-            val linkEndpoint = WebmentionUtil.findEndpointInLinkHeaders(res.headers(HttpHeaders.LINK))
-                ?.let { WebmentionUtil.resolveEndpoint(it, baseUrl) }
+            val linkEndpoint =
+                WebmentionUtil
+                    .findEndpointInLinkHeaders(res.headers(HttpHeaders.LINK))
+                    ?.let { WebmentionUtil.resolveEndpoint(it, baseUrl) }
 
             if (linkEndpoint != null) {
                 logger.info { "Found valid HTTP Link: $linkEndpoint" }
@@ -115,12 +138,13 @@ class WebmentionHttpClient(
             }
 
             logger.info { "No HTTP Link found, checking HTML document..." }
-            val htmlEndpoint = res.parse()
-                .select("link[href], a[href]")
-                .firstOrNull { element ->
-                    WebmentionUtil.hasWebmentionRel(element.attr("rel")) && element.absUrl("href").isNotBlank()
-                }
-                ?.absUrl("href")
+            val htmlEndpoint =
+                res
+                    .parse()
+                    .select("link[href], a[href]")
+                    .firstOrNull { element ->
+                        WebmentionUtil.hasWebmentionRel(element.attr("rel")) && element.absUrl("href").isNotBlank()
+                    }?.absUrl("href")
 
             if (htmlEndpoint != null) {
                 logger.info { "Found valid HTML endpoint: $htmlEndpoint" }
@@ -135,9 +159,10 @@ class WebmentionHttpClient(
         }
     }
 
-    private fun firstHeader(res: org.jsoup.Connection.Response, name: String): String? {
-        return res.headers(name).firstOrNull()
-    }
+    private fun firstHeader(
+        res: org.jsoup.Connection.Response,
+        name: String,
+    ): String? = res.headers(name).firstOrNull()
 
     companion object {
         const val USER_AGENT = "BastionWebmentionHttpClient/0.0.1"

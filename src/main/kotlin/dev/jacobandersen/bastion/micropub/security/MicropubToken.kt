@@ -14,11 +14,15 @@ import tools.jackson.databind.ser.std.StdSerializer
 data class MicropubToken(
     val me: String,
     val clientId: String,
-    val scope: List<MicropubTokenScope>
+    val scope: List<MicropubTokenScope>,
 )
 
 class MicropubTokenSerializer : StdSerializer<MicropubToken>(MicropubToken::class.java) {
-    override fun serialize(value: MicropubToken, gen: JsonGenerator, ctxt: SerializationContext) {
+    override fun serialize(
+        value: MicropubToken,
+        gen: JsonGenerator,
+        ctxt: SerializationContext,
+    ) {
         gen.writeStartObject()
         gen.writeName("me")
         gen.writeString(value.me)
@@ -33,17 +37,21 @@ class MicropubTokenSerializer : StdSerializer<MicropubToken>(MicropubToken::clas
 class MicropubTokenDeserializer : StdDeserializer<MicropubToken>(MicropubToken::class.java) {
     override fun deserialize(
         p: JsonParser,
-        ctxt: DeserializationContext
+        ctxt: DeserializationContext,
     ): MicropubToken {
         val node = ctxt.readTree(p)
-        val me = node["me"]?.asString()?.takeIf { it.isNotBlank() }
-            ?: throw IllegalArgumentException("Token response is missing the 'me' property")
-        val clientId = node["client_id"]?.asString()?.takeIf { it.isNotBlank() }
-            ?: throw IllegalArgumentException("Token response is missing the 'client_id' property")
+        val me =
+            node["me"]?.asString()?.takeIf { it.isNotBlank() }
+                ?: throw IllegalArgumentException("Token response is missing the 'me' property")
+        val clientId =
+            node["client_id"]?.asString()?.takeIf { it.isNotBlank() }
+                ?: throw IllegalArgumentException("Token response is missing the 'client_id' property")
         val rawScope = node.get("scope")?.asString() ?: ""
-        val scope = rawScope.split(' ')
-            .filter { it.isNotBlank() }
-            .mapNotNull { MicropubTokenScope.fromStringOrNull(it) }
+        val scope =
+            rawScope
+                .split(' ')
+                .filter { it.isNotBlank() }
+                .mapNotNull { MicropubTokenScope.fromStringOrNull(it) }
         return MicropubToken(me, clientId, scope)
     }
 }

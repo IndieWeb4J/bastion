@@ -11,19 +11,21 @@ class Mf2TextExtractorTest {
 
     private fun json(value: String) = Mf2Value.Json(mapper.readTree(value))
 
-    private fun entry(properties: MutableMap<String, List<Mf2Value>>) = Mf2Object(
-        type = listOf("h-entry"),
-        properties = properties,
-        children = null,
-    )
+    private fun entry(properties: MutableMap<String, List<Mf2Value>>) =
+        Mf2Object(
+            type = listOf("h-entry"),
+            properties = properties,
+            children = null,
+        )
 
     @Test
     fun ignoresNonHEntry() {
-        val obj = Mf2Object(
-            type = listOf("h-card"),
-            properties = mutableMapOf("name" to listOf(Mf2Value.String("Jane"))),
-            children = null,
-        )
+        val obj =
+            Mf2Object(
+                type = listOf("h-card"),
+                properties = mutableMapOf("name" to listOf(Mf2Value.String("Jane"))),
+                children = null,
+            )
 
         assertEquals(emptyList<String>(), Mf2TextExtractor.extractText(obj))
     }
@@ -37,11 +39,12 @@ class Mf2TextExtractorTest {
 
     @Test
     fun extractsBothValueAndHtmlFromJsonContent() {
-        val obj = entry(
-            mutableMapOf(
-                "content" to listOf(json("""{"value":"Read this","html":"<p>Read <a href=\"https://example.com\">this</a></p>"}""")),
+        val obj =
+            entry(
+                mutableMapOf(
+                    "content" to listOf(json("""{"value":"Read this","html":"<p>Read <a href=\"https://example.com\">this</a></p>"}""")),
+                ),
             )
-        )
 
         assertEquals(
             listOf("Read this", """<p>Read <a href="https://example.com">this</a></p>"""),
@@ -65,12 +68,13 @@ class Mf2TextExtractorTest {
 
     @Test
     fun extractsSummaryButNotName() {
-        val obj = entry(
-            mutableMapOf(
-                "name" to listOf(Mf2Value.String("Title with https://example.com")),
-                "summary" to listOf(Mf2Value.String("A summary")),
+        val obj =
+            entry(
+                mutableMapOf(
+                    "name" to listOf(Mf2Value.String("Title with https://example.com")),
+                    "summary" to listOf(Mf2Value.String("A summary")),
+                ),
             )
-        )
 
         assertEquals(listOf("A summary"), Mf2TextExtractor.extractText(obj))
     }
@@ -84,17 +88,19 @@ class Mf2TextExtractorTest {
 
     @Test
     fun extractsUrlAndContentFromNestedCite() {
-        val cite = Mf2Value.Object(
-            Mf2Object(
-                type = listOf("h-cite"),
-                properties = mutableMapOf(
-                    "url" to listOf(Mf2Value.String("https://example.com/post")),
-                    "name" to listOf(Mf2Value.String("A great post")),
-                    "content" to listOf(json("""{"value":"Quote","html":"<blockquote>Quote</blockquote>"}""")),
+        val cite =
+            Mf2Value.Object(
+                Mf2Object(
+                    type = listOf("h-cite"),
+                    properties =
+                        mutableMapOf(
+                            "url" to listOf(Mf2Value.String("https://example.com/post")),
+                            "name" to listOf(Mf2Value.String("A great post")),
+                            "content" to listOf(json("""{"value":"Quote","html":"<blockquote>Quote</blockquote>"}""")),
+                        ),
+                    children = null,
                 ),
-                children = null,
             )
-        )
 
         val obj = entry(mutableMapOf("in-reply-to" to listOf(cite)))
 
@@ -110,16 +116,18 @@ class Mf2TextExtractorTest {
 
     @Test
     fun bailsOnUnregisteredEmbeddedType() {
-        val card = Mf2Value.Object(
-            Mf2Object(
-                type = listOf("h-card"),
-                properties = mutableMapOf(
-                    "name" to listOf(Mf2Value.String("Jane")),
-                    "url" to listOf(Mf2Value.String("https://example.com/jane")),
+        val card =
+            Mf2Value.Object(
+                Mf2Object(
+                    type = listOf("h-card"),
+                    properties =
+                        mutableMapOf(
+                            "name" to listOf(Mf2Value.String("Jane")),
+                            "url" to listOf(Mf2Value.String("https://example.com/jane")),
+                        ),
+                    children = null,
                 ),
-                children = null,
             )
-        )
 
         val obj = entry(mutableMapOf("like-of" to listOf(card)))
 
@@ -128,54 +136,60 @@ class Mf2TextExtractorTest {
 
     @Test
     fun doesNotDescendIntoNonTextNestedProperties() {
-        val author = Mf2Value.Object(
-            Mf2Object(
-                type = listOf("h-card"),
-                properties = mutableMapOf(
-                    "name" to listOf(Mf2Value.String("Jane")),
-                    "url" to listOf(Mf2Value.String("https://example.com/jane")),
+        val author =
+            Mf2Value.Object(
+                Mf2Object(
+                    type = listOf("h-card"),
+                    properties =
+                        mutableMapOf(
+                            "name" to listOf(Mf2Value.String("Jane")),
+                            "url" to listOf(Mf2Value.String("https://example.com/jane")),
+                        ),
+                    children = null,
                 ),
-                children = null,
             )
-        )
-        val cite = Mf2Value.Object(
-            Mf2Object(
-                type = listOf("h-cite"),
-                properties = mutableMapOf("url" to listOf(Mf2Value.String("https://example.com/post"))),
-                children = null,
+        val cite =
+            Mf2Value.Object(
+                Mf2Object(
+                    type = listOf("h-cite"),
+                    properties = mutableMapOf("url" to listOf(Mf2Value.String("https://example.com/post"))),
+                    children = null,
+                ),
             )
-        )
 
-        val obj = entry(
-            mutableMapOf(
-                "author" to listOf(author),
-                "like-of" to listOf(cite),
+        val obj =
+            entry(
+                mutableMapOf(
+                    "author" to listOf(author),
+                    "like-of" to listOf(cite),
+                ),
             )
-        )
 
         assertEquals(listOf("https://example.com/post"), Mf2TextExtractor.extractText(obj))
     }
 
     @Test
     fun skipsNonTextValuesAndBlankStrings() {
-        val obj = entry(
-            mutableMapOf(
-                "like-of" to listOf(Mf2Value.Number(42), Mf2Value.String("   ")),
-                "content" to listOf(Mf2Value.Boolean(true)),
+        val obj =
+            entry(
+                mutableMapOf(
+                    "like-of" to listOf(Mf2Value.Number(42), Mf2Value.String("   ")),
+                    "content" to listOf(Mf2Value.Boolean(true)),
+                ),
             )
-        )
 
         assertEquals(emptyList<String>(), Mf2TextExtractor.extractText(obj))
     }
 
     @Test
     fun preservesDuplicates() {
-        val obj = entry(
-            mutableMapOf(
-                "like-of" to listOf(Mf2Value.String("https://example.com/post")),
-                "bookmark-of" to listOf(Mf2Value.String("https://example.com/post")),
+        val obj =
+            entry(
+                mutableMapOf(
+                    "like-of" to listOf(Mf2Value.String("https://example.com/post")),
+                    "bookmark-of" to listOf(Mf2Value.String("https://example.com/post")),
+                ),
             )
-        )
 
         assertEquals(listOf("https://example.com/post", "https://example.com/post"), Mf2TextExtractor.extractText(obj))
     }

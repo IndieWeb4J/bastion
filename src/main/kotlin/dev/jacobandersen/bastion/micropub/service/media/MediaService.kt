@@ -12,7 +12,7 @@ private val logger = KotlinLogging.logger { }
 
 @Service
 class MediaService(
-    val fileUploadService: FileUploadService
+    val fileUploadService: FileUploadService,
 ) {
     @PreAuthorize("hasAnyAuthority('MEDIA', 'CREATE')")
     fun handle(file: MultipartFile): ApiResponse<*> {

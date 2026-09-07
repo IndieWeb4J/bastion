@@ -25,23 +25,18 @@ class PostEntity(
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     var id: UUID? = null,
-
     @Column(nullable = false, unique = true)
     var slug: String,
-
     @Column(nullable = false)
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Enumerated(EnumType.STRING)
     var status: PostStatus,
-
     @Column(nullable = false)
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Enumerated(EnumType.STRING)
     var visibility: PostVisibility,
-
     @Column(nullable = false)
     var deleted: Boolean = false,
-
     @Column(nullable = false)
     @JdbcTypeCode(SqlTypes.JSON)
     var post: Mf2Object,
@@ -62,7 +57,14 @@ class PostEntity(
     @Column(name = "updated_at_utc", nullable = false, insertable = false, updatable = false)
     var updatedAtUtc: Instant? = null
 
-    constructor(slug: String, status: PostStatus, visibility: PostVisibility, deleted: Boolean = false, post: Mf2Object) : this(null, slug, status, visibility, deleted, post)
+    constructor(slug: String, status: PostStatus, visibility: PostVisibility, deleted: Boolean = false, post: Mf2Object) : this(
+        null,
+        slug,
+        status,
+        visibility,
+        deleted,
+        post,
+    )
 
     /**
      * Convert this PostEntity to the Post domain object.
@@ -72,8 +74,8 @@ class PostEntity(
      *
      * @return Post the post domain object
      */
-    fun toDomain(): Post {
-        return Post(
+    fun toDomain(): Post =
+        Post(
             id = requireNotNull(id),
             slug = slug,
             status = status,
@@ -83,5 +85,4 @@ class PostEntity(
             subtype = subtype,
             post = post,
         )
-    }
 }

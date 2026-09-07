@@ -14,28 +14,40 @@ import tools.jackson.databind.annotation.JsonSerialize
 @JsonSerialize(using = Mf2ValueSerializer::class)
 @JsonDeserialize(using = Mf2ValueDeserializer::class)
 sealed interface Mf2Value {
-    data class String(val value: kotlin.String) : Mf2Value {
+    data class String(
+        val value: kotlin.String,
+    ) : Mf2Value {
         override fun toString(): kotlin.String = value
     }
 
-    data class Boolean(val value: kotlin.Boolean) : Mf2Value {
+    data class Boolean(
+        val value: kotlin.Boolean,
+    ) : Mf2Value {
         override fun toString(): kotlin.String = value.toString()
     }
 
-    data class Number(val value: Long) : Mf2Value {
+    data class Number(
+        val value: Long,
+    ) : Mf2Value {
         override fun toString(): kotlin.String = value.toString()
     }
 
-    data class Double(val value: kotlin.Double) : Mf2Value {
+    data class Double(
+        val value: kotlin.Double,
+    ) : Mf2Value {
         override fun toString(): kotlin.String = value.toString()
     }
 
-    data class Object(val value: Mf2Object) : Mf2Value {
+    data class Object(
+        val value: Mf2Object,
+    ) : Mf2Value {
         override fun toString(): kotlin.String = value.toString()
     }
 
     /** An html value object (`{html, value}`) or other JSON-structured value. */
-    data class Json(val value: JsonNode) : Mf2Value {
+    data class Json(
+        val value: JsonNode,
+    ) : Mf2Value {
         override fun toString(): kotlin.String = value.toString()
     }
 }
@@ -46,15 +58,17 @@ sealed interface Mf2Value {
  * its `value` key, and anything else has no plain-text representation.
  */
 val Mf2Value.plainTextOrNull: kotlin.String?
-    get() = when (this) {
-        is Mf2Value.String -> value
-        is Mf2Value.Json -> value.get("value")?.takeIf(JsonNode::isString)?.asString()
-        else -> null
-    }
+    get() =
+        when (this) {
+            is Mf2Value.String -> value
+            is Mf2Value.Json -> value.get("value")?.takeIf(JsonNode::isString)?.asString()
+            else -> null
+        }
 
 /** The `html` key of an html value object, or null for other value forms. */
 val Mf2Value.htmlOrNull: kotlin.String?
-    get() = when (this) {
-        is Mf2Value.Json -> value.get("html")?.takeIf(JsonNode::isString)?.asString()
-        else -> null
-    }
+    get() =
+        when (this) {
+            is Mf2Value.Json -> value.get("html")?.takeIf(JsonNode::isString)?.asString()
+            else -> null
+        }

@@ -2,10 +2,10 @@ package dev.jacobandersen.bastion.webmention.service
 
 import dev.jacobandersen.bastion.webmention.data.service.WebmentionEndpointCacheService
 import jakarta.annotation.PostConstruct
-import java.time.Duration
-import java.time.Instant
 import org.jobrunr.scheduling.JobScheduler
 import org.springframework.stereotype.Component
+import java.time.Duration
+import java.time.Instant
 
 /**
  * Periodically removes expired webmention endpoint cache entries so the cache

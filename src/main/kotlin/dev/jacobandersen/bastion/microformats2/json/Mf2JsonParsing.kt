@@ -14,14 +14,16 @@ import tools.jackson.databind.node.ObjectNode
  * `h-entry`, non-array properties are skipped and unreadable values dropped.
  */
 fun ObjectNode.toMf2Object(): Mf2Object {
-    val type = (this["type"] as? ArrayNode)
-        ?.mapNotNull { if (it.isString) it.asString() else null }
-        ?.filter { it.isNotBlank() }
-        ?.takeIf { it.isNotEmpty() }
-        ?: listOf("h-entry")
+    val type =
+        (this["type"] as? ArrayNode)
+            ?.mapNotNull { if (it.isString) it.asString() else null }
+            ?.filter { it.isNotBlank() }
+            ?.takeIf { it.isNotEmpty() }
+            ?: listOf("h-entry")
 
-    val children = (this["children"] as? ArrayNode)
-        ?.mapNotNull { element -> (element as? ObjectNode)?.toMf2Object() }
+    val children =
+        (this["children"] as? ArrayNode)
+            ?.mapNotNull { element -> (element as? ObjectNode)?.toMf2Object() }
 
     return Mf2Object(
         type = type,
@@ -30,27 +32,40 @@ fun ObjectNode.toMf2Object(): Mf2Object {
     )
 }
 
-fun JsonNode.toMf2ValueOrNull(): Mf2Value? {
-    return when {
-        isString -> Mf2Value.String(asString())
-        isBoolean -> Mf2Value.Boolean(booleanValue())
-        isIntegralNumber -> Mf2Value.Number(longValue())
-        isFloatingPointNumber -> Mf2Value.Double(doubleValue())
-        isObject -> try {
-            val objectNode = this as ObjectNode
-            if (isMf2Object()) Mf2Value.Object(objectNode.toMf2Object()) else Mf2Value.Json(this)
-        } catch (_: Exception) {
-            null
+fun JsonNode.toMf2ValueOrNull(): Mf2Value? =
+    when {
+        isString -> {
+            Mf2Value.String(asString())
         }
 
-        else -> null
+        isBoolean -> {
+            Mf2Value.Boolean(booleanValue())
+        }
+
+        isIntegralNumber -> {
+            Mf2Value.Number(longValue())
+        }
+
+        isFloatingPointNumber -> {
+            Mf2Value.Double(doubleValue())
+        }
+
+        isObject -> {
+            try {
+                val objectNode = this as ObjectNode
+                if (isMf2Object()) Mf2Value.Object(objectNode.toMf2Object()) else Mf2Value.Json(this)
+            } catch (_: Exception) {
+                null
+            }
+        }
+
+        else -> {
+            null
+        }
     }
-}
 
 /** Whether the JSON node is a nested microformat object rather than a plain object value. */
-fun JsonNode.isMf2Object(): Boolean {
-    return (this["type"] as? ArrayNode)?.takeIf { it.size() > 0 } != null && this["properties"] is ObjectNode
-}
+fun JsonNode.isMf2Object(): Boolean = (this["type"] as? ArrayNode)?.takeIf { it.size() > 0 } != null && this["properties"] is ObjectNode
 
 private fun parseProperties(node: JsonNode?): Map<String, List<Mf2Value>> {
     val objectNode = node as? ObjectNode ?: return emptyMap()

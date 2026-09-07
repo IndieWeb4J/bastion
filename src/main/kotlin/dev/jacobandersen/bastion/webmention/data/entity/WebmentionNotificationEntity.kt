@@ -21,44 +21,33 @@ class WebmentionNotificationEntity(
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     var id: UUID? = null,
-
     @Column(nullable = false)
     var sourceUrl: String,
-
     @Column(nullable = false)
     var targetUrl: String,
-
     @Column(nullable = false)
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Enumerated(EnumType.STRING)
     var state: WebmentionState,
-
     @Column(nullable = false)
     var delivered: Boolean = false,
-
     @Column(nullable = false)
     var attempts: Int = 0,
-
     @Column(nullable = true)
     var lastError: String? = null,
-
     @Column(nullable = true)
     var lastStatusCode: Int? = null,
-
     @Column(nullable = true)
     var lastAttemptAt: Instant? = null,
-
     @Column(nullable = true)
     var nextAttemptAt: Instant? = null,
-
     @Column(nullable = false)
     var createdAtUtc: Instant,
-
     @Column(nullable = false)
     var updatedAtUtc: Instant,
 ) {
-    fun toDomain(): WebmentionNotification {
-        return WebmentionNotification(
+    fun toDomain(): WebmentionNotification =
+        WebmentionNotification(
             id = requireNotNull(this.id),
             sourceUrl = this.sourceUrl,
             targetUrl = this.targetUrl,
@@ -72,5 +61,4 @@ class WebmentionNotificationEntity(
             createdAtUtc = createdAtUtc,
             updatedAtUtc = updatedAtUtc,
         )
-    }
 }

@@ -1,7 +1,5 @@
 package dev.jacobandersen.bastion
 
-import java.sql.Connection
-import java.sql.DriverManager
 import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -11,6 +9,8 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.utility.DockerImageName
+import java.sql.Connection
+import java.sql.DriverManager
 
 /**
  * Verifies that the `post_type_discovery` function in V1 follows the IndieWeb
@@ -19,7 +19,6 @@ import org.testcontainers.utility.DockerImageName
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class PostTypeDiscoverySqlTest {
-
     private val postgres: PostgreSQLContainer<*> =
         PostgreSQLContainer(DockerImageName.parse("postgres:latest"))
 
@@ -28,7 +27,8 @@ class PostTypeDiscoverySqlTest {
     @BeforeAll
     fun setUp() {
         postgres.start()
-        Flyway.configure()
+        Flyway
+            .configure()
             .dataSource(postgres.jdbcUrl, postgres.username, postgres.password)
             .load()
             .migrate()
@@ -53,7 +53,10 @@ class PostTypeDiscoverySqlTest {
         }
     }
 
-    private fun expect(expected: String, properties: String) {
+    private fun expect(
+        expected: String,
+        properties: String,
+    ) {
         assertEquals(expected, discover(post(properties)))
     }
 
@@ -77,7 +80,7 @@ class PostTypeDiscoverySqlTest {
     fun `a reply with a photo is still a reply`() {
         expect(
             "reply",
-            """"in-reply-to":["https://example.com/a"],"photo":["https://example.com/pic.jpg"],"content":["reply"]"""
+            """"in-reply-to":["https://example.com/a"],"photo":["https://example.com/pic.jpg"],"content":["reply"]""",
         )
     }
 

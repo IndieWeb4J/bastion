@@ -9,7 +9,12 @@ data class MicropubUpdatePayload(
     val removals: Removals?,
 ) {
     sealed interface Removals {
-        data class Many(val properties: Map<String, List<Mf2Value>>) : Removals
-        data class All(val properties: List<String>) : Removals
+        data class Many(
+            val properties: Map<String, List<Mf2Value>>,
+        ) : Removals
+
+        data class All(
+            val properties: List<String>,
+        ) : Removals
     }
 }

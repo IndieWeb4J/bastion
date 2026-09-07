@@ -23,27 +23,29 @@ import dev.jacobandersen.bastion.webmention.data.domain.WebmentionInteraction.RS
  * none) and extracts author/content data.
  */
 object ReceivedWebmentionAnalyzer {
+    private val interactionProperties: List<Pair<String, WebmentionInteraction>> =
+        listOf(
+            "rsvp" to RSVP,
+            "in-reply-to" to REPLY,
+            "like-of" to LIKE,
+            "repost-of" to REPOST,
+            "bookmark-of" to BOOKMARK,
+        )
 
-    private val interactionProperties: List<Pair<String, WebmentionInteraction>> = listOf(
-        "rsvp" to RSVP,
-        "in-reply-to" to REPLY,
-        "like-of" to LIKE,
-        "repost-of" to REPOST,
-        "bookmark-of" to BOOKMARK,
-    )
-
-    private val interactionRels: List<Pair<String, WebmentionInteraction>> = listOf(
-        "in-reply-to" to REPLY,
-        "like-of" to LIKE,
-        "repost-of" to REPOST,
-        "bookmark-of" to BOOKMARK,
-    )
+    private val interactionRels: List<Pair<String, WebmentionInteraction>> =
+        listOf(
+            "in-reply-to" to REPLY,
+            "like-of" to LIKE,
+            "repost-of" to REPOST,
+            "bookmark-of" to BOOKMARK,
+        )
 
     fun analyze(parseResult: Mf2ParseResult): ReceivedWebmentionAnalysis {
         val primary = primaryObject(parseResult)
-        val interaction = primary?.let(::classifyProperties)
-            ?: classifyRels(parseResult)
-            ?: MENTION
+        val interaction =
+            primary?.let(::classifyProperties)
+                ?: classifyRels(parseResult)
+                ?: MENTION
 
         if (primary == null) {
             return ReceivedWebmentionAnalysis(interaction = interaction, primary = null)
@@ -105,15 +107,22 @@ object ReceivedWebmentionAnalyzer {
     private fun extractAuthor(entry: Mf2Object): Triple<String?, String?, String?>? {
         val authorValue = entry.getProperty("author").firstOrNull() ?: return null
         return when (authorValue) {
-            is Mf2Value.Object -> Triple(
-                authorValue.value.firstText("name"),
-                authorValue.value.firstText("url"),
-                authorValue.value.firstText("photo"),
-            )
+            is Mf2Value.Object -> {
+                Triple(
+                    authorValue.value.firstText("name"),
+                    authorValue.value.firstText("url"),
+                    authorValue.value.firstText("photo"),
+                )
+            }
 
             // A plain string author is treated as the author's URL.
-            is Mf2Value.String -> Triple(null, authorValue.value, null)
-            else -> null
+            is Mf2Value.String -> {
+                Triple(null, authorValue.value, null)
+            }
+
+            else -> {
+                null
+            }
         }
     }
 

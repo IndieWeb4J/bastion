@@ -9,12 +9,27 @@ import tools.jackson.databind.node.ObjectNode
 
 /** Deserializes an [Mf2Value] from its canonical mf2 JSON value form. */
 class Mf2ValueDeserializer : StdDeserializer<Mf2Value>(Mf2Value::class.java) {
-    override fun deserialize(p: JsonParser, ctxt: DeserializationContext): Mf2Value {
-        return when (p.currentToken()) {
-            JsonToken.VALUE_STRING -> Mf2Value.String(p.valueAsString)
-            JsonToken.VALUE_TRUE, JsonToken.VALUE_FALSE -> Mf2Value.Boolean(p.booleanValue)
-            JsonToken.VALUE_NUMBER_INT -> Mf2Value.Number(p.longValue)
-            JsonToken.VALUE_NUMBER_FLOAT -> Mf2Value.Double(p.doubleValue)
+    override fun deserialize(
+        p: JsonParser,
+        ctxt: DeserializationContext,
+    ): Mf2Value =
+        when (p.currentToken()) {
+            JsonToken.VALUE_STRING -> {
+                Mf2Value.String(p.valueAsString)
+            }
+
+            JsonToken.VALUE_TRUE, JsonToken.VALUE_FALSE -> {
+                Mf2Value.Boolean(p.booleanValue)
+            }
+
+            JsonToken.VALUE_NUMBER_INT -> {
+                Mf2Value.Number(p.longValue)
+            }
+
+            JsonToken.VALUE_NUMBER_FLOAT -> {
+                Mf2Value.Double(p.doubleValue)
+            }
+
             JsonToken.START_OBJECT -> {
                 val node = ctxt.readTree(p)
                 if (node.isMf2Object()) {
@@ -24,7 +39,8 @@ class Mf2ValueDeserializer : StdDeserializer<Mf2Value>(Mf2Value::class.java) {
                 }
             }
 
-            else -> ctxt.handleUnexpectedToken(Mf2Value::class.java, p) as Mf2Value
+            else -> {
+                ctxt.handleUnexpectedToken(Mf2Value::class.java, p) as Mf2Value
+            }
         }
-    }
 }

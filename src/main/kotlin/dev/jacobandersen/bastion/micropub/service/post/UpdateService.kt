@@ -21,25 +21,31 @@ class UpdateService(
 ) {
     @PreAuthorize("hasAuthority('UPDATE')")
     fun update(payload: MicropubPayload): ApiResponse<*> {
-        val update = try {
-            payload.asUpdatePayload()
-        } catch (e: Exception) {
-            return ApiResponse.Error.InvalidRequest(errorDescription = "Failed to parse payload as update: ${e.message}")
-        }
+        val update =
+            try {
+                payload.asUpdatePayload()
+            } catch (e: Exception) {
+                return ApiResponse.Error.InvalidRequest(errorDescription = "Failed to parse payload as update: ${e.message}")
+            }
 
         if (update.replacements == null && update.additions == null && update.removals == null) {
-            return ApiResponse.Error.InvalidRequest(errorDescription = "Update payload must include at least one of replace, add, or delete")
+            return ApiResponse.Error.InvalidRequest(
+                errorDescription = "Update payload must include at least one of replace, add, or delete",
+            )
         }
 
-        val slug = urlService.extractPostSlug(update.url)
-            ?: return ApiResponse.Error.InvalidRequest(errorDescription = "Invalid URL for this Bastion instance: ${update.url}")
+        val slug =
+            urlService.extractPostSlug(update.url)
+                ?: return ApiResponse.Error.InvalidRequest(errorDescription = "Invalid URL for this Bastion instance: ${update.url}")
 
-        val post = postService.findBySlug(slug)
-            ?: return ApiResponse.Error.InvalidRequest(errorDescription = "Post not found for URL: ${update.url}")
+        val post =
+            postService.findBySlug(slug)
+                ?: return ApiResponse.Error.InvalidRequest(errorDescription = "Post not found for URL: ${update.url}")
 
-        val commands = commandResolver.resolve { key ->
-            update.replacements?.get(key) ?: update.additions?.get(key)
-        } ?: return ApiResponse.Error.InvalidRequest(errorDescription = "Invalid command parameters in update")
+        val commands =
+            commandResolver.resolve { key ->
+                update.replacements?.get(key) ?: update.additions?.get(key)
+            } ?: return ApiResponse.Error.InvalidRequest(errorDescription = "Invalid command parameters in update")
 
         val previousUrl = urlService.generatePostUrl(post)
         val wasPublic = post.publiclyReachable
@@ -63,16 +69,18 @@ class UpdateService(
             postObj = applyRemovals(postObj, removals)
         }
 
-        val targetSlug = when {
-            commands.slug == null || commands.slug == post.slug -> post.slug
-            else -> postService.deduplicateSlug(commands.slug, post.slug)
-        }
+        val targetSlug =
+            when {
+                commands.slug == null || commands.slug == post.slug -> post.slug
+                else -> postService.deduplicateSlug(commands.slug, post.slug)
+            }
 
-        val updated = post.copy(
-            slug = targetSlug,
-            status = commands.status ?: post.status,
-            visibility = commands.visibility ?: post.visibility,
-        )
+        val updated =
+            post.copy(
+                slug = targetSlug,
+                status = commands.status ?: post.status,
+                visibility = commands.visibility ?: post.visibility,
+            )
 
         try {
             postService.updatePost(updated, postObj)
@@ -83,7 +91,9 @@ class UpdateService(
         val updatedUrl = urlService.generatePostUrl(updated)
         val isPublic = updated.publiclyReachable
         when {
-            wasPublic && !isPublic -> webmentionService.deactivateWebmentions(previousUrl)
+            wasPublic && !isPublic -> {
+                webmentionService.deactivateWebmentions(previousUrl)
+            }
 
             isPublic -> {
                 if (updatedUrl != previousUrl || !wasPublic) {
@@ -101,16 +111,20 @@ class UpdateService(
         }
     }
 
-    private fun applyRemovals(postObj: Mf2Object, removals: MicropubUpdatePayload.Removals): Mf2Object {
-        return when (removals) {
-            is MicropubUpdatePayload.Removals.All ->
+    private fun applyRemovals(
+        postObj: Mf2Object,
+        removals: MicropubUpdatePayload.Removals,
+    ): Mf2Object =
+        when (removals) {
+            is MicropubUpdatePayload.Removals.All -> {
                 removals.properties.fold(postObj) { current, property -> current.deleteProperty(property) }
+            }
 
-            is MicropubUpdatePayload.Removals.Many ->
+            is MicropubUpdatePayload.Removals.Many -> {
                 removals.properties.entries.fold(postObj) { current, (key, values) ->
                     val remaining = current.getProperty(key).filter { it !in values }
                     if (remaining.isNotEmpty()) current.setProperty(key, remaining) else current.deleteProperty(key)
                 }
+            }
         }
-    }
 }

@@ -12,9 +12,15 @@ internal class Mf2MicroformatBuilder(
     val classicRoots: Set<String>,
     private val resolver: (String) -> String?,
 ) {
-    data class SeenProperty(val prefix: Char, val name: String)
+    data class SeenProperty(
+        val prefix: Char,
+        val name: String,
+    )
 
-    data class DtEntry(val name: String, val result: DtResult)
+    data class DtEntry(
+        val name: String,
+        val result: DtResult,
+    )
 
     val properties = linkedMapOf<String, MutableList<Mf2Value>>()
     val children = mutableListOf<Mf2Object>()
@@ -25,16 +31,25 @@ internal class Mf2MicroformatBuilder(
         seen.add(SeenProperty(pc.prefix, pc.name))
     }
 
-    fun addValue(name: String, value: Mf2Value) {
+    fun addValue(
+        name: String,
+        value: Mf2Value,
+    ) {
         properties.getOrPut(name) { mutableListOf() }.add(value)
     }
 
-    fun attachObject(pc: ParsedPropertyClass, child: Mf2Object) {
+    fun attachObject(
+        pc: ParsedPropertyClass,
+        child: Mf2Object,
+    ) {
         markPropertySeen(pc)
         addValue(pc.name, Mf2Value.Object(child))
     }
 
-    fun recordDt(name: String, result: DtResult) {
+    fun recordDt(
+        name: String,
+        result: DtResult,
+    ) {
         dtEntries.add(DtEntry(name, result))
     }
 
@@ -56,6 +71,7 @@ internal class Mf2MicroformatBuilder(
                     pending.clear()
                     finals[index] = result.value
                 }
+
                 result.hasTime -> {
                     if (lastDate != null) {
                         finals[index] = "$lastDate ${result.value}"
@@ -63,7 +79,10 @@ internal class Mf2MicroformatBuilder(
                         pending.add(index)
                     }
                 }
-                else -> finals[index] = result.value
+
+                else -> {
+                    finals[index] = result.value
+                }
             }
         }
         for (p in pending) {

@@ -8,8 +8,10 @@ import java.net.URI
  * against a document base URL, per the microformats2 parsing specification.
  */
 internal object Mf2UrlResolver {
-
-    fun resolve(base: String, raw: String): String? {
+    fun resolve(
+        base: String,
+        raw: String,
+    ): String? {
         val trimmed = raw.trim()
         if (trimmed.isEmpty()) return null
         if (base.isEmpty()) {
@@ -19,7 +21,5 @@ internal object Mf2UrlResolver {
         return runCatching { parsed.resolve(trimmed).toString() }.getOrNull()
     }
 
-    private fun isAbsolute(raw: String): Boolean {
-        return raw.contains(":") && runCatching { URI(raw).isAbsolute }.getOrDefault(false)
-    }
+    private fun isAbsolute(raw: String): Boolean = raw.contains(":") && runCatching { URI(raw).isAbsolute }.getOrDefault(false)
 }

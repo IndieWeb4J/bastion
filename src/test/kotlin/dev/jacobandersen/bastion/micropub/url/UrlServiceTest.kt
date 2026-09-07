@@ -7,12 +7,13 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 
 class UrlServiceTest {
-    private val service = UrlService(
-        BastionContentUrlConfig(
-            baseUrl = "https://test.jacobandersen.dev",
-            pathPattern = "{year}/{month}/{day}/{slug}",
+    private val service =
+        UrlService(
+            BastionContentUrlConfig(
+                baseUrl = "https://test.jacobandersen.dev",
+                pathPattern = "{year}/{month}/{day}/{slug}",
+            ),
         )
-    )
 
     @Test
     fun extractsSlugFromMatchingUrl() {

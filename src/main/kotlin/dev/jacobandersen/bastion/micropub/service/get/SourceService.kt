@@ -25,14 +25,19 @@ class SourceService(
         }
     }
 
-    fun handleOne(url: String, params: Map<String, Array<String>>): ApiResponse<*> {
-        val slug = urlService.extractPostSlug(url)
-            ?: return ApiResponse.Error.InvalidRequest(errorDescription = "Invalid URL for this Bastion instance: $url")
+    fun handleOne(
+        url: String,
+        params: Map<String, Array<String>>,
+    ): ApiResponse<*> {
+        val slug =
+            urlService.extractPostSlug(url)
+                ?: return ApiResponse.Error.InvalidRequest(errorDescription = "Invalid URL for this Bastion instance: $url")
 
         logger.info { "Will look up post by slug $slug" }
 
-        val post = postService.findBySlug(slug)
-            ?: return ApiResponse.Error.InvalidRequest(errorDescription = "Post not found for URL: $url")
+        val post =
+            postService.findBySlug(slug)
+                ?: return ApiResponse.Error.InvalidRequest(errorDescription = "Post not found for URL: $url")
 
         if (post.deleted) {
             return ApiResponse.Error.Gone()
@@ -58,7 +63,9 @@ class SourceService(
         val parsedOffset = offset?.toIntOrNull()
 
         if (limit != null && (parsedLimit == null || parsedLimit < 1 || parsedLimit > PostService.MAX_PAGE_SIZE)) {
-            return ApiResponse.Error.InvalidRequest(errorDescription = "limit must be an integer between 1 and ${PostService.MAX_PAGE_SIZE}")
+            return ApiResponse.Error.InvalidRequest(
+                errorDescription = "limit must be an integer between 1 and ${PostService.MAX_PAGE_SIZE}",
+            )
         }
         if (offset != null && (parsedOffset == null || parsedOffset < 0)) {
             return ApiResponse.Error.InvalidRequest(errorDescription = "offset must be a non-negative integer")
@@ -69,7 +76,7 @@ class SourceService(
 
         if (effectiveOffset % effectiveLimit != 0) {
             return ApiResponse.Error.InvalidRequest(
-                errorDescription = "offset must be a multiple of limit ($effectiveOffset % $effectiveLimit != 0)"
+                errorDescription = "offset must be a multiple of limit ($effectiveOffset % $effectiveLimit != 0)",
             )
         }
 

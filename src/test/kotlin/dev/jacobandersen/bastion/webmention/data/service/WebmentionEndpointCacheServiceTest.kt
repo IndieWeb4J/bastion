@@ -2,30 +2,32 @@ package dev.jacobandersen.bastion.webmention.data.service
 
 import dev.jacobandersen.bastion.webmention.data.entity.WebmentionEndpointCacheEntity
 import dev.jacobandersen.bastion.webmention.data.repository.WebmentionEndpointCacheRepository
-import java.time.Instant
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
+import java.time.Instant
 
 class WebmentionEndpointCacheServiceTest {
-
     private val repository = mock(WebmentionEndpointCacheRepository::class.java)
     private val service = WebmentionEndpointCacheService(repository)
 
     private val now = Instant.parse("2026-01-01T00:00:00Z")
 
-    private fun entity(targetUrl: String, endpointUrl: String?, expiresAt: Instant): WebmentionEndpointCacheEntity {
-        return WebmentionEndpointCacheEntity(
+    private fun entity(
+        targetUrl: String,
+        endpointUrl: String?,
+        expiresAt: Instant,
+    ): WebmentionEndpointCacheEntity =
+        WebmentionEndpointCacheEntity(
             targetUrl = targetUrl,
             endpointUrl = endpointUrl,
             discoveredAt = now,
             expiresAt = expiresAt,
             updatedAt = now,
         )
-    }
 
     @Test
     fun lookupReturnsFreshWithinWindowAndMissAfterExpiry() {
@@ -43,10 +45,11 @@ class WebmentionEndpointCacheServiceTest {
 
     @Test
     fun purgeExpiredDeletesOnlyPastEntries() {
-        val expired = listOf(
-            entity("gone", null, now),
-            entity("gone2", null, now.minusSeconds(1)),
-        )
+        val expired =
+            listOf(
+                entity("gone", null, now),
+                entity("gone2", null, now.minusSeconds(1)),
+            )
         `when`(repository.findByExpiresAtLessThanEqual(now)).thenReturn(expired)
 
         assertEquals(2, service.purgeExpired(now))

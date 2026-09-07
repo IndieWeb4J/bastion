@@ -5,7 +5,8 @@ package dev.jacobandersen.bastion.microformats2
  * reuse: every parse runs in its own [Mf2ParseSession].
  */
 class Mf2ParserImpl : Mf2Parser {
-    override fun parse(html: String, baseUrl: String): Mf2ParseResult {
-        return Mf2ParseSession(html, baseUrl).parse()
-    }
+    override fun parse(
+        html: String,
+        baseUrl: String,
+    ): Mf2ParseResult = Mf2ParseSession(html, baseUrl).parse()
 }

@@ -15,22 +15,30 @@ import tools.jackson.databind.node.ObjectNode
  * JSON library used by the GraphQL transport.
  */
 internal object Mf2Graphql {
+    fun firstText(
+        obj: Mf2Object,
+        key: String,
+    ): String? = obj.firstText(key)
 
-    fun firstText(obj: Mf2Object, key: String): String? = obj.firstText(key)
+    fun firstHtml(
+        obj: Mf2Object,
+        key: String,
+    ): String? = obj.firstHtml(key)
 
-    fun firstHtml(obj: Mf2Object, key: String): String? = obj.firstHtml(key)
+    fun strings(
+        obj: Mf2Object,
+        key: String,
+    ): List<String> = obj.texts(key)
 
-    fun strings(obj: Mf2Object, key: String): List<String> = obj.texts(key)
-
-    fun normalizeProperties(obj: Mf2Object): Map<String, List<Any?>> {
-        return obj.properties.mapValues { (_, values) -> values.map(::normalizeValue) }
-    }
+    fun normalizeProperties(obj: Mf2Object): Map<String, List<Any?>> =
+        obj.properties.mapValues { (_, values) -> values.map(::normalizeValue) }
 
     fun normalizeObject(obj: Mf2Object): Map<String, Any?> {
-        val out = linkedMapOf<String, Any?>(
-            "type" to obj.type,
-            "properties" to normalizeProperties(obj),
-        )
+        val out =
+            linkedMapOf<String, Any?>(
+                "type" to obj.type,
+                "properties" to normalizeProperties(obj),
+            )
         obj.children?.let { children ->
             if (children.isNotEmpty()) {
                 out["children"] = children.map(::normalizeObject)
@@ -39,8 +47,8 @@ internal object Mf2Graphql {
         return out
     }
 
-    fun normalizeValue(value: Mf2Value): Any? {
-        return when (value) {
+    fun normalizeValue(value: Mf2Value): Any? =
+        when (value) {
             is Mf2Value.String -> value.value
             is Mf2Value.Boolean -> value.value
             is Mf2Value.Number -> value.value
@@ -48,10 +56,9 @@ internal object Mf2Graphql {
             is Mf2Value.Object -> normalizeObject(value.value)
             is Mf2Value.Json -> nodeToPlain(value.value)
         }
-    }
 
-    private fun nodeToPlain(node: JsonNode): Any? {
-        return when {
+    private fun nodeToPlain(node: JsonNode): Any? =
+        when {
             node.isNull -> null
             node.isString -> node.asString()
             node.isBoolean -> node.asBoolean()
@@ -61,5 +68,4 @@ internal object Mf2Graphql {
             node is ObjectNode -> node.properties().associate { it.key to nodeToPlain(it.value) }
             else -> null
         }
-    }
 }

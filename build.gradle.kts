@@ -6,6 +6,7 @@ plugins {
     id("org.hibernate.orm") version "7.4.5.Final"
     kotlin("plugin.jpa") version "2.3.21"
     kotlin("plugin.serialization") version "2.3.21"
+    id("org.jlleitschuh.gradle.ktlint") version "12.2.0"
 }
 
 group = "dev.jacobandersen"
@@ -67,7 +68,6 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
-
 kotlin {
     compilerOptions {
         freeCompilerArgs.addAll("-Xjsr305=strict", "-Xannotation-default-target=param-property")
@@ -91,4 +91,8 @@ allOpen {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+}
+
+ktlint {
+    version.set("1.8.0")
 }

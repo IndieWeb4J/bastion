@@ -3,10 +3,10 @@ package dev.jacobandersen.bastion.webmention.http
 import dev.jacobandersen.bastion.webmention.config.WebmentionConfig
 import dev.jacobandersen.bastion.webmention.util.HttpUtil
 import io.github.oshai.kotlinlogging.KotlinLogging
-import java.net.URI
 import org.jsoup.Jsoup
 import org.springframework.stereotype.Component
 import org.springframework.stereotype.Service
+import java.net.URI
 
 private val logger = KotlinLogging.logger {}
 
@@ -67,13 +67,15 @@ class WebmentionSourceFetcher(
                 return SourceFetch(0, current, null, "", "source host resolves to a blocked address")
             }
 
-            val response = Jsoup.connect(current)
-                .userAgent(USER_AGENT)
-                .followRedirects(false)
-                .ignoreHttpErrors(true)
-                .maxBodySize(MAX_BODY_SIZE)
-                .timeout((config.readTimeoutSeconds * 1000).toInt())
-                .execute()
+            val response =
+                Jsoup
+                    .connect(current)
+                    .userAgent(USER_AGENT)
+                    .followRedirects(false)
+                    .ignoreHttpErrors(true)
+                    .maxBodySize(MAX_BODY_SIZE)
+                    .timeout((config.readTimeoutSeconds * 1000).toInt())
+                    .execute()
 
             val status = response.statusCode()
             if (status in REDIRECT_STATUSES) {

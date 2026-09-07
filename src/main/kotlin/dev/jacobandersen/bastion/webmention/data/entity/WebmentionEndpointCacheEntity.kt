@@ -12,16 +12,12 @@ class WebmentionEndpointCacheEntity(
     @Id
     @Column(nullable = false)
     var targetUrl: String,
-
     @Column(nullable = true)
     var endpointUrl: String? = null,
-
     @Column(nullable = false)
     var discoveredAt: Instant,
-
     @Column(nullable = false)
     var expiresAt: Instant,
-
     @Column(nullable = false)
     var updatedAt: Instant,
 )

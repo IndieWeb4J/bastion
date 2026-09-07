@@ -11,8 +11,6 @@ import dev.jacobandersen.bastion.webmention.data.service.ReceivedWebmentionServi
 import dev.jacobandersen.bastion.webmention.http.SourceHostValidator
 import dev.jacobandersen.bastion.webmention.service.WebmentionReceiverService
 import dev.jacobandersen.bastion.webmention.service.WebmentionSubmissionLimiter
-import java.time.Instant
-import java.util.UUID
 import org.jobrunr.scheduling.JobScheduler
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -25,9 +23,10 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
+import java.time.Instant
+import java.util.UUID
 
 class WebmentionControllerTest {
-
     private lateinit var notificationService: ReceivedWebmentionService
     private lateinit var receiverService: WebmentionReceiverService
     private lateinit var postService: PostService
@@ -51,17 +50,19 @@ class WebmentionControllerTest {
         hostValidator = SourceHostValidator { it.startsWith("http://127.0.0.1") }
         submissionLimiter = WebmentionSubmissionLimiter()
 
-        mockMvc = MockMvcBuilders.standaloneSetup(
-            WebmentionController(
-                notificationService = notificationService,
-                receiverService = receiverService,
-                postService = postService,
-                urlService = urlService,
-                jobScheduler = jobScheduler,
-                hostValidator = hostValidator,
-                submissionLimiter = submissionLimiter,
-            )
-        ).build()
+        mockMvc =
+            MockMvcBuilders
+                .standaloneSetup(
+                    WebmentionController(
+                        notificationService = notificationService,
+                        receiverService = receiverService,
+                        postService = postService,
+                        urlService = urlService,
+                        jobScheduler = jobScheduler,
+                        hostValidator = hostValidator,
+                        submissionLimiter = submissionLimiter,
+                    ),
+                ).build()
 
         `when`(urlService.extractPostSlug(targetUrl)).thenReturn("hello")
         `when`(postService.findBySlug("hello")).thenReturn(publicPost("hello"))
@@ -69,63 +70,59 @@ class WebmentionControllerTest {
 
     @Test
     fun `accepts a valid webmention with 202 and records it as pending`() {
-        mockMvc.perform(
-            post("/webmention")
-                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .param("source", sourceUrl)
-                .param("target", targetUrl)
-        )
-            .andExpect(status().isAccepted)
+        mockMvc
+            .perform(
+                post("/webmention")
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                    .param("source", sourceUrl)
+                    .param("target", targetUrl),
+            ).andExpect(status().isAccepted)
 
         verify(notificationService).ensurePending(sourceUrl, targetUrl, postId)
     }
 
     @Test
     fun `rejects a missing source`() {
-        mockMvc.perform(
-            post("/webmention")
-                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .param("target", targetUrl)
-        )
-            .andExpect(status().isBadRequest)
+        mockMvc
+            .perform(
+                post("/webmention")
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                    .param("target", targetUrl),
+            ).andExpect(status().isBadRequest)
             .andExpect(jsonPath("$.error").value("invalid_request"))
-
     }
 
     @Test
     fun `rejects a malformed source url`() {
-        mockMvc.perform(
-            post("/webmention")
-                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .param("source", "not a url")
-                .param("target", targetUrl)
-        )
-            .andExpect(status().isBadRequest)
-
+        mockMvc
+            .perform(
+                post("/webmention")
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                    .param("source", "not a url")
+                    .param("target", targetUrl),
+            ).andExpect(status().isBadRequest)
     }
 
     @Test
     fun `rejects a non-http scheme`() {
-        mockMvc.perform(
-            post("/webmention")
-                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .param("source", "mailto:someone@example.com")
-                .param("target", targetUrl)
-        )
-            .andExpect(status().isBadRequest)
-
+        mockMvc
+            .perform(
+                post("/webmention")
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                    .param("source", "mailto:someone@example.com")
+                    .param("target", targetUrl),
+            ).andExpect(status().isBadRequest)
     }
 
     @Test
     fun `rejects a source equal to the target`() {
-        mockMvc.perform(
-            post("/webmention")
-                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .param("source", targetUrl)
-                .param("target", targetUrl)
-        )
-            .andExpect(status().isBadRequest)
-
+        mockMvc
+            .perform(
+                post("/webmention")
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                    .param("source", targetUrl)
+                    .param("target", targetUrl),
+            ).andExpect(status().isBadRequest)
     }
 
     @Test
@@ -133,81 +130,79 @@ class WebmentionControllerTest {
         val foreign = "https://other.example/2026/01/01/nope"
         `when`(urlService.extractPostSlug(foreign)).thenReturn(null)
 
-        mockMvc.perform(
-            post("/webmention")
-                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .param("source", sourceUrl)
-                .param("target", foreign)
-        )
-            .andExpect(status().isBadRequest)
+        mockMvc
+            .perform(
+                post("/webmention")
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                    .param("source", sourceUrl)
+                    .param("target", foreign),
+            ).andExpect(status().isBadRequest)
             .andExpect(jsonPath("$.error").value("invalid_request"))
-
     }
 
     @Test
     fun `rejects a target whose post is not publicly reachable`() {
         `when`(postService.findBySlug("hello")).thenReturn(
-            post(slug = "hello", status = PostStatus.DRAFT, visibility = PostVisibility.PUBLIC)
+            post(slug = "hello", status = PostStatus.DRAFT, visibility = PostVisibility.PUBLIC),
         )
 
-        mockMvc.perform(
-            post("/webmention")
-                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .param("source", sourceUrl)
-                .param("target", targetUrl)
-        )
-            .andExpect(status().isBadRequest)
-
+        mockMvc
+            .perform(
+                post("/webmention")
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                    .param("source", sourceUrl)
+                    .param("target", targetUrl),
+            ).andExpect(status().isBadRequest)
     }
-
 
     @Test
     fun `rejects a target whose post is deleted`() {
         `when`(postService.findBySlug("hello")).thenReturn(
-            post(slug = "hello", status = PostStatus.PUBLISHED, visibility = PostVisibility.PUBLIC, deleted = true)
+            post(slug = "hello", status = PostStatus.PUBLISHED, visibility = PostVisibility.PUBLIC, deleted = true),
         )
 
-        mockMvc.perform(
-            post("/webmention")
-                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .param("source", sourceUrl)
-                .param("target", targetUrl)
-        )
-            .andExpect(status().isBadRequest)
-
+        mockMvc
+            .perform(
+                post("/webmention")
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                    .param("source", sourceUrl)
+                    .param("target", targetUrl),
+            ).andExpect(status().isBadRequest)
     }
-
 
     @Test
     fun `rejects a source on a blocked host`() {
-        mockMvc.perform(
-            post("/webmention")
-                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .param("source", "http://127.0.0.1/internal")
-                .param("target", targetUrl)
-        )
-            .andExpect(status().isBadRequest)
+        mockMvc
+            .perform(
+                post("/webmention")
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                    .param("source", "http://127.0.0.1/internal")
+                    .param("target", targetUrl),
+            ).andExpect(status().isBadRequest)
     }
 
     @Test
     fun `rejects a submission over the rate limit`() {
         submissionLimiter.allow(sourceUrl, targetUrl, Instant.now())
 
-        mockMvc.perform(
-            post("/webmention")
-                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .param("source", sourceUrl)
-                .param("target", targetUrl)
-        )
-            .andExpect(status().isBadRequest)
+        mockMvc
+            .perform(
+                post("/webmention")
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                    .param("source", sourceUrl)
+                    .param("target", targetUrl),
+            ).andExpect(status().isBadRequest)
     }
 
-    private fun publicPost(slug: String): Post {
-        return post(slug, PostStatus.PUBLISHED, PostVisibility.PUBLIC)
-    }
+    private fun publicPost(slug: String): Post = post(slug, PostStatus.PUBLISHED, PostVisibility.PUBLIC)
 
-    private fun post(slug: String, status: PostStatus, visibility: PostVisibility, deleted: Boolean = false): Post {
-        return Post(
+    private fun post(
+        slug: String,
+        status: PostStatus,
+        visibility: PostVisibility,
+        deleted: Boolean = false,
+    ): Post =
+        Post(
             id = postId,
             slug = slug,
             status = status,
@@ -215,14 +210,15 @@ class WebmentionControllerTest {
             deleted = deleted,
             type = "h-entry",
             subtype = null,
-            post = Mf2Object(
-                type = listOf("h-entry"),
-                properties = mutableMapOf(
-                    "name" to listOf(Mf2Value.String(slug)),
-                    "published" to listOf(Mf2Value.String("2026-01-01T00:00:00Z")),
+            post =
+                Mf2Object(
+                    type = listOf("h-entry"),
+                    properties =
+                        mutableMapOf(
+                            "name" to listOf(Mf2Value.String(slug)),
+                            "published" to listOf(Mf2Value.String("2026-01-01T00:00:00Z")),
+                        ),
+                    children = null,
                 ),
-                children = null,
-            ),
         )
-    }
 }

@@ -17,11 +17,11 @@ import dev.jacobandersen.bastion.url.UrlService
 import dev.jacobandersen.bastion.util.StringUtil.excerpt
 import dev.jacobandersen.bastion.webmention.service.WebmentionService
 import io.github.oshai.kotlinlogging.KotlinLogging
-import java.util.UUID
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import org.springframework.util.MultiValueMap
 import org.springframework.web.multipart.MultipartFile
+import java.util.UUID
 
 private val logger = KotlinLogging.logger {}
 
@@ -35,13 +35,17 @@ class CreateService(
     private val webmentionService: WebmentionService,
 ) {
     @PreAuthorize("hasAuthority('CREATE')")
-    fun create(payload: MicropubPayload, files: MultiValueMap<String, MultipartFile>?): ApiResponse<*> {
+    fun create(
+        payload: MicropubPayload,
+        files: MultiValueMap<String, MultipartFile>?,
+    ): ApiResponse<*> {
         logger.info { "Parsing post payload..." }
         var obj = payload.asMf2Object()
 
         logger.info { "Resolving post commands..." }
-        val commands = commandResolver.resolve { key -> obj.properties[key] }
-            ?: return ApiResponse.Error.InvalidRequest(errorDescription = "Invalid command parameters in create")
+        val commands =
+            commandResolver.resolve { key -> obj.properties[key] }
+                ?: return ApiResponse.Error.InvalidRequest(errorDescription = "Invalid command parameters in create")
 
         obj = obj.copy(properties = obj.properties.filterKeys { !MicropubCommand.isCommandProperty(it) })
 
@@ -64,12 +68,13 @@ class CreateService(
         }
 
         logger.info { "Creating post..." }
-        val post = try {
-            postService.create(slug, status, visibility, deleted = false, post = obj)
-        } catch (e: IllegalArgumentException) {
-            logger.warn { "Failed to create post: ${e.message}" }
-            return ApiResponse.Error.InvalidRequest(errorDescription = "Invalid published value: ${e.message}")
-        }
+        val post =
+            try {
+                postService.create(slug, status, visibility, deleted = false, post = obj)
+            } catch (e: IllegalArgumentException) {
+                logger.warn { "Failed to create post: ${e.message}" }
+                return ApiResponse.Error.InvalidRequest(errorDescription = "Invalid published value: ${e.message}")
+            }
         val url = urlService.generatePostUrl(post)
 
         logger.info { "Dispatching webmention processing..." }
@@ -100,7 +105,10 @@ class CreateService(
         return UUID.randomUUID().toString()
     }
 
-    private fun uploadFile(obj: Mf2Object, file: MultipartFile?): Mf2Object {
+    private fun uploadFile(
+        obj: Mf2Object,
+        file: MultipartFile?,
+    ): Mf2Object {
         if (file == null) return obj
 
         return when (val result = fileUploadService.upload(file)) {

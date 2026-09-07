@@ -12,7 +12,6 @@ import tools.jackson.databind.node.ObjectNode
  * properties, including the value-class-pattern and its date/time rules.
  */
 internal object Mf2PropertyParser {
-
     private val PROPERTY_CLASS = Regex("^(p|u|dt|e)-([a-z0-9]+(?:-[a-z0-9]+)*)$")
     private val ROOT_CLASS = Regex("^h-([a-z0-9]+(?:-[a-z0-9]+)*)$")
 
@@ -41,15 +40,17 @@ internal object Mf2PropertyParser {
     private val DATE_ONLY = Regex("^\\d{4}-\\d{2}-\\d{2}$")
     private val DATE_ORDINAL = Regex("^\\d{4}-\\d{3}$")
     private val TIMEZONE = Regex("^(Z|[+-]\\d{2}:?\\d{2}|[+-]\\d{2})$")
-    private val TIME_WITH_TZ = Regex(
-        "^([01]?\\d|2[0-4])(?::([0-5]?\\d))?(?::([0-5]?\\d|60))?\\s*(am|pm|a\\.m\\.|p\\.m\\.)?\\s*(Z|[+-]\\d{2}:?\\d{2}|[+-]\\d{2})?$",
-        RegexOption.IGNORE_CASE
-    )
+    private val TIME_WITH_TZ =
+        Regex(
+            "^([01]?\\d|2[0-4])(?::([0-5]?\\d))?(?::([0-5]?\\d|60))?\\s*(am|pm|a\\.m\\.|p\\.m\\.)?\\s*(Z|[+-]\\d{2}:?\\d{2}|[+-]\\d{2})?$",
+            RegexOption.IGNORE_CASE,
+        )
     private val DATE_TIME =
         Regex("^(\\d{4}-\\d{2}-\\d{2})[T ](.+)$")
 
-    fun mf2PropertyClasses(classNames: Set<String>): List<ParsedPropertyClass> {
-        return classNames.asSequence()
+    fun mf2PropertyClasses(classNames: Set<String>): List<ParsedPropertyClass> =
+        classNames
+            .asSequence()
             .mapNotNull { className ->
                 val match = PROPERTY_CLASS.matchEntire(className)
                 if (match == null) {
@@ -58,49 +59,62 @@ internal object Mf2PropertyParser {
                     val prefix = match.groupValues[1]
                     ParsedPropertyClass(if (prefix == "dt") 'd' else prefix[0], match.groupValues[2])
                 }
-            }
-            .toList()
-    }
+            }.toList()
 
-    fun mf2RootClasses(classNames: Set<String>): List<String> {
-        return classNames.asSequence()
+    fun mf2RootClasses(classNames: Set<String>): List<String> =
+        classNames
+            .asSequence()
             .mapNotNull { ROOT_CLASS.matchEntire(it)?.groupValues?.get(1) }
             .map { "h-$it" }
             .toList()
-    }
 
-    fun hasMf2RootClass(classNames: Set<String>): Boolean {
-        return classNames.any { ROOT_CLASS.matches(it) }
-    }
+    fun hasMf2RootClass(classNames: Set<String>): Boolean = classNames.any { ROOT_CLASS.matches(it) }
 
     /**
      * The text content of the element per the parsing specification: drops
      * nested script/style/template, replaces nested imgs with their alt (or
      * resolved src) surrounded by spaces, collapses whitespace and trims.
      */
-    fun textContent(el: Element, resolver: (String) -> String?): String {
+    fun textContent(
+        el: Element,
+        resolver: (String) -> String?,
+    ): String {
         val sb = StringBuilder()
         collectText(el, sb, resolver)
         return sb.toString().replace(Regex("\\s+"), " ").trim()
     }
 
-    private fun collectText(el: Element, sb: StringBuilder, resolver: (String) -> String?) {
+    private fun collectText(
+        el: Element,
+        sb: StringBuilder,
+        resolver: (String) -> String?,
+    ) {
         for (node in el.childNodes()) {
             when (node) {
-                is TextNode -> sb.append(node.text())
+                is TextNode -> {
+                    sb.append(node.text())
+                }
+
                 is Element -> {
                     when (val tag = node.tagName()) {
-                        TAG_SCRIPT, TAG_STYLE, TAG_TEMPLATE -> Unit
+                        TAG_SCRIPT, TAG_STYLE, TAG_TEMPLATE -> {
+                            Unit
+                        }
+
                         TAG_IMG -> {
                             val alt = node.attr("alt")
-                            val replacement = if (alt.isNotBlank()) {
-                                alt
-                            } else {
-                                resolver(node.attr("src")) ?: node.attr("src")
-                            }
+                            val replacement =
+                                if (alt.isNotBlank()) {
+                                    alt
+                                } else {
+                                    resolver(node.attr("src")) ?: node.attr("src")
+                                }
                             sb.append(' ').append(replacement).append(' ')
                         }
-                        else -> collectText(node, sb, resolver)
+
+                        else -> {
+                            collectText(node, sb, resolver)
+                        }
                     }
                 }
             }
@@ -108,27 +122,33 @@ internal object Mf2PropertyParser {
     }
 
     /** The serialized inner HTML of the element with surrounding whitespace trimmed. */
-    fun innerHtml(el: Element): String {
-        return el.html().trim()
-    }
+    fun innerHtml(el: Element): String = el.html().trim()
 
     /**
      * Parse a `p-` property value.
      */
-    fun parseP(el: Element, resolver: (String) -> String?): String {
+    fun parseP(
+        el: Element,
+        resolver: (String) -> String?,
+    ): String {
         valueClassText(el, resolver)?.let { return it }
 
         return when (el.tagName()) {
             TAG_ABBR, TAG_LINK -> {
                 if (el.hasAttr("title")) el.attr("title").trim() else textContent(el, resolver)
             }
+
             TAG_DATA, TAG_INPUT -> {
                 if (el.hasAttr("value")) el.attr("value").trim() else textContent(el, resolver)
             }
+
             TAG_IMG, TAG_AREA -> {
                 if (el.hasAttr("alt")) el.attr("alt").trim() else textContent(el, resolver)
             }
-            else -> textContent(el, resolver)
+
+            else -> {
+                textContent(el, resolver)
+            }
         }
     }
 
@@ -137,33 +157,50 @@ internal object Mf2PropertyParser {
      * with an `alt` attribute yields a `{value, alt}` object. Returns null when
      * the element has no usable value.
      */
-    fun parseU(el: Element, resolver: (String) -> String?): Any? {
+    fun parseU(
+        el: Element,
+        resolver: (String) -> String?,
+    ): Any? {
         val tag = el.tagName()
-        val raw: String = when (tag) {
-            TAG_A, TAG_AREA, TAG_LINK -> if (el.hasAttr("href")) el.attr("href") else ""
-            TAG_IMG -> return parseImg(el, resolver)
-            TAG_AUDIO, TAG_VIDEO, TAG_SOURCE, TAG_IFRAME -> {
-                if (el.hasAttr("src")) {
-                    el.attr("src")
-                } else if (tag == TAG_VIDEO && el.hasAttr("poster")) {
-                    el.attr("poster")
-                } else {
+        val raw: String =
+            when (tag) {
+                TAG_A, TAG_AREA, TAG_LINK -> {
+                    if (el.hasAttr("href")) el.attr("href") else ""
+                }
+
+                TAG_IMG -> {
+                    return parseImg(el, resolver)
+                }
+
+                TAG_AUDIO, TAG_VIDEO, TAG_SOURCE, TAG_IFRAME -> {
+                    if (el.hasAttr("src")) {
+                        el.attr("src")
+                    } else if (tag == TAG_VIDEO && el.hasAttr("poster")) {
+                        el.attr("poster")
+                    } else {
+                        ""
+                    }
+                }
+
+                TAG_OBJECT -> {
+                    if (el.hasAttr("data")) el.attr("data") else ""
+                }
+
+                else -> {
                     ""
                 }
             }
-            TAG_OBJECT -> if (el.hasAttr("data")) el.attr("data") else ""
-            else -> ""
-        }
 
         val fromAttribute = raw.isNotBlank()
         if (!fromAttribute) {
             valueClassText(el, resolver)?.let { rawValue -> return normalizeUrl(rawValue, resolver) }
 
-            val attributed: String = when (tag) {
-                TAG_ABBR -> if (el.hasAttr("title")) el.attr("title") else ""
-                TAG_DATA, TAG_INPUT -> if (el.hasAttr("value")) el.attr("value") else ""
-                else -> ""
-            }
+            val attributed: String =
+                when (tag) {
+                    TAG_ABBR -> if (el.hasAttr("title")) el.attr("title") else ""
+                    TAG_DATA, TAG_INPUT -> if (el.hasAttr("value")) el.attr("value") else ""
+                    else -> ""
+                }
             if (attributed.isNotBlank()) {
                 return normalizeUrl(attributed, resolver)
             }
@@ -178,7 +215,10 @@ internal object Mf2PropertyParser {
     }
 
     /** Parse an `img` element for src and alt, returning a URL string or a {value, alt} object. */
-    fun parseImg(el: Element, resolver: (String) -> String?): Any? {
+    fun parseImg(
+        el: Element,
+        resolver: (String) -> String?,
+    ): Any? {
         val src = el.attr("src")
         if (src.isBlank()) {
             return null
@@ -195,7 +235,10 @@ internal object Mf2PropertyParser {
     }
 
     /** Parse an `e-` property value into a {html, value} object. */
-    fun parseE(el: Element, resolver: (String) -> String?): ObjectNode {
+    fun parseE(
+        el: Element,
+        resolver: (String) -> String?,
+    ): ObjectNode {
         val node = JsonNodeFactory.instance.objectNode()
         node.put("html", innerHtml(el))
         node.put("value", textContent(el, resolver))
@@ -207,32 +250,44 @@ internal object Mf2PropertyParser {
      * date-bearing value from a time-only value so the caller can apply the
      * cross-property date adoption rule.
      */
-    fun parseDt(el: Element, resolver: (String) -> String?): DtResult {
+    fun parseDt(
+        el: Element,
+        resolver: (String) -> String?,
+    ): DtResult {
         val valueElements = valueElements(el)
-        val rawValues = if (valueElements.isNotEmpty()) {
-            valueElements.map { valueText(it, resolver) }
-        } else {
-            emptyList()
-        }
-
-        val explicit = when {
-            rawValues.isNotEmpty() -> rawValues
-            else -> {
-                val tag = el.tagName()
-                val direct: String? = when (tag) {
-                    TAG_TIME, TAG_INS, TAG_DEL -> if (el.hasAttr("datetime")) el.attr("datetime") else null
-                    TAG_ABBR -> if (el.hasAttr("title")) el.attr("title") else null
-                    TAG_DATA, TAG_INPUT -> if (el.hasAttr("value")) el.attr("value") else null
-                    else -> null
-                }
-                if (direct != null) listOf(direct) else emptyList()
+        val rawValues =
+            if (valueElements.isNotEmpty()) {
+                valueElements.map { valueText(it, resolver) }
+            } else {
+                emptyList()
             }
-        }
+
+        val explicit =
+            when {
+                rawValues.isNotEmpty() -> {
+                    rawValues
+                }
+
+                else -> {
+                    val tag = el.tagName()
+                    val direct: String? =
+                        when (tag) {
+                            TAG_TIME, TAG_INS, TAG_DEL -> if (el.hasAttr("datetime")) el.attr("datetime") else null
+                            TAG_ABBR -> if (el.hasAttr("title")) el.attr("title") else null
+                            TAG_DATA, TAG_INPUT -> if (el.hasAttr("value")) el.attr("value") else null
+                            else -> null
+                        }
+                    if (direct != null) listOf(direct) else emptyList()
+                }
+            }
 
         return assembleDt(explicit, if (explicit.isEmpty()) textContent(el, resolver) else null)
     }
 
-    private fun assembleDt(tokens: List<String>, fallbackText: String?): DtResult {
+    private fun assembleDt(
+        tokens: List<String>,
+        fallbackText: String?,
+    ): DtResult {
         var date: String? = null
         var time: String? = null
         var tz: String? = null
@@ -254,11 +309,19 @@ internal object Mf2PropertyParser {
             }
 
             when {
-                DATE_ONLY.matches(t) || DATE_ORDINAL.matches(t) -> if (date == null) date = normalizeDate(t)
-                TIMEZONE.matches(t) -> if (tz == null) tz = normalizeTz(t)
-                else -> parseTimeAndTz(t)?.let { (parsedTime, parsedTz) ->
-                    time = parsedTime
-                    tz = parsedTz
+                DATE_ONLY.matches(t) || DATE_ORDINAL.matches(t) -> {
+                    if (date == null) date = normalizeDate(t)
+                }
+
+                TIMEZONE.matches(t) -> {
+                    if (tz == null) tz = normalizeTz(t)
+                }
+
+                else -> {
+                    parseTimeAndTz(t)?.let { (parsedTime, parsedTz) ->
+                        time = parsedTime
+                        tz = parsedTz
+                    }
                 }
             }
         }
@@ -276,13 +339,16 @@ internal object Mf2PropertyParser {
         return DtResult(date = null, value = text, hasTime = false)
     }
 
-    private fun join(date: String, time: String, tz: String?): String {
-        return "$date ${joinTime(time, tz)}"
-    }
+    private fun join(
+        date: String,
+        time: String,
+        tz: String?,
+    ): String = "$date ${joinTime(time, tz)}"
 
-    private fun joinTime(time: String, tz: String?): String {
-        return if (tz != null) "$time$tz" else time
-    }
+    private fun joinTime(
+        time: String,
+        tz: String?,
+    ): String = if (tz != null) "$time$tz" else time
 
     /** Parse a time token; returns (formatted time, normalized tz) or null if not a time. */
     private fun parseTimeAndTz(token: String): Pair<String, String?>? {
@@ -327,6 +393,7 @@ internal object Mf2PropertyParser {
      */
     private fun valueElements(el: Element): List<Element> {
         val out = mutableListOf<Element>()
+
         fun scan(node: Node) {
             if (node !is Element) return
             if (CLASS_VALUE in node.classNames() || CLASS_VALUE_TITLE in node.classNames()) {
@@ -339,17 +406,33 @@ internal object Mf2PropertyParser {
         return out
     }
 
-    private fun valueText(el: Element, resolver: (String) -> String?): String {
+    private fun valueText(
+        el: Element,
+        resolver: (String) -> String?,
+    ): String {
         if (el.classNames().contains(CLASS_VALUE_TITLE)) {
             return if (el.hasAttr("title")) el.attr("title") else textContent(el, resolver)
         }
         return when (el.tagName()) {
-            TAG_IMG, TAG_AREA -> el.attr("alt")
-            TAG_DATA -> if (el.hasAttr("value")) el.attr("value") else textContent(el, resolver)
-            TAG_ABBR -> if (el.hasAttr("title")) el.attr("title") else textContent(el, resolver)
-            TAG_TIME, TAG_INS, TAG_DEL ->
+            TAG_IMG, TAG_AREA -> {
+                el.attr("alt")
+            }
+
+            TAG_DATA -> {
+                if (el.hasAttr("value")) el.attr("value") else textContent(el, resolver)
+            }
+
+            TAG_ABBR -> {
+                if (el.hasAttr("title")) el.attr("title") else textContent(el, resolver)
+            }
+
+            TAG_TIME, TAG_INS, TAG_DEL -> {
                 if (el.hasAttr("datetime")) el.attr("datetime") else textContent(el, resolver)
-            else -> textContent(el, resolver)
+            }
+
+            else -> {
+                textContent(el, resolver)
+            }
         }
     }
 
@@ -358,7 +441,10 @@ internal object Mf2PropertyParser {
      * null when the element has no descendant `value` elements. Multiple values
      * are concatenated without separators.
      */
-    private fun valueClassText(el: Element, resolver: (String) -> String?): String? {
+    private fun valueClassText(
+        el: Element,
+        resolver: (String) -> String?,
+    ): String? {
         val valueEls = valueElements(el)
         if (valueEls.isEmpty()) {
             return null
@@ -367,7 +453,10 @@ internal object Mf2PropertyParser {
         return joined.trim()
     }
 
-    private fun normalizeUrl(raw: String, resolver: (String) -> String?): String? {
+    private fun normalizeUrl(
+        raw: String,
+        resolver: (String) -> String?,
+    ): String? {
         val trimmed = raw.trim()
         if (trimmed.isEmpty()) return null
         return resolver(trimmed)

@@ -8,10 +8,8 @@ import java.time.ZoneId
 @Configuration
 class TimeZoneConfig(
     @Value($$"${bastion.timezone}")
-    val tz: String
+    val tz: String,
 ) {
     @Bean
-    fun bastionTimeZone(): ZoneId {
-        return ZoneId.of(tz)
-    }
+    fun bastionTimeZone(): ZoneId = ZoneId.of(tz)
 }

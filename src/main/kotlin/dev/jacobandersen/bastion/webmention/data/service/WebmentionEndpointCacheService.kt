@@ -7,7 +7,10 @@ import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
 
 sealed interface EndpointCacheResult {
-    data class Fresh(val endpointUrl: String?) : EndpointCacheResult
+    data class Fresh(
+        val endpointUrl: String?,
+    ) : EndpointCacheResult
+
     data object Miss : EndpointCacheResult
 }
 
@@ -16,7 +19,10 @@ class WebmentionEndpointCacheService(
     private val repository: WebmentionEndpointCacheRepository,
 ) {
     @Transactional(readOnly = true)
-    fun lookup(targetUrl: String, now: Instant): EndpointCacheResult {
+    fun lookup(
+        targetUrl: String,
+        now: Instant,
+    ): EndpointCacheResult {
         val entry = repository.findByTargetUrl(targetUrl) ?: return EndpointCacheResult.Miss
         return if (entry.expiresAt.isAfter(now)) {
             EndpointCacheResult.Fresh(entry.endpointUrl)
@@ -26,15 +32,20 @@ class WebmentionEndpointCacheService(
     }
 
     @Transactional
-    fun store(targetUrl: String, endpointUrl: String?, expiresAt: Instant) {
+    fun store(
+        targetUrl: String,
+        endpointUrl: String?,
+        expiresAt: Instant,
+    ) {
         val now = Instant.now()
-        val entry = repository.findByTargetUrl(targetUrl)
-            ?: WebmentionEndpointCacheEntity(
-                targetUrl = targetUrl,
-                discoveredAt = now,
-                expiresAt = expiresAt,
-                updatedAt = now,
-            )
+        val entry =
+            repository.findByTargetUrl(targetUrl)
+                ?: WebmentionEndpointCacheEntity(
+                    targetUrl = targetUrl,
+                    discoveredAt = now,
+                    expiresAt = expiresAt,
+                    updatedAt = now,
+                )
         entry.endpointUrl = endpointUrl
         entry.discoveredAt = now
         entry.expiresAt = expiresAt

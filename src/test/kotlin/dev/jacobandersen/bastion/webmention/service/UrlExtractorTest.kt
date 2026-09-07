@@ -42,9 +42,10 @@ class UrlExtractorTest {
 
     @Test
     fun foldsDefaultPorts() {
-        val links = UrlExtractor.distinctUrls(
-            listOf("http://example.com:80/a", "https://example.com:443/a", "https://example.com/a")
-        )
+        val links =
+            UrlExtractor.distinctUrls(
+                listOf("http://example.com:80/a", "https://example.com:443/a", "https://example.com/a"),
+            )
 
         assertEquals(listOf("http://example.com:80/a"), links)
     }
@@ -79,9 +80,10 @@ class UrlExtractorTest {
 
     @Test
     fun stripsTrackingParams() {
-        val links = UrlExtractor.distinctUrls(
-            listOf("https://example.com/a?utm_source=x&utm_medium=y", "https://example.com/a")
-        )
+        val links =
+            UrlExtractor.distinctUrls(
+                listOf("https://example.com/a?utm_source=x&utm_medium=y", "https://example.com/a"),
+            )
 
         assertEquals(listOf("https://example.com/a?utm_source=x&utm_medium=y"), links)
     }

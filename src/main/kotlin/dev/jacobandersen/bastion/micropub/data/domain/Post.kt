@@ -1,10 +1,10 @@
 package dev.jacobandersen.bastion.micropub.data.domain
 
+import dev.jacobandersen.bastion.microformats2.Mf2Object
+import dev.jacobandersen.bastion.microformats2.Mf2Value
 import dev.jacobandersen.bastion.micropub.data.entity.PostEntity
 import dev.jacobandersen.bastion.micropub.type.PostStatus
 import dev.jacobandersen.bastion.micropub.type.PostVisibility
-import dev.jacobandersen.bastion.microformats2.Mf2Object
-import dev.jacobandersen.bastion.microformats2.Mf2Value
 import java.time.OffsetDateTime
 import java.util.UUID
 
@@ -19,9 +19,10 @@ data class Post(
     val post: Mf2Object,
 ) {
     val publishedAt: OffsetDateTime?
-        get() = (post.getFirstProperty("published") as? Mf2Value.String)
-            ?.value
-            ?.let { runCatching { OffsetDateTime.parse(it) }.getOrNull() }
+        get() =
+            (post.getFirstProperty("published") as? Mf2Value.String)
+                ?.value
+                ?.let { runCatching { OffsetDateTime.parse(it) }.getOrNull() }
 
     /**
      * Whether the post is published content that could be shown publicly,
@@ -43,7 +44,5 @@ data class Post(
      * refetches them after flush. Updates go through the managed entity
      * instead of building a detached one.
      */
-    fun toEntity(): PostEntity {
-        return PostEntity(id = id, slug = slug, status = status, visibility = visibility, deleted = deleted, post = post)
-    }
+    fun toEntity(): PostEntity = PostEntity(id = id, slug = slug, status = status, visibility = visibility, deleted = deleted, post = post)
 }

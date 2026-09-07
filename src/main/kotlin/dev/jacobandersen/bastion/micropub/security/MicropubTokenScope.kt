@@ -7,19 +7,15 @@ enum class MicropubTokenScope : GrantedAuthority {
     UPDATE,
     DELETE,
     UNDELETE,
-    MEDIA;
+    MEDIA,
+    ;
 
-    override fun getAuthority(): String {
-        return name
-    }
+    override fun getAuthority(): String = name
 
     companion object {
-        fun fromString(scope: String): MicropubTokenScope {
-            return fromStringOrNull(scope) ?: throw IllegalArgumentException("Unknown token scope '$scope'")
-        }
+        fun fromString(scope: String): MicropubTokenScope =
+            fromStringOrNull(scope) ?: throw IllegalArgumentException("Unknown token scope '$scope'")
 
-        fun fromStringOrNull(scope: String): MicropubTokenScope? {
-            return entries.find { it.name.equals(scope, ignoreCase = true) }
-        }
+        fun fromStringOrNull(scope: String): MicropubTokenScope? = entries.find { it.name.equals(scope, ignoreCase = true) }
     }
 }

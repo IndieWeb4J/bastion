@@ -9,24 +9,31 @@ import tools.jackson.databind.node.ArrayNode
 import tools.jackson.databind.node.ObjectNode
 
 sealed interface MicropubPayload {
-    data class Json(val value: ObjectNode) : MicropubPayload
-    data class Form(val value: Map<String, Array<String>>) : MicropubPayload
+    data class Json(
+        val value: ObjectNode,
+    ) : MicropubPayload
 
-    fun asMf2Object(): Mf2Object {
-        return when (this) {
+    data class Form(
+        val value: Map<String, Array<String>>,
+    ) : MicropubPayload
+
+    fun asMf2Object(): Mf2Object =
+        when (this) {
             is Form -> this.value.toMf2Object()
             is Json -> this.value.toMf2Object()
         }
-    }
 
-    fun getUrl(): String {
-        return when (this) {
-            is Form -> this.value["url"]?.firstOrNull()
-                ?: throw IllegalArgumentException("missing required url")
+    fun getUrl(): String =
+        when (this) {
+            is Form -> {
+                this.value["url"]?.firstOrNull()
+                    ?: throw IllegalArgumentException("missing required url")
+            }
 
-            is Json -> this.value.requiredString("url")
+            is Json -> {
+                this.value.requiredString("url")
+            }
         }
-    }
 
     fun asUpdatePayload(): MicropubUpdatePayload {
         if (this is Form) {
@@ -51,9 +58,7 @@ private fun ObjectNode.requiredString(key: String): String {
     return node.asString()
 }
 
-private fun ObjectNode.optionalMf2Values(key: String): Map<String, List<Mf2Value>>? {
-    return (this[key] as? ObjectNode)?.asMf2ValuesMap()
-}
+private fun ObjectNode.optionalMf2Values(key: String): Map<String, List<Mf2Value>>? = (this[key] as? ObjectNode)?.asMf2ValuesMap()
 
 private fun ObjectNode.asMf2ValuesMap(): Map<String, List<Mf2Value>> {
     val properties = mutableMapOf<String, List<Mf2Value>>()
@@ -68,16 +73,22 @@ private fun ObjectNode.optionalDeletions(key: String): MicropubUpdatePayload.Rem
     val node = this[key] ?: return null
     return when (node) {
         is ArrayNode -> {
-            val propertyNames = buildList {
-                node.forEach { element ->
-                    if (!element.isString) throw IllegalArgumentException("Delete entries must be strings")
-                    add(element.asString())
+            val propertyNames =
+                buildList {
+                    node.forEach { element ->
+                        if (!element.isString) throw IllegalArgumentException("Delete entries must be strings")
+                        add(element.asString())
+                    }
                 }
-            }
             MicropubUpdatePayload.Removals.All(propertyNames)
         }
 
-        is ObjectNode -> MicropubUpdatePayload.Removals.Many(node.asMf2ValuesMap())
-        else -> null
+        is ObjectNode -> {
+            MicropubUpdatePayload.Removals.Many(node.asMf2ValuesMap())
+        }
+
+        else -> {
+            null
+        }
     }
 }

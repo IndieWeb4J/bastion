@@ -23,59 +23,44 @@ class ReceivedWebmentionEntity(
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     var id: UUID? = null,
-
     @Column(nullable = false)
     var postId: UUID,
-
     @Column(nullable = false)
     var sourceUrl: String,
-
     @Column(nullable = false)
     var targetUrl: String,
-
     @Column(nullable = false)
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Enumerated(EnumType.STRING)
     var state: ReceivedWebmentionState,
-
     @Column(nullable = true)
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Enumerated(EnumType.STRING)
     var interaction: WebmentionInteraction?,
-
     @Column(nullable = true)
     var authorName: String?,
-
     @Column(nullable = true)
     var authorUrl: String?,
-
     @Column(nullable = true)
     var authorPhoto: String?,
-
     @Column(nullable = true)
     var contentText: String?,
-
     @Column(nullable = true)
     var contentHtml: String?,
-
     @Column(nullable = true)
     @JdbcTypeCode(SqlTypes.JSON)
     var rawMf2: Mf2Object?,
-
     @Column(nullable = true)
     var lastError: String?,
-
     @Column(nullable = false)
     var firstSeenAt: Instant,
-
     @Column(nullable = true)
     var verifiedAt: Instant?,
-
     @Column(nullable = false)
     var updatedAtUtc: Instant,
 ) {
-    fun toDomain(): ReceivedWebmention {
-        return ReceivedWebmention(
+    fun toDomain(): ReceivedWebmention =
+        ReceivedWebmention(
             id = requireNotNull(id),
             postId = postId,
             sourceUrl = sourceUrl,
@@ -93,5 +78,4 @@ class ReceivedWebmentionEntity(
             verifiedAt = verifiedAt,
             updatedAtUtc = updatedAtUtc,
         )
-    }
 }

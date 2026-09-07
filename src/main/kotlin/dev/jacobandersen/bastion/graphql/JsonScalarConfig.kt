@@ -6,9 +6,9 @@ import graphql.language.Value
 import graphql.schema.Coercing
 import graphql.schema.GraphQLScalarType
 import graphql.schema.idl.RuntimeWiring
-import java.util.Locale
 import org.springframework.context.annotation.Configuration
 import org.springframework.graphql.execution.RuntimeWiringConfigurer
+import java.util.Locale
 
 /**
  * A pass-through JSON scalar. Resolver values are normalized to plain
@@ -17,24 +17,30 @@ import org.springframework.graphql.execution.RuntimeWiringConfigurer
  */
 @Configuration
 class JsonScalarConfig : RuntimeWiringConfigurer {
-
     override fun configure(builder: RuntimeWiring.Builder) {
         builder.scalar(jsonScalar())
     }
 
-    private fun jsonScalar(): GraphQLScalarType {
-        return GraphQLScalarType.newScalar()
+    private fun jsonScalar(): GraphQLScalarType =
+        GraphQLScalarType
+            .newScalar()
             .name("JSON")
             .description("An arbitrary JSON value")
             .coercing(JsonCoercing)
             .build()
-    }
 
     private object JsonCoercing : Coercing<Any, Any> {
-        override fun serialize(dataFetcherResult: Any, graphQLContext: GraphQLContext, locale: Locale): Any =
-            dataFetcherResult
+        override fun serialize(
+            dataFetcherResult: Any,
+            graphQLContext: GraphQLContext,
+            locale: Locale,
+        ): Any = dataFetcherResult
 
-        override fun parseValue(input: Any, graphQLContext: GraphQLContext, locale: Locale): Any = input
+        override fun parseValue(
+            input: Any,
+            graphQLContext: GraphQLContext,
+            locale: Locale,
+        ): Any = input
 
         override fun parseLiteral(
             input: Value<*>,

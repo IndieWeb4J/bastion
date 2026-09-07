@@ -3,19 +3,22 @@ package dev.jacobandersen.bastion.webmention.http
 import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpServer
 import dev.jacobandersen.bastion.webmention.config.WebmentionConfig
-import java.net.InetSocketAddress
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import java.net.InetSocketAddress
 
 class WebmentionSourceFetcherTest {
+    private fun fetcher(blockedHosts: Set<String> = emptySet()) =
+        WebmentionSourceFetcher(
+            WebmentionConfig(),
+            SourceHostValidator { url -> blockedHosts.any { url.contains(it) } },
+        )
 
-    private fun fetcher(blockedHosts: Set<String> = emptySet()) = WebmentionSourceFetcher(
-        WebmentionConfig(),
-        SourceHostValidator { url -> blockedHosts.any { url.contains(it) } },
-    )
-
-    private fun withServer(handler: (HttpExchange) -> Unit, run: (String) -> Unit) {
+    private fun withServer(
+        handler: (HttpExchange) -> Unit,
+        run: (String) -> Unit,
+    ) {
         val server = HttpServer.create(InetSocketAddress(0), 0)
         server.createContext("/") { exchange ->
             handler(exchange)
@@ -29,7 +32,12 @@ class WebmentionSourceFetcherTest {
         }
     }
 
-    private fun respond(exchange: HttpExchange, status: Int, body: String, headers: Map<String, String> = emptyMap()) {
+    private fun respond(
+        exchange: HttpExchange,
+        status: Int,
+        body: String,
+        headers: Map<String, String> = emptyMap(),
+    ) {
         headers.forEach { (name, value) -> exchange.responseHeaders.add(name, value) }
         val bytes = body.toByteArray()
         exchange.sendResponseHeaders(status, bytes.size.toLong())

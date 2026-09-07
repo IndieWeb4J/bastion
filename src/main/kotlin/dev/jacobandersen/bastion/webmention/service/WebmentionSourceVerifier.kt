@@ -28,31 +28,38 @@ internal data class SourceVerification(
  * source is gone, and any other failure is unreachable.
  */
 internal object WebmentionSourceVerifier {
+    private val URL_ATTRIBUTES: List<Pair<String, String>> =
+        listOf(
+            "a" to "href",
+            "area" to "href",
+            "link" to "href",
+            "img" to "src",
+            "video" to "src",
+            "video" to "poster",
+            "audio" to "src",
+            "source" to "src",
+            "iframe" to "src",
+            "object" to "data",
+        )
 
-    private val URL_ATTRIBUTES: List<Pair<String, String>> = listOf(
-        "a" to "href",
-        "area" to "href",
-        "link" to "href",
-        "img" to "src",
-        "video" to "src",
-        "video" to "poster",
-        "audio" to "src",
-        "source" to "src",
-        "iframe" to "src",
-        "object" to "data",
-    )
-
-    fun verify(fetch: SourceFetch, targetUrl: String, parser: Mf2Parser): SourceVerification {
+    fun verify(
+        fetch: SourceFetch,
+        targetUrl: String,
+        parser: Mf2Parser,
+    ): SourceVerification {
         when {
-            fetch.statusCode == 410 || fetch.statusCode == 404 ->
+            fetch.statusCode == 410 || fetch.statusCode == 404 -> {
                 return SourceVerification(SourceVerdict.GONE)
+            }
 
-            fetch.statusCode !in 200..299 ->
+            fetch.statusCode !in 200..299 -> {
                 return SourceVerification(
                     SourceVerdict.UNREACHABLE,
-                    reason = fetch.error
-                        ?: "source returned HTTP ${fetch.statusCode}",
+                    reason =
+                        fetch.error
+                            ?: "source returned HTTP ${fetch.statusCode}",
                 )
+            }
         }
 
         if (HttpUtil.isHtmlContentType(fetch.contentType)) {
@@ -72,7 +79,10 @@ internal object WebmentionSourceVerifier {
         return SourceVerification(SourceVerdict.VERIFIED)
     }
 
-    private fun htmlMentions(document: Document, targetUrl: String): Boolean {
+    private fun htmlMentions(
+        document: Document,
+        targetUrl: String,
+    ): Boolean {
         val target = targetUrl.trim()
         val normalizedTarget = withoutFragment(target)
 

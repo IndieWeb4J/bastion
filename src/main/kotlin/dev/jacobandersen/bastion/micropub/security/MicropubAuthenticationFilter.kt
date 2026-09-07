@@ -24,27 +24,32 @@ class MicropubAuthenticationFilter(
     private val validator: MicropubTokenValidator,
     private val objectMapper: ObjectMapper,
 ) : OncePerRequestFilter() {
-
     override fun doFilterInternal(
         request: HttpServletRequest,
         response: HttpServletResponse,
         filterChain: FilterChain,
     ) {
         when (val extracted = extractToken(request)) {
-            is ExtractedToken.Invalid -> respond(
-                response,
-                ApiResponse.Error.InvalidRequest(errorDescription = "Only one form of access token may be provided"),
-            )
+            is ExtractedToken.Invalid -> {
+                respond(
+                    response,
+                    ApiResponse.Error.InvalidRequest(errorDescription = "Only one form of access token may be provided"),
+                )
+            }
 
-            ExtractedToken.Missing -> respond(response, ApiResponse.Error.Unauthorized())
+            ExtractedToken.Missing -> {
+                respond(response, ApiResponse.Error.Unauthorized())
+            }
+
             is ExtractedToken.Valid -> {
-                SecurityContextHolder.getContext().authentication = try {
-                    validator.validateToken(extracted.value)
-                } catch (e: Exception) {
-                    log.warn(e) { "Micropub token validation failed" }
-                    respond(response, ApiResponse.Error.Forbidden())
-                    return
-                }
+                SecurityContextHolder.getContext().authentication =
+                    try {
+                        validator.validateToken(extracted.value)
+                    } catch (e: Exception) {
+                        log.warn(e) { "Micropub token validation failed" }
+                        respond(response, ApiResponse.Error.Forbidden())
+                        return
+                    }
                 filterChain.doFilter(request, response)
             }
         }
@@ -73,13 +78,20 @@ class MicropubAuthenticationFilter(
         }
     }
 
-    private fun respond(response: HttpServletResponse, apiResponse: ApiResponse<*>) {
+    private fun respond(
+        response: HttpServletResponse,
+        apiResponse: ApiResponse<*>,
+    ) {
         apiResponse.toResponseEntity().writeResponse(response, objectMapper)
     }
 
     private sealed interface ExtractedToken {
-        data class Valid(val value: String) : ExtractedToken
+        data class Valid(
+            val value: String,
+        ) : ExtractedToken
+
         data object Missing : ExtractedToken
+
         data object Invalid : ExtractedToken
     }
 }

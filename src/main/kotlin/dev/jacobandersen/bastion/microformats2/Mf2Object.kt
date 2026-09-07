@@ -29,27 +29,34 @@ data class Mf2Object(
     /** Whether the property exists with at least one value. */
     fun hasProperty(key: String): Boolean = getProperty(key).isNotEmpty()
 
-    fun setProperty(key: String, value: Mf2Value): Mf2Object = setProperty(key, listOf(value))
+    fun setProperty(
+        key: String,
+        value: Mf2Value,
+    ): Mf2Object = setProperty(key, listOf(value))
 
-    fun setProperty(key: String, values: List<Mf2Value>): Mf2Object =
-        copy(properties = properties + (key to values))
+    fun setProperty(
+        key: String,
+        values: List<Mf2Value>,
+    ): Mf2Object = copy(properties = properties + (key to values))
 
-    fun addProperty(key: String, value: Mf2Value): Mf2Object = addProperty(key, listOf(value))
+    fun addProperty(
+        key: String,
+        value: Mf2Value,
+    ): Mf2Object = addProperty(key, listOf(value))
 
-    fun addProperty(key: String, values: List<Mf2Value>): Mf2Object =
-        copy(properties = properties + (key to (getProperty(key) + values)))
+    fun addProperty(
+        key: String,
+        values: List<Mf2Value>,
+    ): Mf2Object = copy(properties = properties + (key to (getProperty(key) + values)))
 
     fun deleteProperty(key: String): Mf2Object = copy(properties = properties - key)
 }
 
 /** The first non-blank plain-text value of the property, or null. */
-fun Mf2Object.firstText(key: String): String? =
-    getProperty(key).firstNotNullOfOrNull { it.plainTextOrNull }?.takeIf { it.isNotBlank() }
+fun Mf2Object.firstText(key: String): String? = getProperty(key).firstNotNullOfOrNull { it.plainTextOrNull }?.takeIf { it.isNotBlank() }
 
 /** The first non-blank `html` value of the property, or null. */
-fun Mf2Object.firstHtml(key: String): String? =
-    getProperty(key).firstNotNullOfOrNull { it.htmlOrNull }?.takeIf { it.isNotBlank() }
+fun Mf2Object.firstHtml(key: String): String? = getProperty(key).firstNotNullOfOrNull { it.htmlOrNull }?.takeIf { it.isNotBlank() }
 
 /** All non-blank plain-text values of the property. */
-fun Mf2Object.texts(key: String): List<String> =
-    getProperty(key).mapNotNull { it.plainTextOrNull }.filter { it.isNotBlank() }
+fun Mf2Object.texts(key: String): List<String> = getProperty(key).mapNotNull { it.plainTextOrNull }.filter { it.isNotBlank() }

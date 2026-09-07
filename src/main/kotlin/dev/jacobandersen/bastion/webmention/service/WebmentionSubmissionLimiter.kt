@@ -1,8 +1,8 @@
 package dev.jacobandersen.bastion.webmention.service
 
+import org.springframework.stereotype.Component
 import java.time.Duration
 import java.time.Instant
-import org.springframework.stereotype.Component
 
 /**
  * Guards the webmention receiver against submission flooding. The endpoint is
@@ -16,13 +16,20 @@ import org.springframework.stereotype.Component
  */
 @Component
 class WebmentionSubmissionLimiter {
-    private data class SourceWindow(val count: Int, val expiresAt: Instant)
+    private data class SourceWindow(
+        val count: Int,
+        val expiresAt: Instant,
+    )
 
     private val lock = Any()
     private val pairCooldowns = LinkedHashMap<String, Instant>()
     private val sourceSubmissions = LinkedHashMap<String, SourceWindow>()
 
-    fun allow(sourceUrl: String, targetUrl: String, now: Instant = Instant.now()): Boolean {
+    fun allow(
+        sourceUrl: String,
+        targetUrl: String,
+        now: Instant = Instant.now(),
+    ): Boolean {
         synchronized(lock) {
             evictExpired(now)
 

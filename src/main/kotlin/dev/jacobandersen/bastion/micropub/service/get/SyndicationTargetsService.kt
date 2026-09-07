@@ -5,9 +5,10 @@ import org.springframework.stereotype.Service
 
 @Service
 class SyndicationTargetsService {
-    fun getSyndicationTargets(): ApiResponse<*> {
-        return ApiResponse.Success.Ok(mapOf(
-            "syndicate-to" to emptyList<Map<String, String>>(),
-        ))
-    }
+    fun getSyndicationTargets(): ApiResponse<*> =
+        ApiResponse.Success.Ok(
+            mapOf(
+                "syndicate-to" to emptyList<Map<String, String>>(),
+            ),
+        )
 }

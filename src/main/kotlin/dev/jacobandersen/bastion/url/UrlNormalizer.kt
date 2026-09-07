@@ -7,8 +7,11 @@ import java.net.URI
  * (webmention target dedup, profile identity checks, slug extraction).
  */
 internal object UrlNormalizer {
-
-    data class Authority(val scheme: String, val host: String, val port: Int)
+    data class Authority(
+        val scheme: String,
+        val host: String,
+        val port: Int,
+    )
 
     /**
      * Lowercased scheme/host with default ports normalized to -1, or null for
@@ -19,10 +22,11 @@ internal object UrlNormalizer {
         val scheme = uri.scheme?.lowercase() ?: return null
         if (scheme != "http" && scheme != "https") return null
         val host = uri.host?.lowercase() ?: return null
-        val port = when (uri.port) {
-            -1, 80, 443 -> -1
-            else -> uri.port
-        }
+        val port =
+            when (uri.port) {
+                -1, 80, 443 -> -1
+                else -> uri.port
+            }
         return Authority(scheme, host, port)
     }
 
@@ -55,12 +59,13 @@ internal object UrlNormalizer {
 
     private fun canonicalQuery(rawQuery: String?): String {
         if (rawQuery.isNullOrEmpty()) return ""
-        val cleaned = rawQuery
-            .split('&')
-            .filter { it.isNotEmpty() }
-            .filterNot { it.substringBefore('=').lowercase().startsWith("utm_") }
-            .sorted()
-            .joinToString("&")
+        val cleaned =
+            rawQuery
+                .split('&')
+                .filter { it.isNotEmpty() }
+                .filterNot { it.substringBefore('=').lowercase().startsWith("utm_") }
+                .sorted()
+                .joinToString("&")
         return if (cleaned.isEmpty()) "" else "?$cleaned"
     }
 }

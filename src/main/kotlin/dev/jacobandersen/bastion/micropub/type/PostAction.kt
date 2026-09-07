@@ -4,7 +4,8 @@ enum class PostAction {
     CREATE,
     UPDATE,
     DELETE,
-    UNDELETE;
+    UNDELETE,
+    ;
 
     companion object {
         fun fromString(value: String?): PostAction? {

@@ -4,10 +4,10 @@ import dev.jacobandersen.bastion.micropub.data.domain.Token
 import dev.jacobandersen.bastion.micropub.data.entity.TokenEntity
 import dev.jacobandersen.bastion.micropub.data.repository.TokenRepository
 import dev.jacobandersen.bastion.micropub.security.MicropubToken
-import java.time.Duration
-import java.time.Instant
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.Duration
+import java.time.Instant
 
 @Service
 class TokenService(
@@ -25,13 +25,16 @@ class TokenService(
     }
 
     @Transactional
-    fun rememberToken(rawToken: String, token: MicropubToken) {
+    fun rememberToken(
+        rawToken: String,
+        token: MicropubToken,
+    ) {
         tokenRepository.save(
             TokenEntity(
                 token = rawToken,
                 decoded = token,
                 expiresAt = Instant.now().plus(REMEMBER_DURATION),
-            )
+            ),
         )
     }
 

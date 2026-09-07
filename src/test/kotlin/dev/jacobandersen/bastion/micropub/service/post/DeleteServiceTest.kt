@@ -1,14 +1,14 @@
 package dev.jacobandersen.bastion.micropub.service.post
 
 import dev.jacobandersen.bastion.TestcontainersConfiguration
-import dev.jacobandersen.bastion.micropub.data.domain.Post
-import dev.jacobandersen.bastion.micropub.type.resp.ApiResponse
 import dev.jacobandersen.bastion.microformats2.Mf2Object
 import dev.jacobandersen.bastion.microformats2.Mf2Value
-import dev.jacobandersen.bastion.micropub.type.req.MicropubPayload
+import dev.jacobandersen.bastion.micropub.data.domain.Post
 import dev.jacobandersen.bastion.micropub.data.service.PostService
 import dev.jacobandersen.bastion.micropub.type.PostStatus
 import dev.jacobandersen.bastion.micropub.type.PostVisibility
+import dev.jacobandersen.bastion.micropub.type.req.MicropubPayload
+import dev.jacobandersen.bastion.micropub.type.resp.ApiResponse
 import dev.jacobandersen.bastion.url.UrlService
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -39,19 +39,20 @@ class DeleteServiceTest {
     private fun uniqueSlug(prefix: String): String = "$prefix-${System.nanoTime()}"
 
     private fun createPost(slug: String): Post {
-        val obj = Mf2Object(
-            type = listOf("h-entry"),
-            properties = mutableMapOf(
-                "content" to listOf(Mf2Value.String("Body")),
-            ),
-            children = null,
-        )
+        val obj =
+            Mf2Object(
+                type = listOf("h-entry"),
+                properties =
+                    mutableMapOf(
+                        "content" to listOf(Mf2Value.String("Body")),
+                    ),
+                children = null,
+            )
         return postService.create(slug, PostStatus.PUBLISHED, PostVisibility.PUBLIC, false, obj)
     }
 
-    private fun actionPayload(url: String): MicropubPayload.Json {
-        return MicropubPayload.Json(mapper.createObjectNode().put("url", url) as ObjectNode)
-    }
+    private fun actionPayload(url: String): MicropubPayload.Json =
+        MicropubPayload.Json(mapper.createObjectNode().put("url", url) as ObjectNode)
 
     @Test
     fun deleteReturnsNoContentAndFlagsPost() {

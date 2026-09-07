@@ -11,7 +11,5 @@ data class Token(
     val decoded: MicropubToken,
     val expiresAt: Instant,
 ) {
-    fun toEntity(): TokenEntity {
-        return TokenEntity(id, token, decoded, expiresAt)
-    }
+    fun toEntity(): TokenEntity = TokenEntity(id, token, decoded, expiresAt)
 }

@@ -9,7 +9,11 @@ import tools.jackson.databind.ser.std.StdSerializer
 
 /** Serializes an [Mf2Value] as its canonical mf2 JSON value form. */
 class Mf2ValueSerializer : StdSerializer<Mf2Value>(Mf2Value::class.java) {
-    override fun serialize(value: Mf2Value, gen: JsonGenerator, provider: SerializationContext) {
+    override fun serialize(
+        value: Mf2Value,
+        gen: JsonGenerator,
+        provider: SerializationContext,
+    ) {
         when (value) {
             is Mf2Value.String -> gen.writeString(value.value)
             is Mf2Value.Boolean -> gen.writeBoolean(value.value)

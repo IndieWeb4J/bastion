@@ -9,13 +9,15 @@ import org.springframework.util.MultiValueMap
 class GetDispatchService(
     val configService: ConfigService,
     val sourceService: SourceService,
-    val syndicationTargetsService: SyndicationTargetsService
+    val syndicationTargetsService: SyndicationTargetsService,
 ) {
-    fun handleMicropubGet(command: GetQueryOption, params: MutableMap<String, Array<String>>): ApiResponse<*> {
-        return when (command) {
+    fun handleMicropubGet(
+        command: GetQueryOption,
+        params: MutableMap<String, Array<String>>,
+    ): ApiResponse<*> =
+        when (command) {
             GetQueryOption.CONFIG -> configService.getConfig()
             GetQueryOption.SOURCE -> sourceService.getSource(params)
             GetQueryOption.SYNDICATE_TO -> syndicationTargetsService.getSyndicationTargets()
         }
-    }
 }

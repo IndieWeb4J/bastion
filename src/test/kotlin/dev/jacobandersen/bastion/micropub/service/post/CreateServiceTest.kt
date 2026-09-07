@@ -1,13 +1,13 @@
 package dev.jacobandersen.bastion.micropub.service.post
 
 import dev.jacobandersen.bastion.TestcontainersConfiguration
-import dev.jacobandersen.bastion.micropub.type.resp.ApiResponse
 import dev.jacobandersen.bastion.microformats2.Mf2Value
-import dev.jacobandersen.bastion.micropub.type.req.MicropubPayload
 import dev.jacobandersen.bastion.micropub.data.service.PostService
 import dev.jacobandersen.bastion.micropub.type.MicropubCommand
 import dev.jacobandersen.bastion.micropub.type.PostStatus
 import dev.jacobandersen.bastion.micropub.type.PostVisibility
+import dev.jacobandersen.bastion.micropub.type.req.MicropubPayload
+import dev.jacobandersen.bastion.micropub.type.resp.ApiResponse
 import dev.jacobandersen.bastion.url.UrlService
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
@@ -47,9 +47,10 @@ class CreateServiceTest {
     @Test
     fun createsPostWithCommands() {
         val slug = uniqueSlug("commanded")
-        val response = createService.create(
-            createPayload(
-                """
+        val response =
+            createService.create(
+                createPayload(
+                    """
                 {
                     "name": ["Hello"],
                     "content": ["World"],
@@ -58,9 +59,9 @@ class CreateServiceTest {
                     "visibility": ["private"]
                 }
                 """,
-            ),
-            null,
-        )
+                ),
+                null,
+            )
 
         assertInstanceOf(ApiResponse.Success.Created::class.java, response)
         val post = postService.findBySlug(slug)!!
@@ -74,17 +75,18 @@ class CreateServiceTest {
 
     @Test
     fun createsPostWithoutCommands() {
-        val response = createService.create(
-            createPayload(
-                """
+        val response =
+            createService.create(
+                createPayload(
+                    """
                 {
                     "name": ["Derived name ${System.nanoTime()}"],
                     "content": ["Body"]
                 }
                 """,
-            ),
-            null,
-        )
+                ),
+                null,
+            )
 
         assertInstanceOf(ApiResponse.Success.Created::class.java, response)
         val slug = urlService.extractPostSlug((response as ApiResponse.Success.Created).location)!!
@@ -95,49 +97,54 @@ class CreateServiceTest {
 
     @Test
     fun rejectsBlankSlugCommand() {
-        val response = createService.create(
-            createPayload("""{"name": ["Hello"], "mp-slug": [""]}"""),
-            null,
-        )
+        val response =
+            createService.create(
+                createPayload("""{"name": ["Hello"], "mp-slug": [""]}"""),
+                null,
+            )
 
         assertInstanceOf(ApiResponse.Error.InvalidRequest::class.java, response)
     }
 
     @Test
     fun rejectsNonStringSlugCommand() {
-        val response = createService.create(
-            createPayload("""{"name": ["Hello"], "mp-slug": [42]}"""),
-            null,
-        )
+        val response =
+            createService.create(
+                createPayload("""{"name": ["Hello"], "mp-slug": [42]}"""),
+                null,
+            )
 
         assertInstanceOf(ApiResponse.Error.InvalidRequest::class.java, response)
     }
 
     @Test
     fun rejectsUnknownStatusCommand() {
-        val response = createService.create(
-            createPayload("""{"name": ["Hello"], "post-status": ["banana"]}"""),
-            null,
-        )
+        val response =
+            createService.create(
+                createPayload("""{"name": ["Hello"], "post-status": ["banana"]}"""),
+                null,
+            )
 
         assertInstanceOf(ApiResponse.Error.InvalidRequest::class.java, response)
     }
 
     @Test
     fun rejectsUnknownVisibilityCommand() {
-        val response = createService.create(
-            createPayload("""{"name": ["Hello"], "visibility": ["banana"]}"""),
-            null,
-        )
+        val response =
+            createService.create(
+                createPayload("""{"name": ["Hello"], "visibility": ["banana"]}"""),
+                null,
+            )
 
         assertInstanceOf(ApiResponse.Error.InvalidRequest::class.java, response)
     }
 
     @Test
     fun slugifiesMpSlugAndStripsUnknownCommands() {
-        val response = createService.create(
-            createPayload(
-                """
+        val response =
+            createService.create(
+                createPayload(
+                    """
                 {
                     "name": ["Hello"],
                     "content": ["Body"],
@@ -145,9 +152,9 @@ class CreateServiceTest {
                     "mp-syndicate-to": ["https://example.com"]
                 }
                 """,
-            ),
-            null,
-        )
+                ),
+                null,
+            )
 
         assertInstanceOf(ApiResponse.Success.Created::class.java, response)
         val location = (response as ApiResponse.Success.Created).location
@@ -159,27 +166,29 @@ class CreateServiceTest {
 
     @Test
     fun preservesHtmlContentObjects() {
-        val response = createService.create(
-            createPayload("""{"name": ["Hello"], "content": [{"html": "<p>hi</p>"}]}"""),
-            null,
-        )
+        val response =
+            createService.create(
+                createPayload("""{"name": ["Hello"], "content": [{"html": "<p>hi</p>"}]}"""),
+                null,
+            )
 
         assertInstanceOf(ApiResponse.Success.Created::class.java, response)
         val slug = urlService.extractPostSlug((response as ApiResponse.Success.Created).location)!!
         val post = postService.findBySlug(slug)!!
         assertEquals(
             listOf(Mf2Value.Json(mapper.readTree("""{"html": "<p>hi</p>"}"""))),
-            post.post.getProperty("content")
+            post.post.getProperty("content"),
         )
     }
 
     @Test
     fun acceptsUnlistedVisibility() {
         val slug = uniqueSlug("unlisted")
-        val response = createService.create(
-            createPayload("""{"name": ["Hello"], "mp-slug": ["$slug"], "visibility": ["unlisted"]}"""),
-            null,
-        )
+        val response =
+            createService.create(
+                createPayload("""{"name": ["Hello"], "mp-slug": ["$slug"], "visibility": ["unlisted"]}"""),
+                null,
+            )
 
         assertInstanceOf(ApiResponse.Success.Created::class.java, response)
         assertEquals(PostVisibility.UNLISTED, postService.findBySlug(slug)!!.visibility)
@@ -187,10 +196,11 @@ class CreateServiceTest {
 
     @Test
     fun stampsPublishedAndUpdatedOnCreate() {
-        val response = createService.create(
-            createPayload("""{"name": ["Hello ${System.nanoTime()}"]}"""),
-            null,
-        )
+        val response =
+            createService.create(
+                createPayload("""{"name": ["Hello ${System.nanoTime()}"]}"""),
+                null,
+            )
 
         assertInstanceOf(ApiResponse.Success.Created::class.java, response)
         val slug = urlService.extractPostSlug((response as ApiResponse.Success.Created).location)!!
@@ -206,10 +216,11 @@ class CreateServiceTest {
 
     @Test
     fun preservesAndNormalizesBackdatedPublished() {
-        val response = createService.create(
-            createPayload("""{"name": ["Old"], "published": ["2019-06-01T10:00:00"]}"""),
-            null,
-        )
+        val response =
+            createService.create(
+                createPayload("""{"name": ["Old"], "published": ["2019-06-01T10:00:00"]}"""),
+                null,
+            )
 
         assertInstanceOf(ApiResponse.Success.Created::class.java, response)
         val location = (response as ApiResponse.Success.Created).location
@@ -223,10 +234,11 @@ class CreateServiceTest {
 
     @Test
     fun rejectsInvalidPublishedValue() {
-        val response = createService.create(
-            createPayload("""{"name": ["X"], "published": ["not-a-date"]}"""),
-            null,
-        )
+        val response =
+            createService.create(
+                createPayload("""{"name": ["X"], "published": ["not-a-date"]}"""),
+                null,
+            )
 
         assertInstanceOf(ApiResponse.Error.InvalidRequest::class.java, response)
     }

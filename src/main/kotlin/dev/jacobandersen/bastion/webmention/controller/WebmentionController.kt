@@ -8,7 +8,6 @@ import dev.jacobandersen.bastion.webmention.service.WebmentionReceiverService
 import dev.jacobandersen.bastion.webmention.service.WebmentionSubmissionLimiter
 import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.servlet.http.HttpServletRequest
-import java.net.URI
 import org.jobrunr.scheduling.JobScheduler
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -17,6 +16,7 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartHttpServletRequest
+import java.net.URI
 
 private val logger = KotlinLogging.logger {}
 
@@ -37,14 +37,10 @@ class WebmentionController(
     private val submissionLimiter: WebmentionSubmissionLimiter,
 ) {
     @PostMapping(consumes = [MediaType.APPLICATION_FORM_URLENCODED_VALUE])
-    fun onUrlEncoded(request: HttpServletRequest): ResponseEntity<*> {
-        return handle(request.parameterMap)
-    }
+    fun onUrlEncoded(request: HttpServletRequest): ResponseEntity<*> = handle(request.parameterMap)
 
     @PostMapping(consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
-    fun onMultipart(request: MultipartHttpServletRequest): ResponseEntity<*> {
-        return handle(request.parameterMap)
-    }
+    fun onMultipart(request: MultipartHttpServletRequest): ResponseEntity<*> = handle(request.parameterMap)
 
     private fun handle(params: Map<String, Array<String>>): ResponseEntity<*> {
         val sourceUrl = firstParam(params, "source")
@@ -87,26 +83,30 @@ class WebmentionController(
         return ResponseEntity.accepted().build<Void>()
     }
 
-    private fun firstParam(params: Map<String, Array<String>>, name: String): String? {
-        return params[name]?.firstOrNull()?.trim()?.takeIf { it.isNotEmpty() }
-    }
+    private fun firstParam(
+        params: Map<String, Array<String>>,
+        name: String,
+    ): String? =
+        params[name]?.firstOrNull()?.trim()?.takeIf {
+            it.isNotEmpty()
+        }
 
-    private fun isHttpUrl(value: String): Boolean {
-        return runCatching {
+    private fun isHttpUrl(value: String): Boolean =
+        runCatching {
             val uri = URI(value)
             uri.isAbsolute &&
                 (uri.scheme == "http" || uri.scheme == "https") &&
                 uri.host != null
         }.getOrDefault(false)
-    }
 
-    private fun invalidRequest(description: String): ResponseEntity<*> {
-        return ResponseEntity
+    private fun invalidRequest(description: String): ResponseEntity<*> =
+        ResponseEntity
             .status(HttpStatus.BAD_REQUEST)
             .contentType(MediaType.APPLICATION_JSON)
-            .body(mapOf(
-                "error" to "invalid_request",
-                "error_description" to description,
-            ))
-    }
+            .body(
+                mapOf(
+                    "error" to "invalid_request",
+                    "error_description" to description,
+                ),
+            )
 }

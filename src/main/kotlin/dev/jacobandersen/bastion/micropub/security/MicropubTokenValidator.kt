@@ -25,30 +25,31 @@ class MicropubTokenValidator(
                 return MicropubAuthentication(
                     rawToken,
                     existingToken.decoded,
-                    true
+                    true,
                 )
             }
             logger.warn { "Cached token belongs to a different identity, evicting and re-validating" }
             tokenService.forgetToken(rawToken)
         }
 
-        logger.info { "New token, validate it..."}
+        logger.info { "New token, validate it..." }
 
-        val token = try {
-            logger.info { "Micropub token validator: try modern validation" }
-            service.modernValidation(rawToken)
-        } catch (e: RestClientResponseException) {
-            logger.info { "Micropub token validator: modern validation failed (HTTP ${e.statusCode.value()})${describeBody(e)}" }
+        val token =
             try {
+                logger.info { "Micropub token validator: try modern validation" }
+                service.modernValidation(rawToken)
+            } catch (e: RestClientResponseException) {
+                logger.info { "Micropub token validator: modern validation failed (HTTP ${e.statusCode.value()})${describeBody(e)}" }
+                try {
+                    service.legacyValidation("Bearer $rawToken")
+                } catch (e2: RestClientResponseException) {
+                    logger.warn { "Micropub token validator: legacy validation failed (HTTP ${e2.statusCode.value()})${describeBody(e2)}" }
+                    throw e2
+                }
+            } catch (_: Exception) {
+                logger.info { "Micropub token validator: modern validation failed, try legacy validation" }
                 service.legacyValidation("Bearer $rawToken")
-            } catch (e2: RestClientResponseException) {
-                logger.warn { "Micropub token validator: legacy validation failed (HTTP ${e2.statusCode.value()})${describeBody(e2)}" }
-                throw e2
             }
-        } catch (_: Exception) {
-            logger.info { "Micropub token validator: modern validation failed, try legacy validation" }
-            service.legacyValidation("Bearer $rawToken")
-        }
 
         if (!sameIdentity(expectedMe, token.me)) {
             logger.warn { "Token is not for the expected identity (expected $expectedMe, got ${token.me})" }
@@ -66,7 +67,10 @@ class MicropubTokenValidator(
      * host, default ports dropped, trailing slash removed, fragment dropped.
      * The query string is not part of the identity.
      */
-    private fun sameIdentity(expected: String, actual: String): Boolean {
+    private fun sameIdentity(
+        expected: String,
+        actual: String,
+    ): Boolean {
         val normalizedExpected = UrlNormalizer.identity(expected) ?: return false
         val normalizedActual = UrlNormalizer.identity(actual) ?: return false
         return normalizedExpected == normalizedActual

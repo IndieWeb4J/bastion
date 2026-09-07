@@ -23,8 +23,8 @@ data class ReceivedWebmention(
     val verifiedAt: Instant?,
     val updatedAtUtc: Instant,
 ) {
-    fun toEntity(): ReceivedWebmentionEntity {
-        return ReceivedWebmentionEntity(
+    fun toEntity(): ReceivedWebmentionEntity =
+        ReceivedWebmentionEntity(
             id = id,
             postId = postId,
             sourceUrl = sourceUrl,
@@ -42,5 +42,4 @@ data class ReceivedWebmention(
             verifiedAt = verifiedAt,
             updatedAtUtc = updatedAtUtc,
         )
-    }
 }

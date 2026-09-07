@@ -11,14 +11,19 @@ import org.springframework.stereotype.Component
 import tools.jackson.databind.ObjectMapper
 
 @Component
-class MicropubAccessDeniedHandler(private val objectMapper: ObjectMapper) : AccessDeniedHandler {
+class MicropubAccessDeniedHandler(
+    private val objectMapper: ObjectMapper,
+) : AccessDeniedHandler {
     override fun handle(
         request: HttpServletRequest,
         response: HttpServletResponse,
-        accessDeniedException: AccessDeniedException
+        accessDeniedException: AccessDeniedException,
     ) {
         // This exception occurs on authorization-check failures, i.e. scope failures
         // Per Micropub spec, we return Insufficient Scope
-        ApiResponse.Error.InsufficientScope().toResponseEntity().writeResponse(response, objectMapper)
+        ApiResponse.Error
+            .InsufficientScope()
+            .toResponseEntity()
+            .writeResponse(response, objectMapper)
     }
 }

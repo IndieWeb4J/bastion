@@ -41,10 +41,16 @@ class WebmentionDispatchIntegrationTest {
 
     private fun uniqueSlug(prefix: String): String = "$prefix-${System.nanoTime()}"
 
-    private fun createPayload(content: String, slug: String, status: String = "published", visibility: String = "public"): MicropubPayload.Json {
-        val root = mapper.readTree(
-            """{"type": ["h-entry"], "properties": {"name": ["$slug"], "content": ["$content"], "mp-slug": ["$slug"], "post-status": ["$status"], "visibility": ["$visibility"]}}"""
-        ) as ObjectNode
+    private fun createPayload(
+        content: String,
+        slug: String,
+        status: String = "published",
+        visibility: String = "public",
+    ): MicropubPayload.Json {
+        val root =
+            mapper.readTree(
+                """{"type": ["h-entry"], "properties": {"name": ["$slug"], "content": ["$content"], "mp-slug": ["$slug"], "post-status": ["$status"], "visibility": ["$visibility"]}}""",
+            ) as ObjectNode
         return MicropubPayload.Json(root)
     }
 
@@ -54,14 +60,18 @@ class WebmentionDispatchIntegrationTest {
         return (response as ApiResponse.Success.Created).location
     }
 
-    private fun updateJson(url: String, update: String): MicropubPayload.Json {
+    private fun updateJson(
+        url: String,
+        update: String,
+    ): MicropubPayload.Json {
         val root = mapper.readTree("""{"url": "$url", $update}""") as ObjectNode
         return MicropubPayload.Json(root)
     }
 
-    private fun stateOf(sourceUrl: String, targetUrl: String): WebmentionState? {
-        return notificationRepository.findBySourceUrlAndTargetUrl(sourceUrl, targetUrl)?.state
-    }
+    private fun stateOf(
+        sourceUrl: String,
+        targetUrl: String,
+    ): WebmentionState? = notificationRepository.findBySourceUrlAndTargetUrl(sourceUrl, targetUrl)?.state
 
     @Test
     fun createTracksPublicPostTargetsAsActive() {
@@ -87,9 +97,10 @@ class WebmentionDispatchIntegrationTest {
     fun updateAddsNewTargetsAndRetractsRemovedTargets() {
         val location = createPublicPost("One https://example.com/alpha")
 
-        val response = updateService.update(
-            updateJson(location, """"replace": {"content": ["Two https://example.com/beta"]}""")
-        )
+        val response =
+            updateService.update(
+                updateJson(location, """"replace": {"content": ["Two https://example.com/beta"]}"""),
+            )
         assertInstanceOf(ApiResponse.Success.NoContent::class.java, response)
 
         assertEquals(WebmentionState.INACTIVE, stateOf(location, "https://example.com/alpha"))
@@ -100,9 +111,10 @@ class WebmentionDispatchIntegrationTest {
     fun updateKeepsUnchangedTargetsActive() {
         val location = createPublicPost("One https://example.com/alpha")
 
-        val response = updateService.update(
-            updateJson(location, """"replace": {"name": ["Renamed"]}""")
-        )
+        val response =
+            updateService.update(
+                updateJson(location, """"replace": {"name": ["Renamed"]}"""),
+            )
         assertInstanceOf(ApiResponse.Success.NoContent::class.java, response)
 
         assertEquals(WebmentionState.ACTIVE, stateOf(location, "https://example.com/alpha"))
@@ -112,9 +124,10 @@ class WebmentionDispatchIntegrationTest {
     fun updateToPrivateInactivatesWithoutRetraction() {
         val location = createPublicPost("One https://example.com/alpha")
 
-        val response = updateService.update(
-            updateJson(location, """"replace": {"visibility": ["private"]}""")
-        )
+        val response =
+            updateService.update(
+                updateJson(location, """"replace": {"visibility": ["private"]}"""),
+            )
         assertInstanceOf(ApiResponse.Success.NoContent::class.java, response)
 
         assertEquals(WebmentionState.INACTIVE, stateOf(location, "https://example.com/alpha"))
@@ -125,15 +138,17 @@ class WebmentionDispatchIntegrationTest {
         val location = createPublicPost("One https://example.com/alpha")
         assertEquals(WebmentionState.ACTIVE, stateOf(location, "https://example.com/alpha"))
 
-        val deleteResponse = deleteService.delete(
-            MicropubPayload.Json(mapper.createObjectNode().put("url", location))
-        )
+        val deleteResponse =
+            deleteService.delete(
+                MicropubPayload.Json(mapper.createObjectNode().put("url", location)),
+            )
         assertInstanceOf(ApiResponse.Success.NoContent::class.java, deleteResponse)
         assertEquals(WebmentionState.INACTIVE, stateOf(location, "https://example.com/alpha"))
 
-        val undeleteResponse = deleteService.undelete(
-            MicropubPayload.Json(mapper.createObjectNode().put("url", location))
-        )
+        val undeleteResponse =
+            deleteService.undelete(
+                MicropubPayload.Json(mapper.createObjectNode().put("url", location)),
+            )
         assertInstanceOf(ApiResponse.Success.NoContent::class.java, undeleteResponse)
         assertEquals(WebmentionState.ACTIVE, stateOf(location, "https://example.com/alpha"))
     }
