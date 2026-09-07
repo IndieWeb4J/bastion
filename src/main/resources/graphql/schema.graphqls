@@ -11,7 +11,15 @@ enum PostType {
 
 type Query {
     posts(types: [PostType!], limit: Int = 10, offset: Int = 0): [Post!]!
-    post(slug: String, url: String): Post
+    post(slug: String, url: String): PostLookup
+}
+
+union PostLookup = Post | PostGone
+
+type PostGone {
+    slug: String!
+    url: String
+    published: String
 }
 
 type Post {

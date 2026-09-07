@@ -25,8 +25,12 @@ class PostQueryResolver(
     }
 
     @QueryMapping
-    fun post(@Argument slug: String?, @Argument url: String?): Post? {
-        return queryService.post(slug, url)
+    fun post(@Argument slug: String?, @Argument url: String?): Any? {
+        return when (val result = queryService.post(slug, url)) {
+            is PostLookupResult.Found -> result.post
+            is PostLookupResult.Gone -> PostGone(result.slug, result.url, result.published)
+            null -> null
+        }
     }
 
     @SchemaMapping
