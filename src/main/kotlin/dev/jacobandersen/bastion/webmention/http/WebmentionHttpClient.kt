@@ -91,7 +91,7 @@ class WebmentionHttpClient(
             }
         } catch (e: RestClientResponseException) {
             val statusCode = e.statusCode.value()
-            val message = describeHttpError(statusCode, e.getResponseBodyAsString())
+            val message = describeHttpError(statusCode, e.responseBodyAsString)
             SendWebmentionResult.Failure(statusCode, message, isTransientStatus(statusCode))
         } catch (e: RestClientException) {
             SendWebmentionResult.Failure(null, e.message ?: e::class.simpleName ?: "Request failed", true)

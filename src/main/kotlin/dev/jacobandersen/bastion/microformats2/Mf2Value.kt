@@ -57,7 +57,7 @@ sealed interface Mf2Value {
  * specification: a string value is itself, an html value object contributes
  * its `value` key, and anything else has no plain-text representation.
  */
-val Mf2Value.plainTextOrNull: kotlin.String?
+val Mf2Value.plainTextOrNull: String?
     get() =
         when (this) {
             is Mf2Value.String -> value
@@ -66,7 +66,7 @@ val Mf2Value.plainTextOrNull: kotlin.String?
         }
 
 /** The `html` key of an html value object, or null for other value forms. */
-val Mf2Value.htmlOrNull: kotlin.String?
+val Mf2Value.htmlOrNull: String?
     get() =
         when (this) {
             is Mf2Value.Json -> value.get("html")?.takeIf(JsonNode::isString)?.asString()

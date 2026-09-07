@@ -15,27 +15,27 @@ internal object Mf2PropertyParser {
     private val PROPERTY_CLASS = Regex("^(p|u|dt|e)-([a-z0-9]+(?:-[a-z0-9]+)*)$")
     private val ROOT_CLASS = Regex("^h-([a-z0-9]+(?:-[a-z0-9]+)*)$")
 
-    private val TAG_A = "a"
-    private val TAG_AREA = "area"
-    private val TAG_LINK = "link"
-    private val TAG_IMG = "img"
-    private val TAG_AUDIO = "audio"
-    private val TAG_VIDEO = "video"
-    private val TAG_SOURCE = "source"
-    private val TAG_IFRAME = "iframe"
-    private val TAG_OBJECT = "object"
-    private val TAG_ABBR = "abbr"
-    private val TAG_DATA = "data"
-    private val TAG_INPUT = "input"
-    private val TAG_TIME = "time"
-    private val TAG_INS = "ins"
-    private val TAG_DEL = "del"
-    private val TAG_SCRIPT = "script"
-    private val TAG_STYLE = "style"
-    private val TAG_TEMPLATE = "template"
+    private const val TAG_A = "a"
+    private const val TAG_AREA = "area"
+    private const val TAG_LINK = "link"
+    private const val TAG_IMG = "img"
+    private const val TAG_AUDIO = "audio"
+    private const val TAG_VIDEO = "video"
+    private const val TAG_SOURCE = "source"
+    private const val TAG_IFRAME = "iframe"
+    private const val TAG_OBJECT = "object"
+    private const val TAG_ABBR = "abbr"
+    private const val TAG_DATA = "data"
+    private const val TAG_INPUT = "input"
+    private const val TAG_TIME = "time"
+    private const val TAG_INS = "ins"
+    private const val TAG_DEL = "del"
+    private const val TAG_SCRIPT = "script"
+    private const val TAG_STYLE = "style"
+    private const val TAG_TEMPLATE = "template"
 
-    private val CLASS_VALUE = "value"
-    private val CLASS_VALUE_TITLE = "value-title"
+    private const val CLASS_VALUE = "value"
+    private const val CLASS_VALUE_TITLE = "value-title"
 
     private val DATE_ONLY = Regex("^\\d{4}-\\d{2}-\\d{2}$")
     private val DATE_ORDINAL = Regex("^\\d{4}-\\d{3}$")
@@ -96,17 +96,13 @@ internal object Mf2PropertyParser {
                 }
 
                 is Element -> {
-                    when (val tag = node.tagName()) {
-                        TAG_SCRIPT, TAG_STYLE, TAG_TEMPLATE -> {
-                            Unit
-                        }
+                    when (node.tagName()) {
+                        TAG_SCRIPT, TAG_STYLE, TAG_TEMPLATE -> Unit
 
                         TAG_IMG -> {
                             val alt = node.attr("alt")
                             val replacement =
-                                if (alt.isNotBlank()) {
-                                    alt
-                                } else {
+                                alt.ifBlank {
                                     resolver(node.attr("src")) ?: node.attr("src")
                                 }
                             sb.append(' ').append(replacement).append(' ')
@@ -371,7 +367,7 @@ internal object Mf2PropertyParser {
         val minutes = minutesRaw.ifEmpty { "00" }.padStart(2, '0')
         val hh = hours.toString().padStart(2, '0')
         val time = if (secondsRaw.isNotEmpty()) "$hh:$minutes:$secondsRaw" else "$hh:$minutes"
-        val tz = tzRaw?.takeIf { it.isNotBlank() }?.let { normalizeTz(it) }
+        val tz = tzRaw.takeIf { it.isNotBlank() }?.let { normalizeTz(it) }
         return Pair(time, tz)
     }
 
