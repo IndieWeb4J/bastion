@@ -121,10 +121,12 @@ class WebmentionHttpClient(
             }
 
             logger.info { "No HTTP Link found, checking HTML document..." }
-            val htmlEndpoint = res.parse().select("link, a")
-                .firstOrNull { WebmentionUtil.hasWebmentionRel(it.attr("rel")) }
+            val htmlEndpoint = res.parse()
+                .select("link[href], a[href]")
+                .firstOrNull { element ->
+                    WebmentionUtil.hasWebmentionRel(element.attr("rel")) && element.absUrl("href").isNotBlank()
+                }
                 ?.absUrl("href")
-                ?.takeIf { it.isNotBlank() }
 
             if (htmlEndpoint != null) {
                 logger.info { "Found valid HTML endpoint: $htmlEndpoint" }
