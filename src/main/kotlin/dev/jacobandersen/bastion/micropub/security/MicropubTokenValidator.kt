@@ -4,6 +4,8 @@ import dev.jacobandersen.bastion.micropub.data.service.TokenService
 import dev.jacobandersen.bastion.micropub.security.auth.IndieAuthService
 import dev.jacobandersen.bastion.util.StringUtil.excerpt
 import io.github.oshai.kotlinlogging.KotlinLogging
+import java.net.URI
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestClientResponseException
 
@@ -12,17 +14,22 @@ private val logger = KotlinLogging.logger {}
 @Component
 class MicropubTokenValidator(
     private val tokenService: TokenService,
-    private val service: IndieAuthService
+    private val service: IndieAuthService,
+    @Value("\${bastion.indieauth.me}") private val expectedMe: String,
 ) {
     fun validateToken(rawToken: String): MicropubAuthentication {
         val existingToken = tokenService.checkToken(rawToken)
         if (existingToken != null) {
-            logger.info { "Previously seen token is still valid, using it" }
-            return MicropubAuthentication(
-                rawToken,
-                existingToken.decoded,
-                true
-            )
+            if (sameIdentity(expectedMe, existingToken.decoded.me)) {
+                logger.info { "Previously seen token is still valid, using it" }
+                return MicropubAuthentication(
+                    rawToken,
+                    existingToken.decoded,
+                    true
+                )
+            }
+            logger.warn { "Cached token belongs to a different identity, evicting and re-validating" }
+            tokenService.forgetToken(rawToken)
         }
 
         logger.info { "New token, validate it..."}
@@ -43,10 +50,36 @@ class MicropubTokenValidator(
             service.legacyValidation("Bearer $rawToken")
         }
 
+        if (!sameIdentity(expectedMe, token.me)) {
+            logger.warn { "Token is not for the expected identity (expected $expectedMe, got ${token.me})" }
+            throw IllegalArgumentException("Token is not for the expected identity")
+        }
+
         logger.info { "Micropub token validated: $token" }
         tokenService.rememberToken(rawToken, token)
 
         return MicropubAuthentication(rawToken, token, true)
+    }
+
+    /**
+     * Compare two profile URLs after normalization: lowercased scheme and host,
+     * explicit port preserved, trailing slash removed, fragment dropped.
+     */
+    private fun sameIdentity(expected: String, actual: String): Boolean {
+        val normalizedExpected = normalize(expected) ?: return false
+        val normalizedActual = normalize(actual) ?: return false
+        return normalizedExpected == normalizedActual
+    }
+
+    private fun normalize(url: String): String? {
+        val uri = runCatching { URI(url) }.getOrNull() ?: return null
+        val scheme = uri.scheme?.lowercase() ?: return null
+        val host = uri.host?.lowercase() ?: return null
+        if (scheme != "http" && scheme != "https") return null
+        val port = if (uri.port == -1) "" else ":${uri.port}"
+        val rawPath = uri.path ?: ""
+        val path = rawPath.trimEnd('/')
+        return "$scheme://$host$port$path"
     }
 
     private fun describeBody(e: RestClientResponseException): String {
