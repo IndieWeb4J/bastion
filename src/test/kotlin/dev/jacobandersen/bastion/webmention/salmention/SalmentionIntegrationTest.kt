@@ -187,4 +187,25 @@ class SalmentionIntegrationTest {
         verify(salmentionSender, times(2)).resendToActiveTargets(postUrl)
         assertEquals(0, salmentionResponseRepository.findByReceivedWebmentionId(receivedWebmentionId()).size)
     }
+
+    @Test
+    fun `re-receipt does not ingest an in-reply-to h-cite pointing at the received post`() {
+        val html =
+            """
+            <article class="h-entry">
+              <a href="$postUrl">the post</a>
+              <a class="u-in-reply-to h-cite" href="$postUrl">in reply to the post</a>
+              <div class="e-content">Bob's reply</div>
+            </article>
+            """.trimIndent()
+        `when`(sourceFetcher.fetch(sourceUrl))
+            .thenReturn(fetch(html))
+            .thenReturn(fetch(html))
+
+        receiverService.verify(sourceUrl, postUrl, postId)
+        receiverService.verify(sourceUrl, postUrl, postId)
+
+        assertEquals(0, salmentionResponseRepository.findByReceivedWebmentionId(receivedWebmentionId()).size)
+        verify(salmentionSender, times(1)).resendToActiveTargets(postUrl)
+    }
 }

@@ -53,6 +53,57 @@ class NestedResponseExtractorTest {
     }
 
     @Test
+    fun `ignores a source entry's in-reply-to relation h-cite`() {
+        val responses =
+            extract(
+                """
+                <article class="h-entry">
+                  <p class="e-content">Bob's reply</p>
+                  <a class="u-in-reply-to h-cite" href="https://alice.example/post">the post</a>
+                </article>
+                """.trimIndent(),
+            )
+
+        assertTrue(responses.isEmpty())
+    }
+
+    @Test
+    fun `ignores like repost and syndication relation h-cites`() {
+        val responses =
+            extract(
+                """
+                <article class="h-entry">
+                  <p class="e-content">Bob's reply</p>
+                  <a class="u-like-of h-cite" href="https://alice.example/post">a like</a>
+                  <a class="u-repost-of h-cite" href="https://carol.example/repost">a repost</a>
+                  <a class="u-syndication h-cite" href="https://twitter.example/status/1">a copy</a>
+                </article>
+                """.trimIndent(),
+            )
+
+        assertTrue(responses.isEmpty())
+    }
+
+    @Test
+    fun `extracts nested entries while ignoring their in-reply-to relation targets`() {
+        val responses =
+            extract(
+                """
+                <article class="h-entry">
+                  <p class="e-content">Bob's reply</p>
+                  <div class="h-entry">
+                    <a class="u-url" href="https://carol.example/reply">Carol's reply</a>
+                    <a class="u-in-reply-to h-cite" href="https://alice.example/post">the post</a>
+                  </div>
+                </article>
+                """.trimIndent(),
+            )
+
+        assertEquals(1, responses.size)
+        assertEquals("https://carol.example/reply", responses[0].responseUrl)
+    }
+
+    @Test
     fun `ignores nested objects without a u-url`() {
         val responses =
             extract(

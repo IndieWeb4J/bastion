@@ -30,14 +30,12 @@ class SalmentionReceiverTest {
 
     private val sourceUrl = "https://source.example/reply"
     private val carolUrl = "https://carol.example/reply"
-    private val daveUrl = "https://dave.example/reply"
     private val postId = UUID.randomUUID()
     private val receivedWebmentionId = UUID.randomUUID()
     private val postUrl = "https://bastion.test/2026/09/07/post"
 
     private fun receiver(
         enabled: Boolean = true,
-        maxNestedResponsesPerSource: Int = 20,
     ) = SalmentionReceiver(
         salmentionResponseService,
         salmentionSender,
@@ -45,7 +43,6 @@ class SalmentionReceiverTest {
         urlService,
         SalmentionConfig(
             enabled = enabled,
-            maxNestedResponsesPerSource = maxNestedResponsesPerSource,
         ),
     )
 
@@ -187,20 +184,49 @@ class SalmentionReceiverTest {
     }
 
     @Test
-    fun `re-receipt respects the per-source nested response limit`() {
+    fun `re-receipt ingests every new nested response without a count limit`() {
         stubPost()
         `when`(salmentionResponseService.responseUrlsByReceivedWebmention(receivedWebmentionId)).thenReturn(emptySet())
+        val urls = (1..25).map { "https://responder$it.example/reply" }
 
-        receiver(maxNestedResponsesPerSource = 1).handleVerified(
+        receiver().handleVerified(
             sourceUrl = sourceUrl,
             receivedWebmentionId = receivedWebmentionId,
             postId = postId,
-            parseResult = parse(listOf(carolUrl, daveUrl)),
+            parseResult = parse(urls),
             isReReceipt = true,
             receivedResponseUpdated = false,
         )
 
-        verify(salmentionResponseService, times(1)).ingest(any(), any(), any(), any())
+        urls.forEach { url ->
+            verify(salmentionResponseService).ingest(eq(sourceUrl), eq(receivedWebmentionId), eq(url), any())
+        }
+        verify(salmentionSender).resendToActiveTargets(postUrl)
+    }
+
+    @Test
+    fun `re-receipt ignores an in-reply-to h-cite relation target`() {
+        stubPost()
+        `when`(salmentionResponseService.responseUrlsByReceivedWebmention(receivedWebmentionId)).thenReturn(emptySet())
+        val html =
+            """
+            <article class="h-entry">
+              <p class="e-content">Bob's reply</p>
+              <a class="u-in-reply-to h-cite" href="$postUrl">the post</a>
+            </article>
+            """.trimIndent()
+
+        receiver().handleVerified(
+            sourceUrl = sourceUrl,
+            receivedWebmentionId = receivedWebmentionId,
+            postId = postId,
+            parseResult = Mf2ParserImpl().parse(html, sourceUrl),
+            isReReceipt = true,
+            receivedResponseUpdated = false,
+        )
+
+        verify(salmentionResponseService, never()).ingest(any(), any(), any(), any())
+        verify(salmentionSender, never()).resendToActiveTargets(postUrl)
     }
 
     @Test

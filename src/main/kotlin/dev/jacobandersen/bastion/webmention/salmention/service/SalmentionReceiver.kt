@@ -69,8 +69,7 @@ class SalmentionReceiver(
         if (nested.isEmpty()) return false
 
         val existing = salmentionResponseService.responseUrlsByReceivedWebmention(receivedWebmentionId)
-        val capacity = (config.maxNestedResponsesPerSource - existing.size).coerceAtLeast(0)
-        val new = nested.filter { it.responseUrl !in existing }.take(capacity)
+        val new = nested.filter { it.responseUrl !in existing }
         if (new.isEmpty()) return false
 
         new.forEach { response ->

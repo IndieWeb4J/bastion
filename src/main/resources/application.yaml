@@ -24,7 +24,6 @@ bastion:
     read-timeout-seconds: ${BASTION_WEBMENTION_READ_TIMEOUT_SECONDS:10}
     salmention:
       enabled: ${BASTION_WEBMENTION_SALMENTION_ENABLED:true}
-      max-nested-responses-per-source: ${BASTION_WEBMENTION_SALMENTION_MAX_NESTED_RESPONSES_PER_SOURCE:20}
 
 logging:
   level:

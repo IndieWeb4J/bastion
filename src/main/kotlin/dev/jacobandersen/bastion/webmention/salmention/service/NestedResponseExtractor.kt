@@ -10,10 +10,14 @@ import dev.jacobandersen.bastion.microformats2.firstText
  * objects can live either as bare children of a parent microformat or as the
  * value of a property (e.g. a `comment`), so both locations are walked. Only
  * responses that carry a `u-url` are returned - that URL is the response's own
- * permalink and the dedupe key used when ingesting.
+ * permalink and the dedupe key used when ingesting. Object-valued properties
+ * that name the entry's own relations or context (its reply/like/repost/
+ * bookmark/quotation targets and syndication copies) are skipped, because they
+ * reference other posts rather than responses nested in the document.
  */
 object NestedResponseExtractor {
     private val RESPONSE_TYPES = setOf("h-entry", "h-cite")
+    private val CONTEXT_PROPERTIES = setOf("in-reply-to", "repost-of", "like-of", "bookmark-of", "quotation-of", "syndication")
 
     fun extract(parseResult: Mf2ParseResult): List<NestedResponse> = parseResult.items.flatMap { extract(it) }.distinctBy { it.responseUrl }
 
@@ -28,8 +32,10 @@ object NestedResponseExtractor {
         into: MutableList<NestedResponse>,
     ) {
         obj.children?.forEach { child -> collect(child, into) }
-        obj.properties.values.flatten().forEach { value ->
-            if (value is Mf2Value.Object) collect(value.value, into)
+        obj.properties.filterKeys { it !in CONTEXT_PROPERTIES }.forEach { (_, values) ->
+            values.forEach { value ->
+                if (value is Mf2Value.Object) collect(value.value, into)
+            }
         }
     }
 
