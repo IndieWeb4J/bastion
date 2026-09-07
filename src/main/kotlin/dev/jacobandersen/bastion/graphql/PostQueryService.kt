@@ -2,8 +2,8 @@ package dev.jacobandersen.bastion.graphql
 
 import dev.jacobandersen.bastion.micropub.data.domain.Post
 import dev.jacobandersen.bastion.micropub.data.service.PostService
-import dev.jacobandersen.bastion.micropub.type.PostStatus
-import dev.jacobandersen.bastion.micropub.type.PostVisibility
+import dev.jacobandersen.bastion.micropub.type.PostType
+import dev.jacobandersen.bastion.micropub.type.subtype
 import dev.jacobandersen.bastion.url.UrlService
 import org.springframework.stereotype.Service
 
@@ -43,11 +43,6 @@ class PostQueryService(
         }
 
         val post = postService.findBySlug(slugToFind) ?: return null
-        return post.takeIf { it.isDirectlyReachable }
+        return post.takeIf { it.publiclyReachable }
     }
-
-    private val Post.isDirectlyReachable: Boolean
-        get() = !deleted &&
-            status == PostStatus.PUBLISHED &&
-            (visibility == PostVisibility.PUBLIC || visibility == PostVisibility.UNLISTED)
 }
