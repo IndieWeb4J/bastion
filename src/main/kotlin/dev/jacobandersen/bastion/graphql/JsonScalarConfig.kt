@@ -1,8 +1,12 @@
 package dev.jacobandersen.bastion.graphql
 
+import graphql.GraphQLContext
+import graphql.execution.CoercedVariables
+import graphql.language.Value
 import graphql.schema.Coercing
 import graphql.schema.GraphQLScalarType
 import graphql.schema.idl.RuntimeWiring
+import java.util.Locale
 import org.springframework.context.annotation.Configuration
 import org.springframework.graphql.execution.RuntimeWiringConfigurer
 
@@ -27,10 +31,16 @@ class JsonScalarConfig : RuntimeWiringConfigurer {
     }
 
     private object JsonCoercing : Coercing<Any, Any> {
-        override fun serialize(dataFetcherResult: Any): Any = dataFetcherResult
+        override fun serialize(dataFetcherResult: Any, graphQLContext: GraphQLContext, locale: Locale): Any =
+            dataFetcherResult
 
-        override fun parseValue(input: Any): Any = input
+        override fun parseValue(input: Any, graphQLContext: GraphQLContext, locale: Locale): Any = input
 
-        override fun parseLiteral(input: Any): Any = input
+        override fun parseLiteral(
+            input: Value<*>,
+            variables: CoercedVariables,
+            graphQLContext: GraphQLContext,
+            locale: Locale,
+        ): Any = input
     }
 }
