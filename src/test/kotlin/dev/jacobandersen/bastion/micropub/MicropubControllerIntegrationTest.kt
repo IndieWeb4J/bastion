@@ -348,6 +348,30 @@ class MicropubControllerIntegrationTest {
         ).andExpect(status().isBadRequest)
     }
 
+    @Test
+    fun multipartCreateWithBodyTokenAuthenticates() {
+        val result = mockMvc.perform(
+            multipart("/micropub")
+                .file(MockMultipartFile("photo", "sunset.jpg", "image/jpeg", byteArrayOf(1, 2, 3)))
+                .param("h", "entry")
+                .param("content", "multipart body token post")
+                .param("access_token", "test-token")
+        )
+            .andExpect(status().isCreated)
+            .andReturn().response
+
+        val location = result.getHeader(HttpHeaders.LOCATION)
+
+        val body = mockMvc.perform(
+            get("/micropub").param("q", "source").param("url", location!!).header(HttpHeaders.AUTHORIZATION, bearer)
+        )
+            .andExpect(status().isOk)
+            .andReturn().response.contentAsString
+
+        val tree = mapper.readTree(body)
+        assertEquals("multipart body token post", tree.path("properties").path("content")[0].asText())
+    }
+
     // ----------------------------------------------------------------- media
 
     @Test
