@@ -6,7 +6,6 @@ import dev.jacobandersen.bastion.webmention.util.HttpUtil
 import dev.jacobandersen.bastion.webmention.util.HttpUtil.isTransientStatus
 import dev.jacobandersen.bastion.webmention.util.WebmentionUtil
 import io.github.oshai.kotlinlogging.KotlinLogging
-import jakarta.annotation.PostConstruct
 import java.net.http.HttpClient
 import java.time.Duration
 import org.jsoup.Jsoup
@@ -39,17 +38,12 @@ data class EndpointDiscovery(
 class WebmentionHttpClient(
     private val config: WebmentionConfig,
 ) {
-    lateinit var client: RestClient
+    private val client: RestClient = RestClient.builder()
+        .requestFactory(requestFactory(config))
+        .requestInterceptor(WebmentionHttpLoggingInterceptor())
+        .build()
 
-    @PostConstruct
-    fun init() {
-        client = RestClient.builder()
-            .requestFactory(requestFactory())
-            .requestInterceptor(WebmentionHttpLoggingInterceptor())
-            .build()
-    }
-
-    private fun requestFactory(): ClientHttpRequestFactory {
+    private fun requestFactory(config: WebmentionConfig): ClientHttpRequestFactory {
         val httpClient = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(config.connectTimeoutSeconds))
             .build()

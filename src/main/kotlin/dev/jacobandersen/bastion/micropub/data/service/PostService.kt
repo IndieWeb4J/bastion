@@ -15,11 +15,13 @@ class PostService(
     val repository: PostRepository,
     private val postTimeService: PostTimeService,
 ) {
+    @Transactional
     fun create(slug: String, status: PostStatus, visibility: PostVisibility, deleted: Boolean, post: Mf2Object): Post {
-        postTimeService.applyCreateTimestamps(post)
-        return repository.saveAndFlush(PostEntity(slug, status, visibility, deleted, post)).toDomain()
+        val stamped = postTimeService.applyCreateTimestamps(post)
+        return repository.saveAndFlush(PostEntity(slug, status, visibility, deleted, stamped)).toDomain()
     }
 
+    @Transactional(readOnly = true)
     fun findBySlug(slug: String): Post? {
         return repository.findBySlug(slug)?.toDomain()
     }
@@ -44,7 +46,7 @@ class PostService(
 
     @Transactional
     fun updatePost(post: Post, modified: Mf2Object): Post {
-        postTimeService.applyUpdateTimestamps(modified)
+        val stamped = postTimeService.applyUpdateTimestamps(modified)
 
         val entity = repository.findById(post.id)
             .orElseThrow { IllegalArgumentException("Post not found for id ${post.id}") }
@@ -52,11 +54,12 @@ class PostService(
         entity.status = post.status
         entity.visibility = post.visibility
         entity.deleted = post.deleted
-        entity.post = modified
+        entity.post = stamped
 
         return repository.saveAndFlush(entity).toDomain()
     }
 
+    @Transactional(readOnly = true)
     fun findPublicPosts(limit: Int, offset: Int, requestedProperties: Array<String>? = null): List<Post> {
         require(offset % limit == 0) { "offset must be a multiple of limit" }
 
@@ -100,8 +103,8 @@ class PostService(
     }
 
     fun filterPostFields(post: Post, requestedProperties: Array<String>? = null): Post {
-        val mf2 = post.post
-        val filteredProperties = mf2.properties.filter { requestedProperties?.contains(it.key) ?: true }
-        return post.copy(post = mf2.copy(properties = filteredProperties.toMutableMap()))
+        if (requestedProperties == null) return post
+        val filtered = post.post.properties.filterKeys { it in requestedProperties }
+        return post.copy(post = post.post.copy(properties = filtered))
     }
 }

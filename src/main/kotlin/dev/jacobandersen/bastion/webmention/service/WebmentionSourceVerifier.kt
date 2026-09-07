@@ -3,6 +3,7 @@ package dev.jacobandersen.bastion.webmention.service
 import dev.jacobandersen.bastion.microformats2.Mf2ParseResult
 import dev.jacobandersen.bastion.microformats2.Mf2Parser
 import dev.jacobandersen.bastion.webmention.http.SourceFetch
+import dev.jacobandersen.bastion.webmention.util.HttpUtil
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 
@@ -28,13 +29,13 @@ internal data class SourceVerification(
  */
 internal object WebmentionSourceVerifier {
 
-    private val URL_ATTRIBUTES: Map<String, String> = mapOf(
+    private val URL_ATTRIBUTES: List<Pair<String, String>> = listOf(
         "a" to "href",
         "area" to "href",
         "link" to "href",
         "img" to "src",
         "video" to "src",
-        "video2" to "poster",
+        "video" to "poster",
         "audio" to "src",
         "source" to "src",
         "iframe" to "src",
@@ -45,6 +46,7 @@ internal object WebmentionSourceVerifier {
         when {
             fetch.statusCode == 410 || fetch.statusCode == 404 ->
                 return SourceVerification(SourceVerdict.GONE)
+
             fetch.statusCode !in 200..299 ->
                 return SourceVerification(
                     SourceVerdict.UNREACHABLE,
@@ -53,11 +55,7 @@ internal object WebmentionSourceVerifier {
                 )
         }
 
-        val isHtml = fetch.contentType == null ||
-            fetch.contentType.startsWith("text/html") ||
-            "html" in fetch.contentType
-
-        if (isHtml) {
+        if (HttpUtil.isHtmlContentType(fetch.contentType)) {
             val document = Jsoup.parse(fetch.body, fetch.finalUrl)
             if (!htmlMentions(document, targetUrl)) {
                 return SourceVerification(SourceVerdict.NO_LINK, reason = "source does not link to the target")
@@ -79,15 +77,11 @@ internal object WebmentionSourceVerifier {
         val normalizedTarget = withoutFragment(target)
 
         for ((tag, attribute) in URL_ATTRIBUTES) {
-            val selector = when (tag) {
-                "video2" -> "video[poster]"
-                else -> "$tag[$attribute]"
-            }
+            val selector = "$tag[$attribute]"
             for (el in document.select(selector)) {
-                val attributeName = if (tag == "video2") "poster" else attribute
-                val raw = el.attr(attributeName)
+                val raw = el.attr(attribute)
                 if (raw.isBlank()) continue
-                val absolute = el.absUrl(attributeName)
+                val absolute = el.absUrl(attribute)
                 if (absolute.isNotEmpty() &&
                     (absolute == target || withoutFragment(absolute) == normalizedTarget)
                 ) {

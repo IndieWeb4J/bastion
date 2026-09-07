@@ -1,5 +1,5 @@
 bastion:
-  timezone: ${BASTION_TIMEZONE:UTC}
+  timezone: ${BASTION_TIMEZONE:Asia/Manila}
   public-url: ${BASTION_PUBLIC_URL:https://bastion.test}
   content:
     base-url: ${BASTION_CONTENT_BASE_URL:https://bastion.test}

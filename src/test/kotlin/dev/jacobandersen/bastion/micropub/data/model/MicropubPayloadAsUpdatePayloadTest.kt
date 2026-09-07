@@ -54,11 +54,9 @@ class MicropubPayloadAsUpdatePayloadTest {
         )
 
         assertEquals(
-            MicropubUpdatePayload.Replacements(
-                mapOf(
-                    "content" to listOf(Mf2Value.String("updated content")),
-                    "category" to listOf(Mf2Value.String("tag-a"), Mf2Value.String("tag-b")),
-                )
+            mapOf<String, List<Mf2Value>>(
+                "content" to listOf(Mf2Value.String("updated content")),
+                "category" to listOf(Mf2Value.String("tag-a"), Mf2Value.String("tag-b")),
             ),
             payload.replacements
         )
@@ -78,9 +76,7 @@ class MicropubPayloadAsUpdatePayloadTest {
         )
 
         assertEquals(
-            MicropubUpdatePayload.Additions(
-                mapOf("category" to listOf(Mf2Value.String("new-tag")))
-            ),
+            mapOf<String, List<Mf2Value>>("category" to listOf(Mf2Value.String("new-tag"))),
             payload.additions
         )
     }
@@ -106,24 +102,18 @@ class MicropubPayloadAsUpdatePayloadTest {
         )
 
         assertEquals(
-            MicropubUpdatePayload.Replacements(
-                mapOf(
-                    "author" to listOf(
-                        Mf2Value.Object(
-                            Mf2Object(
-                                type = listOf("h-card"),
-                                properties = mutableMapOf(
-                                    "name" to listOf(
-                                        Mf2Value.String(
-                                            "Jacob"
-                                        )
-                                    )
-                                ),
-                                children = null,
-                            )
+            mapOf<String, List<Mf2Value>>(
+                "author" to listOf(
+                    Mf2Value.Object(
+                        Mf2Object(
+                            type = listOf("h-card"),
+                            properties = mapOf(
+                                "name" to listOf(Mf2Value.String("Jacob")),
+                            ),
+                            children = null,
                         )
-                    ),
-                )
+                    )
+                ),
             ),
             payload.replacements
         )
@@ -143,10 +133,8 @@ class MicropubPayloadAsUpdatePayloadTest {
         )
 
         assertEquals(
-            MicropubUpdatePayload.Replacements(
-                mapOf(
-                    "count" to listOf(Mf2Value.Number(1), Mf2Value.Float(2.5), Mf2Value.Boolean(true), Mf2Value.String("three")),
-                )
+            mapOf<String, List<Mf2Value>>(
+                "count" to listOf(Mf2Value.Number(1), Mf2Value.Double(2.5), Mf2Value.Boolean(true), Mf2Value.String("three")),
             ),
             payload.replacements
         )
@@ -207,7 +195,7 @@ class MicropubPayloadAsUpdatePayloadTest {
         assertEquals(
             MicropubUpdatePayload.Removals.Many(
                 mapOf(
-                    "count" to listOf(Mf2Value.Number(1), Mf2Value.Float(2.5), Mf2Value.Boolean(true), Mf2Value.String("three")),
+                    "count" to listOf(Mf2Value.Number(1), Mf2Value.Double(2.5), Mf2Value.Boolean(true), Mf2Value.String("three")),
                 )
             ),
             payload.removals
@@ -236,7 +224,7 @@ class MicropubPayloadAsUpdatePayloadTest {
     fun parsesEmptyReplaceObject() {
         val payload = parse("""{"url": "https://example.com/posts/1", "replace": {}}""")
 
-        assertEquals(MicropubUpdatePayload.Replacements(emptyMap()), payload.replacements)
+        assertEquals(mapOf<String, List<Mf2Value>>(), payload.replacements)
     }
 
     @Test

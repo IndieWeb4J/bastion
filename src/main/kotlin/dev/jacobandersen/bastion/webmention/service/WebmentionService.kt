@@ -1,7 +1,6 @@
 package dev.jacobandersen.bastion.webmention.service
 
 import dev.jacobandersen.bastion.microformats2.Mf2Object
-import dev.jacobandersen.bastion.microformats2.Mf2TextExtractor
 import dev.jacobandersen.bastion.url.UrlExtractor
 import dev.jacobandersen.bastion.webmention.config.WebmentionConfig
 import dev.jacobandersen.bastion.webmention.data.domain.WebmentionState
@@ -12,6 +11,7 @@ import dev.jacobandersen.bastion.webmention.http.EndpointDiscovery
 import dev.jacobandersen.bastion.webmention.http.SendWebmentionResult
 import dev.jacobandersen.bastion.webmention.http.WebmentionHttpClient
 import dev.jacobandersen.bastion.webmention.util.HttpUtil
+import dev.jacobandersen.bastion.webmention.util.Mf2TextExtractor
 import dev.jacobandersen.bastion.webmention.util.WebmentionUtil
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.time.Instant

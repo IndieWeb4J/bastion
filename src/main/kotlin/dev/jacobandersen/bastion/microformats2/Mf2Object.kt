@@ -1,159 +1,55 @@
 package dev.jacobandersen.bastion.microformats2
 
-import tools.jackson.databind.JsonNode
-import tools.jackson.databind.node.ArrayNode
-import tools.jackson.databind.node.ObjectNode
-import kotlin.collections.get
-import kotlin.collections.iterator
-
-data class Mf2Object(val type: List<String>, val properties: MutableMap<String, List<Mf2Value>>, val children: List<Mf2Object>?) {
-    fun primaryType(): String {
-        return type.firstOrNull() ?: throw IllegalStateException("Mf2Object has no type")
+/**
+ * A parsed microformat: its `h-*` type(s), its properties in document order
+ * and its bare children (nested microformats that are not property values).
+ *
+ * Instances are immutable; property updates are expressed with the
+ * [setProperty], [addProperty] and [deleteProperty] helpers, which return new
+ * instances.
+ */
+data class Mf2Object(
+    val type: List<String>,
+    val properties: Map<String, List<Mf2Value>> = emptyMap(),
+    val children: List<Mf2Object>? = null,
+) {
+    init {
+        require(type.isNotEmpty()) { "Mf2Object type must not be empty" }
+        require(type.all { it.isNotBlank() }) { "Mf2Object type entries must not be blank" }
     }
 
-    fun getProperty(key: String): List<Mf2Value> {
-        return properties[key] ?: listOf()
-    }
+    fun primaryType(): String = type.first()
 
-    fun getFirstProperty(key: String): Mf2Value? {
-        return getProperty(key).firstOrNull()
-    }
+    fun getProperty(key: String): List<Mf2Value> = properties[key].orEmpty()
 
-    operator fun get(key: String): List<Mf2Value> {
-        return getProperty(key)
-    }
+    fun getFirstProperty(key: String): Mf2Value? = getProperty(key).firstOrNull()
 
-    fun deleteProperty(key: String) {
-        properties.remove(key)
-    }
+    operator fun get(key: String): List<Mf2Value> = getProperty(key)
 
-    fun setProperty(key: String, value: Mf2Value) {
-        properties[key] = listOf(value)
-    }
+    /** Whether the property exists with at least one value. */
+    fun hasProperty(key: String): Boolean = getProperty(key).isNotEmpty()
 
-    operator fun set(key: String, value: Mf2Value) {
-        setProperty(key, value)
-    }
+    fun setProperty(key: String, value: Mf2Value): Mf2Object = setProperty(key, listOf(value))
 
-    fun setProperty(key: String, value: List<Mf2Value>) {
-        properties[key] = value
-    }
+    fun setProperty(key: String, values: List<Mf2Value>): Mf2Object =
+        copy(properties = properties + (key to values))
 
-    operator fun set(key: String, value: List<Mf2Value>) {
-        setProperty(key, value)
-    }
+    fun addProperty(key: String, value: Mf2Value): Mf2Object = addProperty(key, listOf(value))
 
-    fun addProperty(key: String, value: Mf2Value) {
-        addProperty(key, listOf(value))
-    }
+    fun addProperty(key: String, values: List<Mf2Value>): Mf2Object =
+        copy(properties = properties + (key to (getProperty(key) + values)))
 
-    fun addProperty(key: String, value: List<Mf2Value>) {
-        properties.compute(key) { _, values ->
-            return@compute values?.plus(value) ?: value
-        }
-    }
-
-    fun hasProperty(key: String): Boolean {
-        // Property might exist as empty array, while this method's
-        // intention is to be used before getting something from the
-        // property without further checks. Rather than only check if
-        // key exists, we do that but also check if there is at least
-        // one element.
-        return (properties[key]?.size ?: 0) > 0
-    }
+    fun deleteProperty(key: String): Mf2Object = copy(properties = properties - key)
 }
 
-fun Any.asMf2Object(): Mf2Object {
-    return when (this) {
-        is ObjectNode -> {
-            val type = (this["type"] as? ArrayNode)
-                ?.mapNotNull { if (it.isString) it.asString() else null }
-                ?.takeIf { it.isNotEmpty() }
-                ?.toList()
-                ?: listOf("h-entry")
-            val properties = parseJsonProperties(this["properties"])
-            val children = (this["children"] as? ArrayNode)
-                ?.mapNotNull { element -> try { element.asMf2Object() } catch (_: Exception) { null } }
-            Mf2Object(type, properties, children)
-        }
+/** The first non-blank plain-text value of the property, or null. */
+fun Mf2Object.firstText(key: String): String? =
+    getProperty(key).firstNotNullOfOrNull { it.plainTextOrNull }?.takeIf { it.isNotBlank() }
 
-        is Map<*, *> -> {
-            if (this.keys.all { it is String } && this.values.all { it is Array<*> || it is Map<*, *> }) {
-                val h = (this["h"] as? Array<*>)?.filterIsInstance<String>()?.firstOrNull() ?: "entry"
-                val type = listOf("h-$h")
-                val propertyEntries = this.filterKeys { key ->
-                    key is String && key != "h"
-                }
-                val properties = parseFormProperties(propertyEntries) ?: mutableMapOf()
-                Mf2Object(type, properties, null)
-            } else {
-                throw IllegalArgumentException("Map given in $this cannot be read as Mf2Object")
-            }
-        }
+/** The first non-blank `html` value of the property, or null. */
+fun Mf2Object.firstHtml(key: String): String? =
+    getProperty(key).firstNotNullOfOrNull { it.htmlOrNull }?.takeIf { it.isNotBlank() }
 
-        else -> throw IllegalArgumentException("Cannot convert $this to Mf2Object")
-    }
-}
-
-private fun parseJsonProperties(obj: JsonNode?): MutableMap<String, List<Mf2Value>> {
-    val objectNode = obj as? ObjectNode ?: return mutableMapOf()
-    val safeMap = mutableMapOf<String, List<Mf2Value>>()
-    objectNode.properties().forEach { (key, node) ->
-        val arrayNode = node as? ArrayNode ?: return@forEach
-        safeMap[key] = arrayNode.mapNotNull { element -> element.asMf2ValueOrNull() }
-    }
-    return safeMap
-}
-
-internal fun JsonNode.asMf2ValueOrNull(): Mf2Value? {
-    return when {
-        isString -> Mf2Value.String(asString())
-        isBoolean -> Mf2Value.Boolean(booleanValue())
-        isIntegralNumber -> Mf2Value.Number(longValue())
-        isFloatingPointNumber -> Mf2Value.Float(doubleValue())
-        isObject -> try {
-            if (this.isMf2ObjectValue()) {
-                Mf2Value.Object(this.asMf2Object())
-            } else {
-                Mf2Value.Json(this)
-            }
-        } catch (_: Exception) { null }
-        else -> null
-    }
-}
-
-internal fun JsonNode.isMf2ObjectValue(): Boolean {
-    return (this["type"] as? ArrayNode)?.takeIf { it.size() > 0 } != null && this["properties"] is ObjectNode
-}
-
-private fun parseFormProperties(obj: Any): MutableMap<String, List<Mf2Value>>? {
-    val rawMap = obj as? Map<*, *> ?: return null
-    val safeMap = mutableMapOf<String, List<Mf2Value>>()
-
-    for ((key, value) in rawMap) {
-        val safeKey = key as? String ?: continue
-        val rawArray = value as? Array<*> ?: continue
-
-        val validatedElements = mutableListOf<Mf2Value>()
-
-        for (item in rawArray) {
-            when {
-                item == null -> { }
-
-                item.isMf2Primitive() -> validatedElements.add(item.asMf2Value())
-
-                item is Map<*, *> -> {
-                    try {
-                        validatedElements.add(Mf2Value.Object(item.asMf2Object()))
-                    } catch (_: Exception) { }
-                }
-
-                else -> { }
-            }
-        }
-
-        safeMap[safeKey] = validatedElements.toList()
-    }
-
-    return safeMap
-}
+/** All non-blank plain-text values of the property. */
+fun Mf2Object.texts(key: String): List<String> =
+    getProperty(key).mapNotNull { it.plainTextOrNull }.filter { it.isNotBlank() }

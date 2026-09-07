@@ -4,41 +4,44 @@ import dev.jacobandersen.bastion.micropub.data.domain.Token
 import dev.jacobandersen.bastion.micropub.data.entity.TokenEntity
 import dev.jacobandersen.bastion.micropub.data.repository.TokenRepository
 import dev.jacobandersen.bastion.micropub.security.MicropubToken
-import org.springframework.stereotype.Service
 import java.time.Duration
 import java.time.Instant
+import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 
 @Service
 class TokenService(
-    val tokenRepository: TokenRepository
+    private val tokenRepository: TokenRepository,
 ) {
-    fun checkToken(token: String): Token? {
-        val ent = tokenRepository.findByToken(token)
-        if (ent != null) {
-            val token = ent.toDomain()
-            return if (token.expiresAt.isAfter(Instant.now())) {
-                token
-            } else {
-                tokenRepository.delete(ent)
-                null
-            }
+    @Transactional
+    fun checkToken(rawToken: String): Token? {
+        val entity = tokenRepository.findByToken(rawToken) ?: return null
+        val cached = entity.toDomain()
+        if (cached.expiresAt.isAfter(Instant.now())) {
+            return cached
         }
-
+        tokenRepository.delete(entity)
         return null
     }
 
+    @Transactional
     fun rememberToken(rawToken: String, token: MicropubToken) {
         tokenRepository.save(
             TokenEntity(
                 token = rawToken,
                 decoded = token,
-                expiresAt = Instant.now().plus(Duration.ofDays(7))
+                expiresAt = Instant.now().plus(REMEMBER_DURATION),
             )
         )
     }
 
-    fun forgetToken(token: String) {
-        val entity = tokenRepository.findByToken(token) ?: return
+    @Transactional
+    fun forgetToken(rawToken: String) {
+        val entity = tokenRepository.findByToken(rawToken) ?: return
         tokenRepository.delete(entity)
+    }
+
+    companion object {
+        private val REMEMBER_DURATION: Duration = Duration.ofDays(7)
     }
 }

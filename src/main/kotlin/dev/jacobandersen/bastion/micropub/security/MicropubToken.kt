@@ -36,8 +36,10 @@ class MicropubTokenDeserializer : StdDeserializer<MicropubToken>(MicropubToken::
         ctxt: DeserializationContext
     ): MicropubToken {
         val node = ctxt.readTree(p)
-        val me = node["me"].asString()
-        val clientId = node["client_id"].asString()
+        val me = node["me"]?.asString()?.takeIf { it.isNotBlank() }
+            ?: throw IllegalArgumentException("Token response is missing the 'me' property")
+        val clientId = node["client_id"]?.asString()?.takeIf { it.isNotBlank() }
+            ?: throw IllegalArgumentException("Token response is missing the 'client_id' property")
         val rawScope = node.get("scope")?.asString() ?: ""
         val scope = rawScope.split(' ')
             .filter { it.isNotBlank() }

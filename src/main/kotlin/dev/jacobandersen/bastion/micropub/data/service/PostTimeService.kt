@@ -2,7 +2,6 @@ package dev.jacobandersen.bastion.micropub.data.service
 
 import dev.jacobandersen.bastion.microformats2.Mf2Object
 import dev.jacobandersen.bastion.microformats2.Mf2Value
-import org.springframework.stereotype.Service
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -11,6 +10,7 @@ import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
+import org.springframework.stereotype.Service
 
 @Service
 class PostTimeService(
@@ -26,24 +26,27 @@ class PostTimeService(
         return parse(raw) ?: throw IllegalArgumentException("Invalid timestamp: $raw")
     }
 
-    fun applyCreateTimestamps(post: Mf2Object) {
-        val existing = post.getFirstProperty("published")
-        if (existing == null) {
-            post.addProperty("published", Mf2Value.String(nowIso()))
-        } else {
-            val raw = existing as? Mf2Value.String
-                ?: throw IllegalArgumentException("published must be a string value")
-            post.setProperty("published", Mf2Value.String(isoFormatter.format(normalizeOrThrow(raw.value))))
+    /**
+     * Normalizes `published` (or supplies it from now) and stamps `updated`,
+     * returning the resulting object.
+     */
+    fun applyCreateTimestamps(post: Mf2Object): Mf2Object {
+        val published = when (val existing = post.getFirstProperty("published")) {
+            null -> Mf2Value.String(nowIso())
+            is Mf2Value.String -> Mf2Value.String(isoFormatter.format(normalizeOrThrow(existing.value)))
+            else -> throw IllegalArgumentException("published must be a string value")
         }
-        post.setProperty("updated", Mf2Value.String(nowIso()))
+        return post
+            .setProperty("published", published)
+            .setProperty("updated", Mf2Value.String(nowIso()))
     }
 
-    fun applyUpdateTimestamps(post: Mf2Object) {
-        val existing = post.getFirstProperty("published")
-        if (existing is Mf2Value.String) {
+    /** Normalizes `published` (when present) and stamps `updated`. */
+    fun applyUpdateTimestamps(post: Mf2Object): Mf2Object {
+        val withPublished = (post.getFirstProperty("published") as? Mf2Value.String)?.let { existing ->
             post.setProperty("published", Mf2Value.String(isoFormatter.format(normalizeOrThrow(existing.value))))
-        }
-        post.setProperty("updated", Mf2Value.String(nowIso()))
+        } ?: post
+        return withPublished.setProperty("updated", Mf2Value.String(nowIso()))
     }
 
     private fun parse(raw: String): OffsetDateTime? {

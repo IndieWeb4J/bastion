@@ -31,7 +31,7 @@ class PostEntityJsonRoundTripTest {
                 "updated" to listOf(Mf2Value.String("2026-08-31T00:00:00Z")),
                 "draft" to listOf(Mf2Value.Boolean(false)),
                 "count" to listOf(Mf2Value.Number(42)),
-                "rating" to listOf(Mf2Value.Float(4.5)),
+                "rating" to listOf(Mf2Value.Double(4.5)),
                 "author" to listOf(
                     Mf2Value.Object(
                         Mf2Object(

@@ -63,7 +63,7 @@ internal class Mf2ParseSession(html: String, baseUrl: String) {
             Mf2Backcompat.classicRootTypes(classicRoots)
         }
 
-        val children = builder.children.takeIf { it.isNotEmpty() }
+        val children = builder.children.takeIf { it.isNotEmpty() }?.toList()
         val finalProperties = builder.properties.mapValuesTo(linkedMapOf()) { it.value.toList() }
         return Mf2Object(types, finalProperties, children)
     }

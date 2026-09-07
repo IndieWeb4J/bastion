@@ -1,7 +1,6 @@
-package dev.jacobandersen.bastion.webmention.service
+package dev.jacobandersen.bastion.webmention.util
 
 import dev.jacobandersen.bastion.microformats2.Mf2Object
-import dev.jacobandersen.bastion.microformats2.Mf2TextExtractor
 import dev.jacobandersen.bastion.microformats2.Mf2Value
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
