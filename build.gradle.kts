@@ -54,6 +54,7 @@ dependencies {
     implementation("org.nibor.autolink:autolink:0.12.0")
     implementation("org.jsoup:jsoup:1.23.2")
     testImplementation("org.springframework.security:spring-security-test")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:6.2.0")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     runtimeOnly("org.postgresql:postgresql")
     testImplementation("org.springframework.boot:spring-boot-starter-actuator-test")

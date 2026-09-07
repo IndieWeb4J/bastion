@@ -17,8 +17,8 @@ internal class Mf2ParseSession(
     baseUrl: String,
 ) {
     private val document: Document = Jsoup.parse(html)
-    private val baseUrl: String = effectiveBase(document, baseUrl)
-    private val resolver: (String) -> String? = { raw -> Mf2UrlResolver.resolve(baseUrl, raw) }
+    private val resolvedBaseUrl: String = effectiveBase(document, baseUrl)
+    private val resolver: (String) -> String? = { raw -> Mf2UrlResolver.resolve(resolvedBaseUrl, raw) }
 
     private val items = mutableListOf<Mf2Object>()
     private val rels = linkedMapOf<String, MutableList<String>>()

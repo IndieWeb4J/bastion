@@ -211,5 +211,162 @@ class Mf2ParserTest {
         assertEquals("One", feed.children!![0].firstString("name"))
     }
 
+    @Test
+    fun `implied photo comes from a sole nested img`() {
+        val entry =
+            singleItem(
+                """
+                <div class="h-entry">
+                  <span class="p-name">Photo post</span>
+                  <img src="/photo.jpg"/>
+                </div>
+                """.trimIndent(),
+                "http://example.com/post",
+            )
+
+        assertEquals("http://example.com/photo.jpg", entry.firstString("photo"))
+    }
+
+    @Test
+    fun `implied photo is skipped when a photo is already explicit`() {
+        val entry =
+            singleItem(
+                """
+                <div class="h-entry">
+                  <img class="u-photo" src="/explicit.jpg"/>
+                  <img src="/other.jpg"/>
+                </div>
+                """.trimIndent(),
+                "http://example.com/post",
+            )
+
+        assertEquals("http://example.com/explicit.jpg", entry.firstString("photo"))
+    }
+
+    @Test
+    fun `implied url comes from a sole nested link`() {
+        val entry =
+            singleItem(
+                """
+                <div class="h-entry">
+                  <span class="p-name">Linked post</span>
+                  <a href="/target">read more</a>
+                </div>
+                """.trimIndent(),
+                "http://example.com/post",
+            )
+
+        assertEquals("http://example.com/target", entry.firstString("url"))
+    }
+
+    @Test
+    fun `implied name uses an img alt when the root is an img`() {
+        val card = singleItem("""<img class="h-card" alt="Ben Ward" src="/ben.jpg"/>""")
+
+        assertEquals("Ben Ward", card.firstString("name"))
+    }
+
+    @Test
+    fun `template elements are skipped entirely`() {
+        val entry =
+            singleItem(
+                """
+                <div class="h-entry">
+                  <template><span class="p-name">Template name</span></template>
+                  <span class="p-name">Real name</span>
+                </div>
+                """.trimIndent(),
+            )
+
+        assertEquals("Real name", entry.firstString("name"))
+    }
+
+    @Test
+    fun `value-title pattern reads the title attribute`() {
+        val entry =
+            singleItem(
+                """
+                <div class="h-entry">
+                  <span class="p-name"><span class="value-title" title="Real Title">Displayed text</span></span>
+                </div>
+                """.trimIndent(),
+            )
+
+        assertEquals("Real Title", entry.firstString("name"))
+    }
+
+    @Test
+    fun `dt values keep an explicit timezone`() {
+        val event =
+            singleItem(
+                """
+                <div class="h-event">
+                  <time class="dt-start" datetime="2015-07-01T19:30:00+02:00">tonight</time>
+                </div>
+                """.trimIndent(),
+            )
+
+        assertEquals("2015-07-01 19:30:00+02:00", event.firstString("start"))
+    }
+
+    @Test
+    fun `a trailing time-only dt adopts no date when none came before`() {
+        val event =
+            singleItem(
+                """
+                <div class="h-event">
+                  <time class="dt-start">22:00</time>
+                </div>
+                """.trimIndent(),
+            )
+
+        assertEquals("22:00", event.firstString("start"))
+    }
+
+    @Test
+    fun `rel-urls merge rels from repeated links to the same url`() {
+        val result =
+            parser.parse(
+                """
+                <a rel="tag" href="/tags/kotlin">kotlin</a>
+                <a rel="category" href="/tags/kotlin">kotlin again</a>
+                """.trimIndent(),
+                "http://example.com/",
+            )
+
+        assertEquals(listOf("category", "tag"), result.relUrls.getValue("http://example.com/tags/kotlin").rels)
+    }
+
+    @Test
+    fun `classic vevent maps summary to name and dtstart to start`() {
+        val event =
+            singleItem(
+                """
+                <div class="vevent">
+                  <span class="summary">Birthday party</span>
+                  <abbr class="dtstart" title="2015-07-01T19:30:00+02:00">tonight</abbr>
+                </div>
+                """.trimIndent(),
+            )
+
+        assertEquals(listOf("h-event"), event.type)
+        assertEquals("Birthday party", event.firstString("name"))
+        assertEquals("2015-07-01 19:30:00+02:00", event.firstString("start"))
+    }
+
+    @Test
+    fun `resolves relative property urls against a base href`() {
+        val entry =
+            singleItem(
+                """
+                <html><head><base href="http://example.com/sub/dir/"/></head>
+                <body><div class="h-entry"><a class="u-url" href="post">post</a></div></body></html>
+                """.trimIndent(),
+                "http://example.com/ignored",
+            )
+
+        assertEquals("http://example.com/sub/dir/post", entry.firstString("url"))
+    }
+
     private fun Mf2Object.strings(key: String): List<String> = getProperty(key).mapNotNull { (it as? Mf2Value.String)?.value }
 }

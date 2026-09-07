@@ -59,4 +59,34 @@ class UrlServiceTest {
     fun returnsNullForUnparseableUrl() {
         assertNull(service.extractPostSlug("not a url"))
     }
+
+    @Test
+    fun extractsSlugWithDefaultPortMatching() {
+        assertEquals("my-slug", service.extractPostSlug("https://test.jacobandersen.dev:443/2026/09/02/my-slug"))
+    }
+
+    @Test
+    fun extractsSlugWithCaseInsensitiveHost() {
+        assertEquals("my-slug", service.extractPostSlug("https://TEST.JACOBANDERSEN.DEV/2026/09/02/my-slug"))
+    }
+
+    @Test
+    fun returnsNullForNonDefaultPort() {
+        assertNull(service.extractPostSlug("https://test.jacobandersen.dev:8443/2026/09/02/my-slug"))
+    }
+
+    @Test
+    fun validatePathPatternRejectsMissingSlugPlaceholder() {
+        val invalid =
+            UrlService(
+                BastionContentUrlConfig(
+                    baseUrl = "https://test.jacobandersen.dev",
+                    pathPattern = "{year}/{month}/{day}",
+                ),
+            )
+
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalStateException::class.java) {
+            invalid.validatePathPattern()
+        }
+    }
 }

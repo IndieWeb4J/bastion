@@ -18,7 +18,9 @@ import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 import org.springframework.http.MediaType
+import org.springframework.mock.web.MockMultipartFile
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
@@ -168,6 +170,19 @@ class WebmentionControllerTest {
                     .param("source", sourceUrl)
                     .param("target", targetUrl),
             ).andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `accepts a multipart webmention`() {
+        mockMvc
+            .perform(
+                multipart("/webmention")
+                    .file(MockMultipartFile("part", "content".toByteArray()))
+                    .param("source", sourceUrl)
+                    .param("target", targetUrl),
+            ).andExpect(status().isAccepted)
+
+        verify(notificationService).ensurePending(sourceUrl, targetUrl, postId)
     }
 
     @Test

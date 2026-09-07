@@ -380,11 +380,18 @@ internal object Mf2PropertyParser {
         return raw
     }
 
+    /**
+     * Normalizes a timezone offset per the parsing specification: a zero
+     * offset becomes "Z", any other offset becomes "±HH:MM".
+     */
     private fun normalizeTz(raw: String): String {
         if (raw == "Z") return "Z"
-        val normalized = raw.removePrefix("+")
         val sign = if (raw.startsWith("-")) "-" else "+"
-        return sign + normalized.replace(":", "")
+        val digits = raw.filter(Char::isDigit)
+        if (digits.length < 4) return raw
+        val hh = digits.take(2)
+        val mm = digits.drop(2).take(2)
+        return if (hh == "00" && mm == "00") "Z" else "$sign$hh:$mm"
     }
 
     /**
