@@ -17,6 +17,8 @@ bastion:
     herald:
       base-url: ${BASTION_INDIEAUTH_HERALD_BASE_URL:}
       authorize-path: ${BASTION_INDIEAUTH_HERALD_AUTHORIZE_PATH:/auth}
+    purge-interval: ${BASTION_INDIEAUTH_PURGE_INTERVAL:1h}
+    code-retention: ${BASTION_INDIEAUTH_CODE_RETENTION:1d}
     github:
       client-id: ${BASTION_INDIEAUTH_GITHUB_CLIENT_ID:}
       client-secret: ${BASTION_INDIEAUTH_GITHUB_CLIENT_SECRET:}

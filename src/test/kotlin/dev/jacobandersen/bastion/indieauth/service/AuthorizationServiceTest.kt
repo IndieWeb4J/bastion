@@ -48,6 +48,8 @@ class AuthorizationServiceTest {
 
     private val clientId = "https://client.example"
     private val redirectUri = "https://client.example/callback"
+    private val verifier = "client-verifier"
+    private val challenge = Pkce.s256(verifier)
 
     private fun request(
         me: String? = null,
@@ -56,8 +58,8 @@ class AuthorizationServiceTest {
         state: String? = "client-state",
         scope: String? = "create",
         responseType: String? = "code",
-        codeChallenge: String? = null,
-        codeChallengeMethod: String? = null,
+        codeChallenge: String? = challenge,
+        codeChallengeMethod: String? = Pkce.METHOD_S256,
     ) = AuthorizationRequest(
         me = me,
         clientId = clientId,
@@ -104,6 +106,31 @@ class AuthorizationServiceTest {
         verify(authRequestRepository).save(captor.capture())
         assertEquals(Tokens.sha256(state!!), captor.value.stateHash)
         assertEquals(redirectUri, captor.value.redirectUri)
+        assertEquals(challenge, captor.value.codeChallenge)
+        assertEquals(Pkce.METHOD_S256, captor.value.codeChallengeMethod)
+    }
+
+    @Test
+    fun `begin requires a code challenge`() {
+        assertCode(IndieAuthError.Code.INVALID_REQUEST) { service.begin(request(codeChallenge = null, codeChallengeMethod = null)) }
+    }
+
+    @Test
+    fun `begin requires a code challenge even when the method is present`() {
+        assertCode(IndieAuthError.Code.INVALID_REQUEST) {
+            service.begin(request(codeChallenge = null, codeChallengeMethod = Pkce.METHOD_S256))
+        }
+    }
+
+    @Test
+    fun `begin accepts an omitted code challenge method as s256`() {
+        val location = service.begin(request(codeChallengeMethod = null))
+
+        assertTrue(location.startsWith("https://herald.test/auth?"))
+        val captor = ArgumentCaptor.forClass(AuthRequestEntity::class.java)
+        verify(authRequestRepository).save(captor.capture())
+        assertEquals(challenge, captor.value.codeChallenge)
+        assertTrue(captor.value.codeChallengeMethod.isNullOrBlank())
     }
 
     @Test
@@ -221,6 +248,36 @@ class AuthorizationServiceTest {
 
         assertTrue(result is CompleteResult.Redirect)
         assertEquals("server_error", queryParam((result as CompleteResult.Redirect).url, "error"))
+    }
+
+    @Test
+    fun `complete redirects a server error when the provider fails unexpectedly`() {
+        val stateHash = Tokens.sha256("one-time-state")
+        `when`(authRequestRepository.findByStateHash(stateHash)).thenReturn(authRequest(stateHash))
+        `when`(authRequestRepository.claim(eq(stateHash), any())).thenReturn(1)
+        `when`(identityProvider.resolveIdentity(anyString())).thenThrow(RuntimeException("boom"))
+
+        val result = service.complete("one-time-state", "github-code", null)
+
+        assertTrue(result is CompleteResult.Redirect)
+        assertEquals("server_error", queryParam((result as CompleteResult.Redirect).url, "error"))
+        verify(authorizationCodeRepository, never()).save(any())
+    }
+
+    @Test
+    fun `complete redirects a server error when owner verification fails unexpectedly`() {
+        val stateHash = Tokens.sha256("one-time-state")
+        `when`(authRequestRepository.findByStateHash(stateHash)).thenReturn(authRequest(stateHash))
+        `when`(authRequestRepository.claim(eq(stateHash), any())).thenReturn(1)
+        `when`(identityProvider.resolveIdentity("github-code"))
+            .thenReturn(ProviderIdentity("github", "12345", "https://github.com/someone"))
+        `when`(ownerVerifier.verify(anyString())).thenThrow(RuntimeException("boom"))
+
+        val result = service.complete("one-time-state", "github-code", null)
+
+        assertTrue(result is CompleteResult.Redirect)
+        assertEquals("server_error", queryParam((result as CompleteResult.Redirect).url, "error"))
+        verify(authorizationCodeRepository, never()).save(any())
     }
 
     // --------------------------------------------------------------- helpers

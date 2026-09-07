@@ -26,4 +26,15 @@ interface AuthRequestRepository : JpaRepository<AuthRequestEntity, UUID> {
         @Param("stateHash") stateHash: String,
         @Param("now") now: Instant,
     ): Int
+
+    /**
+     * Deletes authorization requests that have expired, returning the number of
+     * rows removed. Used by the recurring row-purge job so `indieauth_authorization_requests`
+     * stays bounded.
+     */
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("delete from AuthRequestEntity r where r.expiresAt < :cutoff")
+    fun deleteExpired(
+        @Param("cutoff") cutoff: Instant,
+    ): Int
 }

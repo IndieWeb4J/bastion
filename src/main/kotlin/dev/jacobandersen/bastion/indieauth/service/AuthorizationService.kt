@@ -144,9 +144,20 @@ class AuthorizationService(
             } catch (e: IdentityProviderException) {
                 logger.warn(e) { "Identity provider failed to resolve the authorization code" }
                 return CompleteResult.Redirect(errorRedirect(authRequest, IndieAuthError.Code.SERVER_ERROR.value))
+            } catch (e: Exception) {
+                logger.error(e) { "Identity provider failed to resolve the authorization code unexpectedly" }
+                return CompleteResult.Redirect(errorRedirect(authRequest, IndieAuthError.Code.SERVER_ERROR.value))
             }
 
-        when (ownerVerifier.verify(identity.profileUrl)) {
+        val verification =
+            try {
+                ownerVerifier.verify(identity.profileUrl)
+            } catch (e: Exception) {
+                logger.error(e) { "Owner verification of ${identity.subject} failed unexpectedly" }
+                return CompleteResult.Redirect(errorRedirect(authRequest, IndieAuthError.Code.SERVER_ERROR.value))
+            }
+
+        when (verification) {
             OwnerVerification.Unavailable -> {
                 return CompleteResult.Redirect(errorRedirect(authRequest, IndieAuthError.Code.SERVER_ERROR.value))
             }
@@ -264,10 +275,7 @@ class AuthorizationService(
         codeChallengeMethod: String?,
     ) {
         if (codeChallenge.isNullOrBlank()) {
-            if (!codeChallengeMethod.isNullOrBlank()) {
-                throw IndieAuthException(IndieAuthError.Code.INVALID_REQUEST, "A 'code_challenge_method' requires a 'code_challenge'")
-            }
-            return
+            throw IndieAuthException(IndieAuthError.Code.INVALID_REQUEST, "PKCE is required: a 'code_challenge' must be supplied")
         }
         if (codeChallengeMethod != null && !codeChallengeMethod.equals(Pkce.METHOD_S256, ignoreCase = true)) {
             throw IndieAuthException(IndieAuthError.Code.INVALID_REQUEST, "Only the 'S256' code challenge method is supported")
