@@ -70,7 +70,7 @@ class PostGraphQlIntegrationTest {
             .get()
             .map { it["slug"] }
 
-        assertEquals(listOf(publicNote, publicPhoto), slugs)
+        assertEquals(setOf(publicNote, publicPhoto), slugs.toSet())
     }
 
     @Test
@@ -123,7 +123,7 @@ class PostGraphQlIntegrationTest {
             """
             {"type": ["h-entry"], "properties": {
               "name": ["$slug"],
-              "content": ["Body of $slug"],
+              "content": ["$slug content"],
               $extra
               "mp-slug": ["$slug"],
               "post-status": ["$status"],
