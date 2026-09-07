@@ -16,6 +16,7 @@ When updating this file, preserve this bar for all agents and keep entries conci
 - `./gradlew test` runs the full suite; the Spring Boot tests use Testcontainers (needs Docker).
 - `./gradlew ktlintCheck` runs the linter (ktlint 1.8.0).
 - Jackson 3 (`tools.jackson.*`) is used, not Jackson 2; `@JsonProperty` still comes from `com.fasterxml.jackson.annotation`.
+- JobRunr: methods invoked from a scheduled/enqueued job lambda must not use Kotlin default parameter values - JobRunr fails to schedule them (`UnsupportedOperationException` at `JobDetailsBuilder`). Pass explicit args in the lambda instead.
 
 ## IndieAuth
 

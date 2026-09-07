@@ -26,6 +26,10 @@ data class IndieAuthConfig(
     val authRequestTtl: Duration = Duration.ofMinutes(10),
     /** How long an issued access token stays valid. */
     val accessTokenTtl: Duration = Duration.ofDays(30),
+    /** How often the recurring dead-row purge job runs. */
+    val purgeInterval: Duration = Duration.ofHours(1),
+    /** How long a used or expired authorization-code row is retained before the purge job deletes it. */
+    val codeRetention: Duration = Duration.ofDays(1),
     /** The set of scopes Bastion is willing to grant; anything else is `invalid_scope`. */
     val allowedScopes: Set<String> = DEFAULT_SCOPES,
     /** The browser UI host Bastion delegates the authentication screen to. */

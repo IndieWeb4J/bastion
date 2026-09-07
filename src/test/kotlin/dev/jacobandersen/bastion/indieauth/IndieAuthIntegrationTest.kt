@@ -1,15 +1,25 @@
 package dev.jacobandersen.bastion.indieauth
 
 import dev.jacobandersen.bastion.TestcontainersConfiguration
+import dev.jacobandersen.bastion.indieauth.data.entity.AccessTokenEntity
+import dev.jacobandersen.bastion.indieauth.data.entity.AuthRequestEntity
+import dev.jacobandersen.bastion.indieauth.data.entity.AuthorizationCodeEntity
+import dev.jacobandersen.bastion.indieauth.data.repository.AccessTokenRepository
+import dev.jacobandersen.bastion.indieauth.data.repository.AuthRequestRepository
+import dev.jacobandersen.bastion.indieauth.data.repository.AuthorizationCodeRepository
 import dev.jacobandersen.bastion.indieauth.identity.GitHubIdentityProvider
 import dev.jacobandersen.bastion.indieauth.identity.ProviderIdentity
 import dev.jacobandersen.bastion.indieauth.security.Pkce
+import dev.jacobandersen.bastion.indieauth.security.Tokens
+import dev.jacobandersen.bastion.indieauth.service.IndieAuthRowPurgeService
 import dev.jacobandersen.bastion.indieauth.service.OwnerVerification
 import dev.jacobandersen.bastion.indieauth.service.OwnerVerifier
 import dev.jacobandersen.bastion.micropub.security.MicropubToken
 import dev.jacobandersen.bastion.micropub.security.MicropubTokenScope
 import dev.jacobandersen.bastion.micropub.security.MicropubTokenValidator
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -31,6 +41,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import org.springframework.web.context.WebApplicationContext
 import org.springframework.web.util.UriComponentsBuilder
 import tools.jackson.databind.ObjectMapper
+import java.time.Instant
 
 @Import(TestcontainersConfiguration::class)
 @SpringBootTest(
@@ -48,6 +59,18 @@ class IndieAuthIntegrationTest {
 
     @Autowired
     lateinit var tokenValidator: MicropubTokenValidator
+
+    @Autowired
+    lateinit var authRequestRepository: AuthRequestRepository
+
+    @Autowired
+    lateinit var authorizationCodeRepository: AuthorizationCodeRepository
+
+    @Autowired
+    lateinit var accessTokenRepository: AccessTokenRepository
+
+    @Autowired
+    lateinit var rowPurgeService: IndieAuthRowPurgeService
 
     @MockitoBean
     lateinit var githubIdentityProvider: GitHubIdentityProvider
@@ -137,8 +160,22 @@ class IndieAuthIntegrationTest {
     }
 
     @Test
+    fun `authorization without a code challenge is rejected`() {
+        mockMvc
+            .perform(
+                get("/indieauth/auth")
+                    .param("client_id", clientId)
+                    .param("redirect_uri", redirectUri)
+                    .param("state", "client-state")
+                    .param("scope", "create")
+                    .param("response_type", "code"),
+            ).andExpect(status().isFound)
+            .andExpect(header().string(HttpHeaders.LOCATION, org.hamcrest.Matchers.containsString("error=invalid_request")))
+    }
+
+    @Test
     fun `replayed state is rejected`() {
-        val state = beginAuthorization(null)
+        val state = beginAuthorization()
 
         mockMvc
             .perform(get("/indieauth/auth/callback").param("state", state).param("code", "github-code"))
@@ -219,22 +256,130 @@ class IndieAuthIntegrationTest {
             .andExpect(header().string(HttpHeaders.LOCATION, org.hamcrest.Matchers.containsString("error=invalid_scope")))
     }
 
+    // -------------------------------------------------------------- row purge
+
+    @Test
+    fun `purge removes dead rows and keeps live ones`() {
+        val now = Instant.now()
+        val challenge = Pkce.s256("purge-verifier")
+
+        authRequestRepository.save(
+            AuthRequestEntity(
+                stateHash = Tokens.sha256("expired-state"),
+                clientId = clientId,
+                redirectUri = redirectUri,
+                me = "https://bastion.test",
+                scope = "create",
+                codeChallenge = challenge,
+                codeChallengeMethod = "S256",
+                expiresAt = now.minusSeconds(3600),
+                createdAt = now.minusSeconds(7200),
+            ),
+        )
+        authRequestRepository.save(
+            AuthRequestEntity(
+                stateHash = Tokens.sha256("live-state"),
+                clientId = clientId,
+                redirectUri = redirectUri,
+                me = "https://bastion.test",
+                scope = "create",
+                codeChallenge = challenge,
+                codeChallengeMethod = "S256",
+                expiresAt = now.plusSeconds(3600),
+                createdAt = now,
+            ),
+        )
+
+        authorizationCodeRepository.save(
+            AuthorizationCodeEntity(
+                codeHash = Tokens.sha256("used-old-code"),
+                clientId = clientId,
+                redirectUri = redirectUri,
+                me = "https://bastion.test",
+                scope = "create",
+                codeChallenge = challenge,
+                codeChallengeMethod = "S256",
+                expiresAt = now.minusSeconds(60),
+                usedAt = now.minusSeconds(86400 * 2),
+                createdAt = now.minusSeconds(86400 * 2).minusSeconds(60),
+            ),
+        )
+        authorizationCodeRepository.save(
+            AuthorizationCodeEntity(
+                codeHash = Tokens.sha256("expired-unused-code"),
+                clientId = clientId,
+                redirectUri = redirectUri,
+                me = "https://bastion.test",
+                scope = "create",
+                codeChallenge = challenge,
+                codeChallengeMethod = "S256",
+                expiresAt = now.minusSeconds(86400 * 2),
+                createdAt = now.minusSeconds(86400 * 2).minusSeconds(60),
+            ),
+        )
+        authorizationCodeRepository.save(
+            AuthorizationCodeEntity(
+                codeHash = Tokens.sha256("recently-used-code"),
+                clientId = clientId,
+                redirectUri = redirectUri,
+                me = "https://bastion.test",
+                scope = "create",
+                codeChallenge = challenge,
+                codeChallengeMethod = "S256",
+                expiresAt = now.minusSeconds(30),
+                usedAt = now.minusSeconds(60),
+                createdAt = now.minusSeconds(600),
+            ),
+        )
+
+        accessTokenRepository.save(
+            AccessTokenEntity(
+                tokenHash = Tokens.sha256("expired-token"),
+                me = "https://bastion.test",
+                clientId = clientId,
+                scope = "create",
+                issuedAt = now.minusSeconds(86400 * 31),
+                expiresAt = now.minusSeconds(60),
+            ),
+        )
+        accessTokenRepository.save(
+            AccessTokenEntity(
+                tokenHash = Tokens.sha256("live-token"),
+                me = "https://bastion.test",
+                clientId = clientId,
+                scope = "create",
+                issuedAt = now,
+                expiresAt = now.plusSeconds(86400 * 30),
+            ),
+        )
+
+        rowPurgeService.purge(now)
+
+        assertNull(authRequestRepository.findByStateHash(Tokens.sha256("expired-state")))
+        assertNull(authorizationCodeRepository.findByCodeHash(Tokens.sha256("used-old-code")))
+        assertNull(authorizationCodeRepository.findByCodeHash(Tokens.sha256("expired-unused-code")))
+        assertNull(accessTokenRepository.findByTokenHash(Tokens.sha256("expired-token")))
+
+        assertNotNull(authRequestRepository.findByStateHash(Tokens.sha256("live-state")))
+        assertNotNull(authorizationCodeRepository.findByCodeHash(Tokens.sha256("recently-used-code")))
+        assertNotNull(accessTokenRepository.findByTokenHash(Tokens.sha256("live-token")))
+    }
+
     // --------------------------------------------------------------- helpers
 
-    private fun beginAuthorization(codeChallenge: String?): String {
-        val request =
-            get("/indieauth/auth")
-                .param("client_id", clientId)
-                .param("redirect_uri", redirectUri)
-                .param("state", "client-state")
-                .param("scope", "create")
-                .param("response_type", "code")
-        codeChallenge?.let { request.param("code_challenge", it).param("code_challenge_method", "S256") }
-
+    private fun beginAuthorization(codeChallenge: String = Pkce.s256("integration-verifier")): String {
         val response =
             mockMvc
-                .perform(request)
-                .andExpect(status().isFound)
+                .perform(
+                    get("/indieauth/auth")
+                        .param("client_id", clientId)
+                        .param("redirect_uri", redirectUri)
+                        .param("state", "client-state")
+                        .param("scope", "create")
+                        .param("response_type", "code")
+                        .param("code_challenge", codeChallenge)
+                        .param("code_challenge_method", "S256"),
+                ).andExpect(status().isFound)
                 .andReturn()
                 .response
 
