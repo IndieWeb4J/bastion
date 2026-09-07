@@ -15,7 +15,11 @@ enum class MicropubTokenScope : GrantedAuthority {
 
     companion object {
         fun fromString(scope: String): MicropubTokenScope {
-            return entries.find { it.name.equals(scope, ignoreCase = true) } ?: throw IllegalArgumentException("Unknown token scope '$scope'")
+            return fromStringOrNull(scope) ?: throw IllegalArgumentException("Unknown token scope '$scope'")
+        }
+
+        fun fromStringOrNull(scope: String): MicropubTokenScope? {
+            return entries.find { it.name.equals(scope, ignoreCase = true) }
         }
     }
 }
