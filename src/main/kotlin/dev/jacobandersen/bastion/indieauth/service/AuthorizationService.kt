@@ -4,13 +4,10 @@ import dev.jacobandersen.bastion.indieauth.IndieAuthEndpoints
 import dev.jacobandersen.bastion.indieauth.config.IndieAuthConfig
 import dev.jacobandersen.bastion.indieauth.data.entity.AuthRequestEntity
 import dev.jacobandersen.bastion.indieauth.data.entity.AuthorizationCodeEntity
-import dev.jacobandersen.bastion.indieauth.data.entity.ProviderIdentityEntity
 import dev.jacobandersen.bastion.indieauth.data.repository.AuthRequestRepository
 import dev.jacobandersen.bastion.indieauth.data.repository.AuthorizationCodeRepository
-import dev.jacobandersen.bastion.indieauth.data.repository.ProviderIdentityRepository
 import dev.jacobandersen.bastion.indieauth.identity.IdentityProvider
 import dev.jacobandersen.bastion.indieauth.identity.IdentityProviderException
-import dev.jacobandersen.bastion.indieauth.identity.ProviderIdentity
 import dev.jacobandersen.bastion.indieauth.security.Pkce
 import dev.jacobandersen.bastion.indieauth.security.Tokens
 import dev.jacobandersen.bastion.indieauth.type.IndieAuthError
@@ -62,7 +59,7 @@ class AuthorizationService(
     private val identityProvider: IdentityProvider,
     private val authRequestRepository: AuthRequestRepository,
     private val authorizationCodeRepository: AuthorizationCodeRepository,
-    private val providerIdentityRepository: ProviderIdentityRepository,
+    private val ownerVerifier: OwnerVerifier,
     @Value($$"${bastion.public-url}") private val publicUrl: String,
 ) {
     /** Starts the flow, returning the Herald redirect location. */
@@ -149,7 +146,24 @@ class AuthorizationService(
                 return CompleteResult.Redirect(errorRedirect(authRequest, IndieAuthError.Code.SERVER_ERROR.value))
             }
 
-        rememberIdentity(identity)
+        when (ownerVerifier.verify(identity.profileUrl)) {
+            OwnerVerification.Unavailable -> {
+                return CompleteResult.Redirect(errorRedirect(authRequest, IndieAuthError.Code.SERVER_ERROR.value))
+            }
+
+            OwnerVerification.NotLinked -> {
+                logger.warn { "Rejected identity ${identity.subject}: not linked to ${config.me}" }
+                return CompleteResult.Redirect(
+                    errorRedirect(
+                        authRequest,
+                        IndieAuthError.Code.ACCESS_DENIED.value,
+                        "The authenticated identity is not linked to this site",
+                    ),
+                )
+            }
+
+            OwnerVerification.Verified -> Unit
+        }
 
         val authorizationCode = Tokens.random()
         val now = Instant.now()
@@ -170,28 +184,6 @@ class AuthorizationService(
         logger.info { "Issued authorization code for ${authRequest.me} (client ${authRequest.clientId})" }
 
         return CompleteResult.Redirect(codeRedirect(authRequest, authorizationCode))
-    }
-
-    private fun rememberIdentity(identity: ProviderIdentity) {
-        val now = Instant.now()
-        val existing = providerIdentityRepository.findByProviderAndSubject(identity.provider, identity.subject)
-        if (existing != null) {
-            existing.profileUrl = identity.profileUrl
-            existing.me = config.me
-            existing.lastSeenAt = now
-            providerIdentityRepository.save(existing)
-        } else {
-            providerIdentityRepository.save(
-                ProviderIdentityEntity(
-                    provider = identity.provider,
-                    subject = identity.subject,
-                    profileUrl = identity.profileUrl,
-                    me = config.me,
-                    createdAt = now,
-                    lastSeenAt = now,
-                ),
-            )
-        }
     }
 
     private fun heraldUri(

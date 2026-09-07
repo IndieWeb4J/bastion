@@ -39,17 +39,6 @@ create table indieauth_access_tokens (
     expires_at timestamptz not null
 );
 
-create table indieauth_provider_identities (
-    id uuid primary key,
-    provider text not null,
-    subject text not null,
-    profile_url text,
-    me text not null,
-    created_at timestamptz not null,
-    last_seen_at timestamptz not null,
-    constraint uq_indieauth_provider_identity unique (provider, subject)
-);
-
 create index idx_indieauth_auth_request_expires_at on indieauth_authorization_requests (expires_at);
 create index idx_indieauth_auth_code_expires_at on indieauth_authorization_codes (expires_at);
 create index idx_indieauth_access_token_expires_at on indieauth_access_tokens (expires_at);

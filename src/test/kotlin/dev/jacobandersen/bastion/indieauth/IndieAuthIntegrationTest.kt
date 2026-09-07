@@ -4,6 +4,8 @@ import dev.jacobandersen.bastion.TestcontainersConfiguration
 import dev.jacobandersen.bastion.indieauth.identity.GitHubIdentityProvider
 import dev.jacobandersen.bastion.indieauth.identity.ProviderIdentity
 import dev.jacobandersen.bastion.indieauth.security.Pkce
+import dev.jacobandersen.bastion.indieauth.service.OwnerVerification
+import dev.jacobandersen.bastion.indieauth.service.OwnerVerifier
 import dev.jacobandersen.bastion.micropub.security.MicropubToken
 import dev.jacobandersen.bastion.micropub.security.MicropubTokenScope
 import dev.jacobandersen.bastion.micropub.security.MicropubTokenValidator
@@ -50,6 +52,9 @@ class IndieAuthIntegrationTest {
     @MockitoBean
     lateinit var githubIdentityProvider: GitHubIdentityProvider
 
+    @MockitoBean
+    lateinit var ownerVerifier: OwnerVerifier
+
     lateinit var mockMvc: MockMvc
 
     private val clientId = "https://client.example"
@@ -59,6 +64,7 @@ class IndieAuthIntegrationTest {
     fun setUp() {
         `when`(githubIdentityProvider.resolveIdentity(anyString()))
             .thenReturn(ProviderIdentity("github", "12345", "https://github.com/someone"))
+        `when`(ownerVerifier.verify(anyString())).thenReturn(OwnerVerification.Verified)
         mockMvc = MockMvcBuilders.webAppContextSetup(context).build()
     }
 

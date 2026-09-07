@@ -34,7 +34,7 @@ class IdentityProviderException(
  * host (Herald), so providers only expose the code exchange here.
  */
 interface IdentityProvider {
-    /** The stable name of the provider, used in logs and persistence. */
+    /** The stable name of the provider, used in logs. */
     val provider: String
 
     /**

@@ -5,7 +5,6 @@ import dev.jacobandersen.bastion.indieauth.data.entity.AuthRequestEntity
 import dev.jacobandersen.bastion.indieauth.data.entity.AuthorizationCodeEntity
 import dev.jacobandersen.bastion.indieauth.data.repository.AuthRequestRepository
 import dev.jacobandersen.bastion.indieauth.data.repository.AuthorizationCodeRepository
-import dev.jacobandersen.bastion.indieauth.data.repository.ProviderIdentityRepository
 import dev.jacobandersen.bastion.indieauth.identity.IdentityProvider
 import dev.jacobandersen.bastion.indieauth.identity.IdentityProviderException
 import dev.jacobandersen.bastion.indieauth.identity.ProviderIdentity
@@ -36,14 +35,14 @@ class AuthorizationServiceTest {
     private val identityProvider = mock(IdentityProvider::class.java)
     private val authRequestRepository = mock(AuthRequestRepository::class.java)
     private val authorizationCodeRepository = mock(AuthorizationCodeRepository::class.java)
-    private val providerIdentityRepository = mock(ProviderIdentityRepository::class.java)
+    private val ownerVerifier = mock(OwnerVerifier::class.java)
     private val service =
         AuthorizationService(
             config,
             identityProvider,
             authRequestRepository,
             authorizationCodeRepository,
-            providerIdentityRepository,
+            ownerVerifier,
             "https://bastion.test",
         )
 
@@ -149,7 +148,7 @@ class AuthorizationServiceTest {
         `when`(authRequestRepository.claim(eq(stateHash), any())).thenReturn(1)
         `when`(identityProvider.resolveIdentity("github-code"))
             .thenReturn(ProviderIdentity("github", "12345", "https://github.com/someone"))
-        `when`(providerIdentityRepository.findByProviderAndSubject("github", "12345")).thenReturn(null)
+        `when`(ownerVerifier.verify("https://github.com/someone")).thenReturn(OwnerVerification.Verified)
 
         val result = service.complete(state, "github-code", null)
 
@@ -163,6 +162,22 @@ class AuthorizationServiceTest {
         val codeCaptor = ArgumentCaptor.forClass(AuthorizationCodeEntity::class.java)
         verify(authorizationCodeRepository).save(codeCaptor.capture())
         assertEquals(Tokens.sha256(code!!), codeCaptor.value.codeHash)
+    }
+
+    @Test
+    fun `complete redirects an access denied error when the identity is not the owner`() {
+        val stateHash = Tokens.sha256("one-time-state")
+        `when`(authRequestRepository.findByStateHash(stateHash)).thenReturn(authRequest(stateHash))
+        `when`(authRequestRepository.claim(eq(stateHash), any())).thenReturn(1)
+        `when`(identityProvider.resolveIdentity("github-code"))
+            .thenReturn(ProviderIdentity("github", "12345", "https://github.com/attacker"))
+        `when`(ownerVerifier.verify("https://github.com/attacker")).thenReturn(OwnerVerification.NotLinked)
+
+        val result = service.complete("one-time-state", "github-code", null)
+
+        assertTrue(result is CompleteResult.Redirect)
+        assertEquals("access_denied", queryParam((result as CompleteResult.Redirect).url, "error"))
+        verify(authorizationCodeRepository, never()).save(any())
     }
 
     @Test
