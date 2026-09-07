@@ -15,8 +15,8 @@ data class WebmentionCounts(
     companion object {
         val EMPTY = WebmentionCounts(0, 0, 0, 0, 0, 0, 0)
 
-        fun of(counts: Map<WebmentionInteraction, Int>): WebmentionCounts {
-            return WebmentionCounts(
+        fun of(counts: Map<WebmentionInteraction, Int>): WebmentionCounts =
+            WebmentionCounts(
                 total = counts.values.sum(),
                 reply = counts[WebmentionInteraction.REPLY] ?: 0,
                 like = counts[WebmentionInteraction.LIKE] ?: 0,
@@ -25,6 +25,5 @@ data class WebmentionCounts(
                 rsvp = counts[WebmentionInteraction.RSVP] ?: 0,
                 mention = counts[WebmentionInteraction.MENTION] ?: 0,
             )
-        }
     }
 }

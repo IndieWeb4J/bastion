@@ -9,5 +9,8 @@ package dev.jacobandersen.bastion.microformats2
  * retain state on the instance.
  */
 fun interface Mf2Parser {
-    fun parse(html: String, baseUrl: String): Mf2ParseResult
+    fun parse(
+        html: String,
+        baseUrl: String,
+    ): Mf2ParseResult
 }

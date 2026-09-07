@@ -20,18 +20,18 @@ class PostQueryResolver(
         @Argument types: List<PostType>?,
         @Argument limit: Int?,
         @Argument offset: Int?,
-    ): List<Post> {
-        return queryService.feed(types, limit, offset)
-    }
+    ): List<Post> = queryService.feed(types, limit, offset)
 
     @QueryMapping
-    fun post(@Argument slug: String?, @Argument url: String?): Any? {
-        return when (val result = queryService.post(slug, url)) {
+    fun post(
+        @Argument slug: String?,
+        @Argument url: String?,
+    ): Any? =
+        when (val result = queryService.post(slug, url)) {
             is PostLookupResult.Found -> result.post
             is PostLookupResult.Gone -> PostGone(result.slug, result.url, result.published)
             null -> null
         }
-    }
 
     @SchemaMapping
     fun id(post: Post): String = post.id.toString()
@@ -61,10 +61,16 @@ class PostQueryResolver(
     fun category(post: Post): List<String> = Mf2Graphql.strings(post.post, "category")
 
     @SchemaMapping
-    fun properties(post: Post, @Argument names: List<String>?): Map<String, List<Any?>> {
+    fun properties(
+        post: Post,
+        @Argument names: List<String>?,
+    ): Map<String, List<Any?>> {
         val requested = postService.filterPostFields(post, names?.toTypedArray()).post
         return Mf2Graphql.normalizeProperties(requested)
     }
 
-    private fun text(post: Post, key: String): String? = Mf2Graphql.firstText(post.post, key)
+    private fun text(
+        post: Post,
+        key: String,
+    ): String? = Mf2Graphql.firstText(post.post, key)
 }

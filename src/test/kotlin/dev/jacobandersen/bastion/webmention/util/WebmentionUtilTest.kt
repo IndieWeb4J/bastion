@@ -43,17 +43,21 @@ class WebmentionUtilTest {
 
     @Test
     fun findsWebmentionAcrossMultipleLinkValuesInOneHeader() {
-        val endpoint = WebmentionUtil.findEndpointInLinkHeaders(listOf("<https://example.com/a>; rel=\"preload\", <https://example.com/wm>; rel=\"webmention\""))
+        val endpoint =
+            WebmentionUtil.findEndpointInLinkHeaders(
+                listOf("<https://example.com/a>; rel=\"preload\", <https://example.com/wm>; rel=\"webmention\""),
+            )
 
         assertEquals("https://example.com/wm", endpoint)
     }
 
     @Test
     fun findsWebmentionAcrossMultipleHeaders() {
-        val headers = listOf(
-            "<https://example.com/a>; rel=\"preload\"",
-            "<https://example.com/wm>; rel=\"webmention\"",
-        )
+        val headers =
+            listOf(
+                "<https://example.com/a>; rel=\"preload\"",
+                "<https://example.com/wm>; rel=\"webmention\"",
+            )
 
         val endpoint = WebmentionUtil.findEndpointInLinkHeaders(headers)
 
@@ -62,10 +66,11 @@ class WebmentionUtilTest {
 
     @Test
     fun prefersFirstWebmentionHeader() {
-        val headers = listOf(
-            "<https://example.com/first>; rel=\"webmention\"",
-            "<https://example.com/second>; rel=\"webmention\"",
-        )
+        val headers =
+            listOf(
+                "<https://example.com/first>; rel=\"webmention\"",
+                "<https://example.com/second>; rel=\"webmention\"",
+            )
 
         val endpoint = WebmentionUtil.findEndpointInLinkHeaders(headers)
 
@@ -113,7 +118,10 @@ class WebmentionUtilTest {
 
     @Test
     fun resolvesProtocolRelativeEndpoint() {
-        assertEquals("https://wm.example.com/endpoint", WebmentionUtil.resolveEndpoint("//wm.example.com/endpoint", "https://example.com/post"))
+        assertEquals(
+            "https://wm.example.com/endpoint",
+            WebmentionUtil.resolveEndpoint("//wm.example.com/endpoint", "https://example.com/post"),
+        )
     }
 
     @Test
@@ -125,11 +133,12 @@ class WebmentionUtilTest {
     fun expiryUsesMaxAge() {
         val now = Instant.parse("2026-01-01T00:00:00Z")
 
-        val expiry = WebmentionUtil.effectiveCacheExpiry(
-            cacheControl = "public, max-age=1200",
-            expiresHeader = null,
-            now = now,
-        )
+        val expiry =
+            WebmentionUtil.effectiveCacheExpiry(
+                cacheControl = "public, max-age=1200",
+                expiresHeader = null,
+                now = now,
+            )
 
         assertEquals(now.plusSeconds(1200), expiry)
     }
@@ -138,11 +147,12 @@ class WebmentionUtilTest {
     fun maxAgeOfZeroIsNotCacheable() {
         val now = Instant.parse("2026-01-01T00:00:00Z")
 
-        val expiry = WebmentionUtil.effectiveCacheExpiry(
-            cacheControl = "no-cache, max-age=0",
-            expiresHeader = null,
-            now = now,
-        )
+        val expiry =
+            WebmentionUtil.effectiveCacheExpiry(
+                cacheControl = "no-cache, max-age=0",
+                expiresHeader = null,
+                now = now,
+            )
 
         assertNull(expiry)
     }
@@ -151,11 +161,12 @@ class WebmentionUtilTest {
     fun expiryUsesExpiresHeader() {
         val now = Instant.parse("2026-01-01T00:00:00Z")
 
-        val expiry = WebmentionUtil.effectiveCacheExpiry(
-            cacheControl = null,
-            expiresHeader = "Thu, 01 Jan 2026 02:00:00 GMT",
-            now = now,
-        )
+        val expiry =
+            WebmentionUtil.effectiveCacheExpiry(
+                cacheControl = null,
+                expiresHeader = "Thu, 01 Jan 2026 02:00:00 GMT",
+                now = now,
+            )
 
         assertEquals(now.plusSeconds(7200), expiry)
     }
@@ -164,11 +175,12 @@ class WebmentionUtilTest {
     fun noCacheHeadersMeansNotCacheable() {
         val now = Instant.parse("2026-01-01T00:00:00Z")
 
-        val expiry = WebmentionUtil.effectiveCacheExpiry(
-            cacheControl = null,
-            expiresHeader = null,
-            now = now,
-        )
+        val expiry =
+            WebmentionUtil.effectiveCacheExpiry(
+                cacheControl = null,
+                expiresHeader = null,
+                now = now,
+            )
 
         assertNull(expiry)
     }
@@ -177,11 +189,12 @@ class WebmentionUtilTest {
     fun pastExpiresHeaderIsNotCacheable() {
         val now = Instant.parse("2026-01-01T00:00:00Z")
 
-        val expiry = WebmentionUtil.effectiveCacheExpiry(
-            cacheControl = null,
-            expiresHeader = "Wed, 31 Dec 2025 23:00:00 GMT",
-            now = now,
-        )
+        val expiry =
+            WebmentionUtil.effectiveCacheExpiry(
+                cacheControl = null,
+                expiresHeader = "Wed, 31 Dec 2025 23:00:00 GMT",
+                now = now,
+            )
 
         assertNull(expiry)
     }

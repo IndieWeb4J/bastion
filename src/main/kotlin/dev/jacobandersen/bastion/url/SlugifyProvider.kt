@@ -8,12 +8,12 @@ import java.util.Locale
 @Component
 class SlugifyProvider {
     @Bean
-    fun slugify(): Slugify {
-        return Slugify.builder()
+    fun slugify(): Slugify =
+        Slugify
+            .builder()
             .lowerCase(true)
             .transliterator(true)
             .underscoreSeparator(false)
             .locale(Locale.ENGLISH)
             .build()
-    }
 }

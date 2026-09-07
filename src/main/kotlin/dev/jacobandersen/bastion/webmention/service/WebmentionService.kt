@@ -1,7 +1,6 @@
 package dev.jacobandersen.bastion.webmention.service
 
 import dev.jacobandersen.bastion.microformats2.Mf2Object
-import dev.jacobandersen.bastion.microformats2.Mf2TextExtractor
 import dev.jacobandersen.bastion.url.UrlExtractor
 import dev.jacobandersen.bastion.webmention.config.WebmentionConfig
 import dev.jacobandersen.bastion.webmention.data.domain.WebmentionState
@@ -12,11 +11,12 @@ import dev.jacobandersen.bastion.webmention.http.EndpointDiscovery
 import dev.jacobandersen.bastion.webmention.http.SendWebmentionResult
 import dev.jacobandersen.bastion.webmention.http.WebmentionHttpClient
 import dev.jacobandersen.bastion.webmention.util.HttpUtil
+import dev.jacobandersen.bastion.webmention.util.Mf2TextExtractor
 import dev.jacobandersen.bastion.webmention.util.WebmentionUtil
 import io.github.oshai.kotlinlogging.KotlinLogging
-import java.time.Instant
 import org.jobrunr.scheduling.JobScheduler
 import org.springframework.stereotype.Service
+import java.time.Instant
 
 private val logger = KotlinLogging.logger {}
 
@@ -28,27 +28,26 @@ class WebmentionService(
     private val httpClient: WebmentionHttpClient,
     private val config: WebmentionConfig,
 ) {
-    fun processWebmentions(sourceUrl: String, obj: Mf2Object) {
+    fun processWebmentions(
+        sourceUrl: String,
+        obj: Mf2Object,
+    ) {
         targetUrlsOf(obj).forEach { target ->
-            val current = notificationService.notification(sourceUrl, target)
-            if (current == null || current.state != WebmentionState.ACTIVE) {
-                notificationService.setActivePending(sourceUrl, target)
-                enqueueSend(sourceUrl, target)
-            }
+            enqueueIfInactive(sourceUrl, target)
         }
     }
 
-    fun processUpdatedWebmentions(sourceUrl: String, previousTargetUrls: Collection<String>, obj: Mf2Object) {
+    fun processUpdatedWebmentions(
+        sourceUrl: String,
+        previousTargetUrls: Collection<String>,
+        obj: Mf2Object,
+    ) {
         val previous = previousTargetUrls.toSet()
         val current = targetUrlsOf(obj)
 
         val new = current - previous
         new.forEach { target ->
-            val existing = notificationService.notification(sourceUrl, target)
-            if (existing == null || existing.state != WebmentionState.ACTIVE) {
-                notificationService.setActivePending(sourceUrl, target)
-                enqueueSend(sourceUrl, target)
-            }
+            enqueueIfInactive(sourceUrl, target)
         }
 
         val unchanged = previous.intersect(current)
@@ -96,12 +95,16 @@ class WebmentionService(
         }
     }
 
-    fun sendWebmention(sourceUrl: String, targetUrl: String, forceRediscovery: Boolean = false) {
+    fun sendWebmention(
+        sourceUrl: String,
+        targetUrl: String,
+        forceRediscovery: Boolean = false,
+    ) {
         logger.info { "Sending webmention for $sourceUrl to $targetUrl..." }
 
-        if (HttpUtil.isLoopbackOrLocal(targetUrl)) {
-            logger.info { "Skipping webmention to loopback/local target $targetUrl" }
-            recordTerminalFailure(sourceUrl, targetUrl, "target URL is loopback/local")
+        if (HttpUtil.isBlockedHost(targetUrl, failClosedOnDnsError = false)) {
+            logger.info { "Skipping webmention to blocked target $targetUrl" }
+            recordTerminalFailure(sourceUrl, targetUrl, "target URL resolves to a blocked address")
             return
         }
 
@@ -112,9 +115,9 @@ class WebmentionService(
             return
         }
 
-        if (HttpUtil.isLoopbackOrLocal(endpointUrl)) {
-            logger.info { "Skipping webmention to loopback/local endpoint $endpointUrl" }
-            recordTerminalFailure(sourceUrl, targetUrl, "webmention endpoint is loopback/local")
+        if (HttpUtil.isBlockedHost(endpointUrl, failClosedOnDnsError = false)) {
+            logger.info { "Skipping webmention to blocked endpoint $endpointUrl" }
+            recordTerminalFailure(sourceUrl, targetUrl, "webmention endpoint resolves to a blocked address")
             return
         }
 
@@ -127,21 +130,23 @@ class WebmentionService(
             is SendWebmentionResult.Failure -> {
                 logger.warn { "Webmention to $endpointUrl failed: ${result.message}" }
                 val attempts = notificationService.recordFailure(sourceUrl, targetUrl, result.statusCode, result.message)
-                val nextAttempt = if (result.retryable && attempts < config.maxAttempts) {
-                    nextAttemptAt(attempts)
-                } else {
-                    null
-                }
+                val nextAttempt =
+                    if (result.retryable && attempts < config.maxAttempts) {
+                        nextAttemptAt(attempts)
+                    } else {
+                        null
+                    }
                 notificationService.scheduleNextAttempt(sourceUrl, targetUrl, nextAttempt)
             }
         }
     }
 
-    internal fun targetUrlsOf(obj: Mf2Object): Set<String> {
-        return Mf2TextExtractor.extractText(obj).let(UrlExtractor::distinctUrls).toSet()
-    }
+    internal fun targetUrlsOf(obj: Mf2Object): Set<String> = Mf2TextExtractor.extractText(obj).let(UrlExtractor::distinctUrls).toSet()
 
-    private fun resolveEndpointForTarget(targetUrl: String, forceRediscovery: Boolean = false): String? {
+    private fun resolveEndpointForTarget(
+        targetUrl: String,
+        forceRediscovery: Boolean = false,
+    ): String? {
         val now = Instant.now()
 
         if (!forceRediscovery) {
@@ -152,11 +157,12 @@ class WebmentionService(
         }
 
         val discovery = discover(targetUrl)
-        val expiresAt = WebmentionUtil.effectiveCacheExpiry(
-            cacheControl = discovery.cacheControl,
-            expiresHeader = discovery.expiresHeader,
-            now = now,
-        )
+        val expiresAt =
+            WebmentionUtil.effectiveCacheExpiry(
+                cacheControl = discovery.cacheControl,
+                expiresHeader = discovery.expiresHeader,
+                now = now,
+            )
         if (expiresAt != null) {
             endpointCacheService.store(targetUrl, discovery.endpointUrl, expiresAt)
         } else {
@@ -165,25 +171,43 @@ class WebmentionService(
         return discovery.endpointUrl
     }
 
-    private fun discover(targetUrl: String): EndpointDiscovery {
-        return httpClient.discoverWebmentionEndpoint(targetUrl)
-    }
+    private fun discover(targetUrl: String): EndpointDiscovery = httpClient.discoverWebmentionEndpoint(targetUrl)
 
     private fun nextAttemptAt(attempts: Int): Instant {
         val exponent = (attempts - 1).coerceAtLeast(0)
-        val seconds = minOf(
-            config.backoffBaseSeconds * (1L shl exponent.coerceAtMost(20)),
-            config.backoffMaxSeconds,
-        )
+        val seconds =
+            minOf(
+                config.backoffBaseSeconds * (1L shl exponent.coerceAtMost(20)),
+                config.backoffMaxSeconds,
+            )
         return Instant.now().plusSeconds(seconds)
     }
 
-    private fun recordTerminalFailure(sourceUrl: String, targetUrl: String, reason: String) {
+    private fun recordTerminalFailure(
+        sourceUrl: String,
+        targetUrl: String,
+        reason: String,
+    ) {
         notificationService.recordFailure(sourceUrl, targetUrl, null, reason)
         notificationService.scheduleNextAttempt(sourceUrl, targetUrl, null)
     }
 
-    private fun enqueueSend(sourceUrl: String, targetUrl: String, forceRediscovery: Boolean = false) {
+    private fun enqueueIfInactive(
+        sourceUrl: String,
+        targetUrl: String,
+    ) {
+        val current = notificationService.notification(sourceUrl, targetUrl)
+        if (current == null || current.state != WebmentionState.ACTIVE) {
+            notificationService.setActivePending(sourceUrl, targetUrl)
+            enqueueSend(sourceUrl, targetUrl)
+        }
+    }
+
+    private fun enqueueSend(
+        sourceUrl: String,
+        targetUrl: String,
+        forceRediscovery: Boolean = false,
+    ) {
         jobScheduler.enqueue { sendWebmention(sourceUrl, targetUrl, forceRediscovery) }
     }
 }

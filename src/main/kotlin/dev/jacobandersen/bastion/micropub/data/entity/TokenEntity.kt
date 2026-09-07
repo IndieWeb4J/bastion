@@ -19,23 +19,19 @@ class TokenEntity(
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     var id: UUID? = null,
-
     @Column(nullable = false)
     var token: String,
-
     @Column(nullable = false)
     @JdbcTypeCode(SqlTypes.JSON)
     var decoded: MicropubToken,
-
     @Column(nullable = false)
-    var expiresAt: Instant
+    var expiresAt: Instant,
 ) {
-    fun toDomain(): Token {
-        return Token(
+    fun toDomain(): Token =
+        Token(
             id = requireNotNull(this.id),
             token = this.token,
             decoded = this.decoded,
-            expiresAt = expiresAt
+            expiresAt = expiresAt,
         )
-    }
 }

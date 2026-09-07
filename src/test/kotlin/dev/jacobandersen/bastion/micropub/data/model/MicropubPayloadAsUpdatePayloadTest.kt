@@ -41,8 +41,9 @@ class MicropubPayloadAsUpdatePayloadTest {
 
     @Test
     fun parsesReplacements() {
-        val payload = parse(
-            """
+        val payload =
+            parse(
+                """
             {
                 "url": "https://example.com/posts/1",
                 "replace": {
@@ -50,45 +51,43 @@ class MicropubPayloadAsUpdatePayloadTest {
                     "category": ["tag-a", "tag-b"]
                 }
             }
-            """
-        )
+            """,
+            )
 
         assertEquals(
-            MicropubUpdatePayload.Replacements(
-                mapOf(
-                    "content" to listOf(Mf2Value.String("updated content")),
-                    "category" to listOf(Mf2Value.String("tag-a"), Mf2Value.String("tag-b")),
-                )
+            mapOf<String, List<Mf2Value>>(
+                "content" to listOf(Mf2Value.String("updated content")),
+                "category" to listOf(Mf2Value.String("tag-a"), Mf2Value.String("tag-b")),
             ),
-            payload.replacements
+            payload.replacements,
         )
     }
 
     @Test
     fun parsesAdditions() {
-        val payload = parse(
-            """
+        val payload =
+            parse(
+                """
             {
                 "url": "https://example.com/posts/1",
                 "add": {
                     "category": ["new-tag"]
                 }
             }
-            """
-        )
+            """,
+            )
 
         assertEquals(
-            MicropubUpdatePayload.Additions(
-                mapOf("category" to listOf(Mf2Value.String("new-tag")))
-            ),
-            payload.additions
+            mapOf<String, List<Mf2Value>>("category" to listOf(Mf2Value.String("new-tag"))),
+            payload.additions,
         )
     }
 
     @Test
     fun parsesNestedMf2Values() {
-        val payload = parse(
-            """
+        val payload =
+            parse(
+                """
             {
                 "url": "https://example.com/posts/1",
                 "replace": {
@@ -102,74 +101,71 @@ class MicropubPayloadAsUpdatePayloadTest {
                     ]
                 }
             }
-            """
-        )
+            """,
+            )
 
         assertEquals(
-            MicropubUpdatePayload.Replacements(
-                mapOf(
-                    "author" to listOf(
+            mapOf<String, List<Mf2Value>>(
+                "author" to
+                    listOf(
                         Mf2Value.Object(
                             Mf2Object(
                                 type = listOf("h-card"),
-                                properties = mutableMapOf(
-                                    "name" to listOf(
-                                        Mf2Value.String(
-                                            "Jacob"
-                                        )
-                                    )
-                                ),
+                                properties =
+                                    mapOf(
+                                        "name" to listOf(Mf2Value.String("Jacob")),
+                                    ),
                                 children = null,
-                            )
-                        )
+                            ),
+                        ),
                     ),
-                )
             ),
-            payload.replacements
+            payload.replacements,
         )
     }
 
     @Test
     fun ignoresUnparseableValueElements() {
-        val payload = parse(
-            """
+        val payload =
+            parse(
+                """
             {
                 "url": "https://example.com/posts/1",
                 "replace": {
                     "count": [1, 2.5, true, "three"]
                 }
             }
-            """
-        )
+            """,
+            )
 
         assertEquals(
-            MicropubUpdatePayload.Replacements(
-                mapOf(
-                    "count" to listOf(Mf2Value.Number(1), Mf2Value.Float(2.5), Mf2Value.Boolean(true), Mf2Value.String("three")),
-                )
+            mapOf<String, List<Mf2Value>>(
+                "count" to listOf(Mf2Value.Number(1), Mf2Value.Double(2.5), Mf2Value.Boolean(true), Mf2Value.String("three")),
             ),
-            payload.replacements
+            payload.replacements,
         )
     }
 
     @Test
     fun parsesDeleteAll() {
-        val payload = parse(
-            """
+        val payload =
+            parse(
+                """
             {
                 "url": "https://example.com/posts/1",
                 "delete": ["content", "category"]
             }
-            """
-        )
+            """,
+            )
 
         assertEquals(MicropubUpdatePayload.Removals.All(listOf("content", "category")), payload.removals)
     }
 
     @Test
     fun parsesDeleteMany() {
-        val payload = parse(
-            """
+        val payload =
+            parse(
+                """
             {
                 "url": "https://example.com/posts/1",
                 "delete": {
@@ -177,55 +173,57 @@ class MicropubPayloadAsUpdatePayloadTest {
                     "content": ["old content"]
                 }
             }
-            """
-        )
+            """,
+            )
 
         assertEquals(
             MicropubUpdatePayload.Removals.Many(
                 mapOf(
                     "category" to listOf(Mf2Value.String("tag-a"), Mf2Value.String("tag-b")),
                     "content" to listOf(Mf2Value.String("old content")),
-                )
+                ),
             ),
-            payload.removals
+            payload.removals,
         )
     }
 
     @Test
     fun parsesDeleteManyTypedValues() {
-        val payload = parse(
-            """
+        val payload =
+            parse(
+                """
             {
                 "url": "https://example.com/posts/1",
                 "delete": {
                     "count": [1, 2.5, true, "three"]
                 }
             }
-            """
-        )
+            """,
+            )
 
         assertEquals(
             MicropubUpdatePayload.Removals.Many(
                 mapOf(
-                    "count" to listOf(Mf2Value.Number(1), Mf2Value.Float(2.5), Mf2Value.Boolean(true), Mf2Value.String("three")),
-                )
+                    "count" to listOf(Mf2Value.Number(1), Mf2Value.Double(2.5), Mf2Value.Boolean(true), Mf2Value.String("three")),
+                ),
             ),
-            payload.removals
+            payload.removals,
         )
     }
 
     @Test
     fun ignoresMalformedSections() {
-        val payload = parse(
-            """
+        val payload =
+            parse(
+                """
             {
                 "url": "https://example.com/posts/1",
                 "replace": "not an object",
                 "add": [1, 2],
                 "delete": "not an object or array"
             }
-            """
-        )
+            """,
+            )
 
         assertNull(payload.replacements)
         assertNull(payload.additions)
@@ -236,7 +234,7 @@ class MicropubPayloadAsUpdatePayloadTest {
     fun parsesEmptyReplaceObject() {
         val payload = parse("""{"url": "https://example.com/posts/1", "replace": {}}""")
 
-        assertEquals(MicropubUpdatePayload.Replacements(emptyMap()), payload.replacements)
+        assertEquals(mapOf<String, List<Mf2Value>>(), payload.replacements)
     }
 
     @Test

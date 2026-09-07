@@ -12,7 +12,7 @@ class IndieAuthServiceLoggingInterceptor : ClientHttpRequestInterceptor {
     override fun intercept(
         request: HttpRequest,
         body: ByteArray,
-        execution: ClientHttpRequestExecution
+        execution: ClientHttpRequestExecution,
     ): ClientHttpResponse {
         logRequest(request)
         val start = System.currentTimeMillis()
@@ -22,10 +22,13 @@ class IndieAuthServiceLoggingInterceptor : ClientHttpRequestInterceptor {
     }
 
     private fun logRequest(request: HttpRequest) {
-        logger.info { "--> IndieAuth: ${request.method} ${request.uri}"}
+        logger.info { "--> IndieAuth: ${request.method} ${request.uri}" }
     }
 
-    private fun logResponse(response: ClientHttpResponse, elapsedNanos: Long) {
-        logger.info { "<-- IndieAuth (in $elapsedNanos ms): ${response.statusCode}"}
+    private fun logResponse(
+        response: ClientHttpResponse,
+        elapsedNanos: Long,
+    ) {
+        logger.info { "<-- IndieAuth (in $elapsedNanos ms): ${response.statusCode}" }
     }
 }

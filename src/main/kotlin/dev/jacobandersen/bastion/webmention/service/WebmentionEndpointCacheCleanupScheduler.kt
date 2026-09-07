@@ -2,9 +2,10 @@ package dev.jacobandersen.bastion.webmention.service
 
 import dev.jacobandersen.bastion.webmention.data.service.WebmentionEndpointCacheService
 import jakarta.annotation.PostConstruct
-import java.time.Duration
 import org.jobrunr.scheduling.JobScheduler
 import org.springframework.stereotype.Component
+import java.time.Duration
+import java.time.Instant
 
 /**
  * Periodically removes expired webmention endpoint cache entries so the cache
@@ -19,7 +20,7 @@ class WebmentionEndpointCacheCleanupScheduler(
     @PostConstruct
     fun scheduleCleanup() {
         jobScheduler.scheduleRecurrently(RECURRING_JOB_ID, Duration.ofHours(CLEANUP_INTERVAL_HOURS)) {
-            endpointCacheService.cleanupExpired()
+            endpointCacheService.purgeExpired(Instant.now())
         }
     }
 

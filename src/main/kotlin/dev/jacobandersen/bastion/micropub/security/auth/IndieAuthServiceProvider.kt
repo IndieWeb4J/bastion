@@ -11,20 +11,23 @@ import org.springframework.web.service.invoker.createClient
 @Component
 class IndieAuthServiceProvider(
     @Value($$"${bastion.indieauth.validate-token-url}")
-    private val indieAuthUrl: String
+    private val indieAuthUrl: String,
 ) {
-
     @Bean
     fun indieAuthService(): IndieAuthService {
-        val client = RestClient.builder()
-            .baseUrl(indieAuthUrl)
-            .requestInterceptor(IndieAuthServiceLoggingInterceptor())
-            .build()
+        val client =
+            RestClient
+                .builder()
+                .baseUrl(indieAuthUrl)
+                .requestInterceptor(IndieAuthServiceLoggingInterceptor())
+                .build()
 
         val adapter = RestClientAdapter.create(client)
 
-        val factory = HttpServiceProxyFactory.builderFor(adapter)
-            .build();
+        val factory =
+            HttpServiceProxyFactory
+                .builderFor(adapter)
+                .build()
 
         return factory.createClient<IndieAuthService>()
     }

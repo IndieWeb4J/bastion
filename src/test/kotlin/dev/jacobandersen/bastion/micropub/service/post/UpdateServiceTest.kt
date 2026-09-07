@@ -1,14 +1,14 @@
 package dev.jacobandersen.bastion.micropub.service.post
 
 import dev.jacobandersen.bastion.TestcontainersConfiguration
-import dev.jacobandersen.bastion.micropub.data.domain.Post
-import dev.jacobandersen.bastion.micropub.type.resp.ApiResponse
 import dev.jacobandersen.bastion.microformats2.Mf2Object
 import dev.jacobandersen.bastion.microformats2.Mf2Value
-import dev.jacobandersen.bastion.micropub.type.req.MicropubPayload
+import dev.jacobandersen.bastion.micropub.data.domain.Post
 import dev.jacobandersen.bastion.micropub.data.service.PostService
 import dev.jacobandersen.bastion.micropub.type.PostStatus
 import dev.jacobandersen.bastion.micropub.type.PostVisibility
+import dev.jacobandersen.bastion.micropub.type.req.MicropubPayload
+import dev.jacobandersen.bastion.micropub.type.resp.ApiResponse
 import dev.jacobandersen.bastion.url.UrlService
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
@@ -43,65 +43,71 @@ class UpdateServiceTest {
     private fun uniqueSlug(prefix: String): String = "$prefix-${System.nanoTime()}"
 
     private fun createPost(slug: String): Post {
-        val obj = Mf2Object(
-            type = listOf("h-entry"),
-            properties = mutableMapOf(
-                "name" to listOf(Mf2Value.String("Original name")),
-                "content" to listOf(Mf2Value.String("Original content")),
-                "category" to listOf(Mf2Value.String("a"), Mf2Value.String("b")),
-            ),
-            children = null,
-        )
+        val obj =
+            Mf2Object(
+                type = listOf("h-entry"),
+                properties =
+                    mutableMapOf(
+                        "name" to listOf(Mf2Value.String("Original name")),
+                        "content" to listOf(Mf2Value.String("Original content")),
+                        "category" to listOf(Mf2Value.String("a"), Mf2Value.String("b")),
+                    ),
+                children = null,
+            )
         return postService.create(slug, PostStatus.PUBLISHED, PostVisibility.PUBLIC, false, obj)
     }
 
-    private fun updateJson(url: String, update: String): MicropubPayload.Json {
+    private fun updateJson(
+        url: String,
+        update: String,
+    ): MicropubPayload.Json {
         val root = mapper.readTree("""{"url": "$url", $update}""") as ObjectNode
         return MicropubPayload.Json(root)
     }
 
-    private fun updateWithUrlOnly(url: String): MicropubPayload.Json {
-        return MicropubPayload.Json(mapper.createObjectNode().put("url", url))
-    }
+    private fun updateWithUrlOnly(url: String): MicropubPayload.Json = MicropubPayload.Json(mapper.createObjectNode().put("url", url))
 
     @Test
     fun replacesProperty() {
         val post = createPost(uniqueSlug("replace"))
-        val response = updateService.update(
-            updateJson(urlService.generatePostUrl(post), """ "replace": {"name": ["Updated name"]} """)
-        )
+        val response =
+            updateService.update(
+                updateJson(urlService.generatePostUrl(post), """ "replace": {"name": ["Updated name"]} """),
+            )
 
         assertEquals(ApiResponse.Success.NoContent, response)
         assertEquals(
             listOf(Mf2Value.String("Updated name")),
-            postService.findBySlug(post.slug)!!.post.getProperty("name")
+            postService.findBySlug(post.slug)!!.post.getProperty("name"),
         )
         assertEquals(
             listOf(Mf2Value.String("Original content")),
-            postService.findBySlug(post.slug)!!.post.getProperty("content")
+            postService.findBySlug(post.slug)!!.post.getProperty("content"),
         )
     }
 
     @Test
     fun addsValues() {
         val post = createPost(uniqueSlug("add"))
-        val response = updateService.update(
-            updateJson(urlService.generatePostUrl(post), """ "add": {"category": ["c"]} """)
-        )
+        val response =
+            updateService.update(
+                updateJson(urlService.generatePostUrl(post), """ "add": {"category": ["c"]} """),
+            )
 
         assertEquals(ApiResponse.Success.NoContent, response)
         assertEquals(
             listOf(Mf2Value.String("a"), Mf2Value.String("b"), Mf2Value.String("c")),
-            postService.findBySlug(post.slug)!!.post.getProperty("category")
+            postService.findBySlug(post.slug)!!.post.getProperty("category"),
         )
     }
 
     @Test
     fun deletesProperty() {
         val post = createPost(uniqueSlug("delete-all"))
-        val response = updateService.update(
-            updateJson(urlService.generatePostUrl(post), """ "delete": ["name"] """)
-        )
+        val response =
+            updateService.update(
+                updateJson(urlService.generatePostUrl(post), """ "delete": ["name"] """),
+            )
 
         assertEquals(ApiResponse.Success.NoContent, response)
         assertEquals(emptyList<Mf2Value>(), postService.findBySlug(post.slug)!!.post.getProperty("name"))
@@ -110,14 +116,15 @@ class UpdateServiceTest {
     @Test
     fun deletesPropertyValues() {
         val post = createPost(uniqueSlug("delete-many"))
-        val response = updateService.update(
-            updateJson(urlService.generatePostUrl(post), """ "delete": {"category": ["b"]} """)
-        )
+        val response =
+            updateService.update(
+                updateJson(urlService.generatePostUrl(post), """ "delete": {"category": ["b"]} """),
+            )
 
         assertEquals(ApiResponse.Success.NoContent, response)
         assertEquals(
             listOf(Mf2Value.String("a")),
-            postService.findBySlug(post.slug)!!.post.getProperty("category")
+            postService.findBySlug(post.slug)!!.post.getProperty("category"),
         )
     }
 
@@ -126,9 +133,10 @@ class UpdateServiceTest {
         val post = createPost(uniqueSlug("original"))
         val newSlug = uniqueSlug("renamed")
 
-        val response = updateService.update(
-            updateJson(urlService.generatePostUrl(post), """ "replace": {"mp-slug": ["$newSlug"]} """)
-        )
+        val response =
+            updateService.update(
+                updateJson(urlService.generatePostUrl(post), """ "replace": {"mp-slug": ["$newSlug"]} """),
+            )
 
         assertInstanceOf(ApiResponse.Success.Created::class.java, response)
         assertEquals(urlService.generatePostUrl(postService.findBySlug(newSlug)!!), (response as ApiResponse.Success.Created).location)
@@ -142,9 +150,10 @@ class UpdateServiceTest {
         val second = createPost(uniqueSlug("dedup-second"))
         val expectedSlug = postService.deduplicateSlug(first.slug, second.slug)
 
-        val response = updateService.update(
-            updateJson(urlService.generatePostUrl(second), """ "replace": {"mp-slug": ["${first.slug}"]} """)
-        )
+        val response =
+            updateService.update(
+                updateJson(urlService.generatePostUrl(second), """ "replace": {"mp-slug": ["${first.slug}"]} """),
+            )
 
         assertInstanceOf(ApiResponse.Success.Created::class.java, response)
         assertEquals(urlService.generatePostUrl(postService.findBySlug(expectedSlug)!!), (response as ApiResponse.Success.Created).location)
@@ -154,12 +163,13 @@ class UpdateServiceTest {
     @Test
     fun appliesStatusAndVisibilityCommands() {
         val post = createPost(uniqueSlug("status"))
-        val response = updateService.update(
-            updateJson(
-                urlService.generatePostUrl(post),
-                """ "replace": {"post-status": ["draft"], "visibility": ["private"]} """,
+        val response =
+            updateService.update(
+                updateJson(
+                    urlService.generatePostUrl(post),
+                    """ "replace": {"post-status": ["draft"], "visibility": ["private"]} """,
+                ),
             )
-        )
 
         assertEquals(ApiResponse.Success.NoContent, response)
         val updated = postService.findBySlug(post.slug)!!
@@ -172,9 +182,10 @@ class UpdateServiceTest {
     @Test
     fun rejectsBlankSlugCommand() {
         val post = createPost(uniqueSlug("blank-slug"))
-        val response = updateService.update(
-            updateJson(urlService.generatePostUrl(post), """ "replace": {"mp-slug": [""]} """)
-        )
+        val response =
+            updateService.update(
+                updateJson(urlService.generatePostUrl(post), """ "replace": {"mp-slug": [""]} """),
+            )
 
         assertInstanceOf(ApiResponse.Error.InvalidRequest::class.java, response)
         assertEquals(post.slug, postService.findBySlug(post.slug)!!.slug)
@@ -183,9 +194,10 @@ class UpdateServiceTest {
     @Test
     fun rejectsNonStringSlugCommand() {
         val post = createPost(uniqueSlug("nonstring-slug"))
-        val response = updateService.update(
-            updateJson(urlService.generatePostUrl(post), """ "replace": {"mp-slug": [42]} """)
-        )
+        val response =
+            updateService.update(
+                updateJson(urlService.generatePostUrl(post), """ "replace": {"mp-slug": [42]} """),
+            )
 
         assertInstanceOf(ApiResponse.Error.InvalidRequest::class.java, response)
         assertEquals(post.slug, postService.findBySlug(post.slug)!!.slug)
@@ -194,9 +206,10 @@ class UpdateServiceTest {
     @Test
     fun rejectsUnknownStatusCommand() {
         val post = createPost(uniqueSlug("bad-status"))
-        val response = updateService.update(
-            updateJson(urlService.generatePostUrl(post), """ "replace": {"post-status": ["banana"]} """)
-        )
+        val response =
+            updateService.update(
+                updateJson(urlService.generatePostUrl(post), """ "replace": {"post-status": ["banana"]} """),
+            )
 
         assertInstanceOf(ApiResponse.Error.InvalidRequest::class.java, response)
         assertEquals(PostStatus.PUBLISHED, postService.findBySlug(post.slug)!!.status)
@@ -213,9 +226,10 @@ class UpdateServiceTest {
     @Test
     fun emptyReplaceRemovesProperty() {
         val post = createPost(uniqueSlug("replace-empty"))
-        val response = updateService.update(
-            updateJson(urlService.generatePostUrl(post), """ "replace": {"category": []} """)
-        )
+        val response =
+            updateService.update(
+                updateJson(urlService.generatePostUrl(post), """ "replace": {"category": []} """),
+            )
 
         assertEquals(ApiResponse.Success.NoContent, response)
         assertEquals(emptyList<Mf2Value>(), postService.findBySlug(post.slug)!!.post.getProperty("category"))
@@ -226,9 +240,10 @@ class UpdateServiceTest {
         val post = createPost(uniqueSlug("orig"))
         val requested = "Renamed ${System.nanoTime()}"
 
-        val response = updateService.update(
-            updateJson(urlService.generatePostUrl(post), """ "replace": {"mp-slug": ["$requested"]} """)
-        )
+        val response =
+            updateService.update(
+                updateJson(urlService.generatePostUrl(post), """ "replace": {"mp-slug": ["$requested"]} """),
+            )
 
         assertInstanceOf(ApiResponse.Success.Created::class.java, response)
         val location = (response as ApiResponse.Success.Created).location
@@ -240,26 +255,29 @@ class UpdateServiceTest {
     @Test
     fun updateBumpsUpdatedButNotPublished() {
         val slug = uniqueSlug("timestamp")
-        val obj = Mf2Object(
-            type = listOf("h-entry"),
-            properties = mutableMapOf(
-                "name" to listOf(Mf2Value.String("Original")),
-                "content" to listOf(Mf2Value.String("Original content")),
-                "published" to listOf(Mf2Value.String("2020-01-01T00:00:00Z")),
-            ),
-            children = null,
-        )
+        val obj =
+            Mf2Object(
+                type = listOf("h-entry"),
+                properties =
+                    mutableMapOf(
+                        "name" to listOf(Mf2Value.String("Original")),
+                        "content" to listOf(Mf2Value.String("Original content")),
+                        "published" to listOf(Mf2Value.String("2020-01-01T00:00:00Z")),
+                    ),
+                children = null,
+            )
         val post = postService.create(slug, PostStatus.PUBLISHED, PostVisibility.PUBLIC, false, obj)
 
-        val response = updateService.update(
-            updateJson(urlService.generatePostUrl(post), """ "replace": {"content": ["Updated content"]} """)
-        )
+        val response =
+            updateService.update(
+                updateJson(urlService.generatePostUrl(post), """ "replace": {"content": ["Updated content"]} """),
+            )
 
         assertEquals(ApiResponse.Success.NoContent, response)
         val updated = postService.findBySlug(slug)!!
         assertEquals(
             listOf(Mf2Value.String("2020-01-01T00:00:00Z")),
-            updated.post.getProperty("published")
+            updated.post.getProperty("published"),
         )
         val updatedProp = (updated.post.getFirstProperty("updated") as Mf2Value.String).value
         assertTrue(OffsetDateTime.parse(updatedProp).year >= 2020)

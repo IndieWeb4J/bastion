@@ -8,7 +8,6 @@ import dev.jacobandersen.bastion.micropub.type.PostStatus
 import dev.jacobandersen.bastion.micropub.type.PostType
 import dev.jacobandersen.bastion.micropub.type.PostVisibility
 import dev.jacobandersen.bastion.url.UrlService
-import java.util.UUID
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertThrows
@@ -17,9 +16,9 @@ import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
+import java.util.UUID
 
 class PostQueryServiceTest {
-
     private val postService = mock(PostService::class.java)
     private val urlService = mock(UrlService::class.java)
     private val service = PostQueryService(postService, urlService)
@@ -98,19 +97,22 @@ class PostQueryServiceTest {
         assertEquals("unlisted", slugOf(service.post("unlisted", null)))
     }
 
-    private fun slugOf(result: PostLookupResult?): String? {
-        return when (result) {
+    private fun slugOf(result: PostLookupResult?): String? =
+        when (result) {
             is PostLookupResult.Found -> result.post.slug
             is PostLookupResult.Gone -> result.slug
             null -> null
         }
-    }
 
-    private fun publicPost(slug: String): Post =
-        post(slug, PostStatus.PUBLISHED, PostVisibility.PUBLIC)
+    private fun publicPost(slug: String): Post = post(slug, PostStatus.PUBLISHED, PostVisibility.PUBLIC)
 
-    private fun post(slug: String, status: PostStatus, visibility: PostVisibility, deleted: Boolean = false): Post {
-        return Post(
+    private fun post(
+        slug: String,
+        status: PostStatus,
+        visibility: PostVisibility,
+        deleted: Boolean = false,
+    ): Post =
+        Post(
             id = UUID.randomUUID(),
             slug = slug,
             status = status,
@@ -118,11 +120,11 @@ class PostQueryServiceTest {
             deleted = deleted,
             type = "h-entry",
             subtype = "note",
-            post = Mf2Object(
-                type = listOf("h-entry"),
-                properties = mutableMapOf("name" to listOf(Mf2Value.String(slug))),
-                children = null,
-            ),
+            post =
+                Mf2Object(
+                    type = listOf("h-entry"),
+                    properties = mutableMapOf("name" to listOf(Mf2Value.String(slug))),
+                    children = null,
+                ),
         )
-    }
 }
