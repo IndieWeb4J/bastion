@@ -1,6 +1,7 @@
 package dev.jacobandersen.bastion.micropub.service.post
 
 import dev.jacobandersen.bastion.micropub.data.service.PostService
+import dev.jacobandersen.bastion.micropub.syndication.SyndicationService
 import dev.jacobandersen.bastion.micropub.type.req.MicropubPayload
 import dev.jacobandersen.bastion.micropub.type.resp.ApiResponse
 import dev.jacobandersen.bastion.url.UrlService
@@ -15,6 +16,7 @@ class DeleteService(
     val postService: PostService,
     private val webmentionService: WebmentionService,
     private val websubPublisher: WebsubPublisher,
+    private val syndicationService: SyndicationService,
 ) {
     @PreAuthorize("hasAuthority('DELETE')")
     fun delete(payload: MicropubPayload): ApiResponse<*> = commonDelete(payload, true)
@@ -61,6 +63,10 @@ class DeleteService(
                 webmentionService.processWebmentions(postUrl, post.post)
                 websubPublisher.publish()
             }
+        }
+
+        if (delete && !wasDeleted) {
+            syndicationService.syndicateDeleted(post)
         }
 
         return ApiResponse.Success.NoContent

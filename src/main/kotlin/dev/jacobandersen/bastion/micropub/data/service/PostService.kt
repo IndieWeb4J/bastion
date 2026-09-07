@@ -9,6 +9,7 @@ import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.util.UUID
 
 @Service
 class PostService(
@@ -33,6 +34,9 @@ class PostService(
 
     @Transactional(readOnly = true)
     fun findBySlug(slug: String): Post? = repository.findBySlug(slug)?.toDomain()
+
+    @Transactional(readOnly = true)
+    fun findById(id: UUID): Post? = repository.findById(id).orElse(null)?.toDomain()
 
     @Transactional(readOnly = true)
     fun doesExistBySlug(slug: String): Boolean = repository.existsBySlug(slug)
