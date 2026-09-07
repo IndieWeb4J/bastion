@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/jacobsandersen/bastion/compare/v1.2.4...v1.3.0) (2026-09-07)
+
+
+### Features
+
+* return a gone result for deleted posts in graphql ([f43a589](https://github.com/jacobsandersen/bastion/commit/f43a589aebb413011bd01110ba34d6a369e652cb))
+
 ## [1.2.4](https://github.com/jacobsandersen/bastion/compare/v1.2.3...v1.2.4) (2026-09-07)
 
 
