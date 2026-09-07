@@ -20,6 +20,7 @@ env:
   BASTION_MEDIA_S3_REGION: us-east-1
   BASTION_MEDIA_S3_BUCKET: bastion-test
   BASTION_INDIEAUTH_VALIDATE_TOKEN_URL: https://tokens.indieauth.com/token
+  BASTION_INDIEAUTH_ME: https://bastion.test
   SPRING_PG_HOST: localhost
   SPRING_PG_PORT: "5432"
   SPRING_PG_DB: bastion
