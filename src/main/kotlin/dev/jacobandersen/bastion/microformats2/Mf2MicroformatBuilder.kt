@@ -107,7 +107,7 @@ internal class Mf2MicroformatBuilder(
         val otherU = seen.any { it.prefix == 'u' && it.name != "photo" }
         val nested = children.isNotEmpty() || properties.values.flatten().any { it is Mf2Value.Object }
 
-        Mf2ImpliedProperties.name(root, hasName, otherPOrE, nested, resolver)?.let { value ->
+        Mf2ImpliedProperties.name(root, hasName, otherPOrE, nested)?.let { value ->
             if (value.isNotBlank()) addValue("name", Mf2Value.String(value))
         }
         Mf2ImpliedProperties.url(root, hasUrl, otherU, nested, resolver)?.let { value ->
