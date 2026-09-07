@@ -23,8 +23,17 @@ data class Post(
             ?.value
             ?.let { runCatching { OffsetDateTime.parse(it) }.getOrNull() }
 
+    /**
+     * Whether the post is published content that could be shown publicly,
+     * regardless of a soft-delete tombstone (used to decide dispatch behavior
+     * when toggling delete/undelete).
+     */
+    val isPublicContent: Boolean
+        get() = status == PostStatus.PUBLISHED && visibility.canGetByUrl()
+
+    /** Whether the post is currently publicly reachable (not deleted). */
     val publiclyReachable: Boolean
-        get() = !deleted && status == PostStatus.PUBLISHED && visibility.canGetByUrl()
+        get() = !deleted && isPublicContent
 
     /**
      * Map this domain Post to a PostEntity for persisting or updating.

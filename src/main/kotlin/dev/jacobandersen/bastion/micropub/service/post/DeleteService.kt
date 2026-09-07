@@ -36,7 +36,7 @@ class DeleteService(
             ?: return ApiResponse.Error.InvalidRequest(errorDescription = "Post not found for URL: $url")
 
         val postUrl = urlService.generatePostUrl(post)
-        val wasPublic = post.publiclyReachable
+        val isPublic = post.isPublicContent
         val wasDeleted = post.deleted
 
         try {
@@ -46,8 +46,8 @@ class DeleteService(
         }
 
         when {
-            delete && !wasDeleted && wasPublic -> webmentionService.processDeletedWebmentions(postUrl)
-            !delete && wasDeleted && wasPublic -> webmentionService.processWebmentions(postUrl, post.post)
+            delete && !wasDeleted && isPublic -> webmentionService.processDeletedWebmentions(postUrl)
+            !delete && wasDeleted && isPublic -> webmentionService.processWebmentions(postUrl, post.post)
         }
 
         return ApiResponse.Success.NoContent
