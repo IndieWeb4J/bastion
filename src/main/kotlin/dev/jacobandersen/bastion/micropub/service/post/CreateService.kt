@@ -16,6 +16,7 @@ import dev.jacobandersen.bastion.micropub.type.resp.ApiResponse
 import dev.jacobandersen.bastion.url.UrlService
 import dev.jacobandersen.bastion.util.StringUtil.excerpt
 import dev.jacobandersen.bastion.webmention.service.WebmentionService
+import dev.jacobandersen.bastion.websub.service.WebsubPublisher
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
@@ -33,6 +34,7 @@ class CreateService(
     private val urlService: UrlService,
     private val commandResolver: MicropubCommandResolver,
     private val webmentionService: WebmentionService,
+    private val websubPublisher: WebsubPublisher,
 ) {
     @PreAuthorize("hasAuthority('CREATE')")
     fun create(
@@ -77,9 +79,10 @@ class CreateService(
             }
         val url = urlService.generatePostUrl(post)
 
-        logger.info { "Dispatching webmention processing..." }
+        logger.info { "Dispatching webmention and WebSub processing..." }
         if (post.publiclyReachable) {
             webmentionService.processWebmentions(url, post.post)
+            websubPublisher.publish()
         }
 
         logger.info { "Post created: $url" }

@@ -9,6 +9,7 @@ import dev.jacobandersen.bastion.micropub.type.req.MicropubUpdatePayload
 import dev.jacobandersen.bastion.micropub.type.resp.ApiResponse
 import dev.jacobandersen.bastion.url.UrlService
 import dev.jacobandersen.bastion.webmention.service.WebmentionService
+import dev.jacobandersen.bastion.websub.service.WebsubPublisher
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 
@@ -18,6 +19,7 @@ class UpdateService(
     private val postService: PostService,
     private val commandResolver: MicropubCommandResolver,
     private val webmentionService: WebmentionService,
+    private val websubPublisher: WebsubPublisher,
 ) {
     @PreAuthorize("hasAuthority('UPDATE')")
     fun update(payload: MicropubPayload): ApiResponse<*> {
@@ -101,6 +103,7 @@ class UpdateService(
                 } else {
                     webmentionService.processUpdatedWebmentions(updatedUrl, previousTargetUrls, postObj)
                 }
+                websubPublisher.publish()
             }
         }
 
