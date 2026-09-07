@@ -36,11 +36,12 @@ data class Post(
         get() = !deleted && isPublicContent
 
     /**
-     * Map this domain Post to a PostEntity for persisting or updating.
+     * Map this domain Post to a PostEntity for persisting a new post.
      * `type`, `subtype`, `created_at_utc` and `updated_at_utc` are
      * database-generated columns, so they are intentionally not set here -
-     * Postgres recomputes them from the `post` JSON on INSERT/UPDATE and
-     * Hibernate refetches them after flush.
+     * Postgres recomputes them from the `post` JSON on INSERT and Hibernate
+     * refetches them after flush. Updates go through the managed entity
+     * instead of building a detached one.
      */
     fun toEntity(): PostEntity {
         return PostEntity(id = id, slug = slug, status = status, visibility = visibility, deleted = deleted, post = post)

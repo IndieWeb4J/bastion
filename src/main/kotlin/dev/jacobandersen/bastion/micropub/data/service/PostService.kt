@@ -46,12 +46,15 @@ class PostService(
     fun updatePost(post: Post, modified: Mf2Object): Post {
         postTimeService.applyUpdateTimestamps(modified)
 
-        val ent = post.toEntity()
-        ent.post = modified
+        val entity = repository.findById(post.id)
+            .orElseThrow { IllegalArgumentException("Post not found for id ${post.id}") }
+        entity.slug = post.slug
+        entity.status = post.status
+        entity.visibility = post.visibility
+        entity.deleted = post.deleted
+        entity.post = modified
 
-        val saved = repository.saveAndFlush(ent)
-
-        return saved.toDomain()
+        return repository.saveAndFlush(entity).toDomain()
     }
 
     fun findPublicPosts(limit: Int, offset: Int, requestedProperties: Array<String>? = null): List<Post> {

@@ -47,19 +47,19 @@ class PostEntity(
     var post: Mf2Object,
 ) {
     @Generated(event = [EventType.INSERT, EventType.UPDATE])
-    @Column(name = "type", nullable = false)
+    @Column(name = "type", nullable = false, insertable = false, updatable = false)
     var type: String? = null
 
     @Generated(event = [EventType.INSERT, EventType.UPDATE])
-    @Column(name = "subtype", nullable = true)
+    @Column(name = "subtype", nullable = true, insertable = false, updatable = false)
     var subtype: String? = null
 
     @Generated(event = [EventType.INSERT, EventType.UPDATE])
-    @Column(name = "created_at_utc", nullable = false)
+    @Column(name = "created_at_utc", nullable = false, insertable = false, updatable = false)
     var createdAtUtc: Instant? = null
 
     @Generated(event = [EventType.INSERT, EventType.UPDATE])
-    @Column(name = "updated_at_utc", nullable = false)
+    @Column(name = "updated_at_utc", nullable = false, insertable = false, updatable = false)
     var updatedAtUtc: Instant? = null
 
     constructor(slug: String, status: PostStatus, visibility: PostVisibility, deleted: Boolean = false, post: Mf2Object) : this(null, slug, status, visibility, deleted, post)
