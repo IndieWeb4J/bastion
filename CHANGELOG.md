@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.2.0](https://github.com/jacobsandersen/bastion/compare/v1.1.0...v1.2.0) (2026-09-07)
+
+
+### Features
+
+* classify rsvp webmentions ([a7fd161](https://github.com/jacobsandersen/bastion/commit/a7fd161c69db7e8703ea255114a4c1dd162fd592))
+* expose webmentions and counts over graphql ([d70bc78](https://github.com/jacobsandersen/bastion/commit/d70bc78c5565f5c5623ef67b48dba557998e3efa))
+
+
+### Bug Fixes
+
+* base webmention undelete dispatch on public content not deletion ([efbe6cc](https://github.com/jacobsandersen/bastion/commit/efbe6cc25190d9bc9ef317156b5b097f24e2c42e))
+* implement the current graphql coercing api in the json scalar ([505569f](https://github.com/jacobsandersen/bastion/commit/505569f6e53362a1866eb629587e3a9ed631ab9e))
+* make publiclyReachable account for deleted posts ([277e66a](https://github.com/jacobsandersen/bastion/commit/277e66ac8e85ff50579ae4f83300954cbae71edc))
+
 ## [1.1.0](https://github.com/jacobsandersen/bastion/compare/v1.0.1...v1.1.0) (2026-09-07)
 
 
