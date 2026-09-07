@@ -51,6 +51,15 @@ class WebmentionService(
             }
         }
 
+        val unchanged = previous.intersect(current)
+        unchanged.forEach { target ->
+            val existing = notificationService.notification(sourceUrl, target)
+            if (existing != null && (existing.state == WebmentionState.ACTIVE || existing.delivered)) {
+                notificationService.setActivePending(sourceUrl, target)
+                enqueueSend(sourceUrl, target, forceRediscovery = true)
+            }
+        }
+
         val removed = previous - current
         removed.forEach { target ->
             val existing = notificationService.notification(sourceUrl, target)
@@ -58,7 +67,7 @@ class WebmentionService(
 
             if (existing.delivered) {
                 notificationService.markInactivePendingRetraction(sourceUrl, target)
-                enqueueSend(sourceUrl, target)
+                enqueueSend(sourceUrl, target, forceRediscovery = true)
             } else {
                 notificationService.markInactiveSilent(sourceUrl, target)
             }
@@ -69,7 +78,7 @@ class WebmentionService(
         notificationService.activeNotificationsBySource(sourceUrl).forEach { notification ->
             if (notification.delivered) {
                 notificationService.markInactivePendingRetraction(sourceUrl, notification.targetUrl)
-                enqueueSend(sourceUrl, notification.targetUrl)
+                enqueueSend(sourceUrl, notification.targetUrl, forceRediscovery = true)
             } else {
                 notificationService.markInactiveSilent(sourceUrl, notification.targetUrl)
             }
@@ -87,7 +96,7 @@ class WebmentionService(
         }
     }
 
-    fun sendWebmention(sourceUrl: String, targetUrl: String) {
+    fun sendWebmention(sourceUrl: String, targetUrl: String, forceRediscovery: Boolean = false) {
         logger.info { "Sending webmention for $sourceUrl to $targetUrl..." }
 
         if (HttpUtil.isLoopbackOrLocal(targetUrl)) {
@@ -96,7 +105,7 @@ class WebmentionService(
             return
         }
 
-        val endpointUrl = resolveEndpointForTarget(targetUrl)
+        val endpointUrl = resolveEndpointForTarget(targetUrl, forceRediscovery)
         if (endpointUrl == null) {
             logger.info { "No remote webmention endpoint found for $targetUrl" }
             recordTerminalFailure(sourceUrl, targetUrl, "no webmention endpoint advertised")
@@ -132,29 +141,28 @@ class WebmentionService(
         return Mf2TextExtractor.extractText(obj).let(UrlExtractor::distinctUrls).toSet()
     }
 
-    private fun resolveEndpointForTarget(targetUrl: String): String? {
+    private fun resolveEndpointForTarget(targetUrl: String, forceRediscovery: Boolean = false): String? {
         val now = Instant.now()
-        return when (val cached = endpointCacheService.lookup(targetUrl, now)) {
-            is EndpointCacheResult.Fresh -> cached.endpointUrl
 
-            is EndpointCacheResult.Miss -> {
-                val discovery = discover(targetUrl)
-                val defaultTtl = if (discovery.endpointUrl == null) {
-                    config.negativeCacheTtlSeconds
-                } else {
-                    config.discoveryCacheTtlSeconds
-                }
-                val expiresAt = WebmentionUtil.computeDiscoveryExpiry(
-                    cacheControl = discovery.cacheControl,
-                    expiresHeader = discovery.expiresHeader,
-                    now = now,
-                    defaultTtlSeconds = defaultTtl,
-                    minCacheSeconds = config.minCacheSeconds,
-                )
-                endpointCacheService.store(targetUrl, discovery.endpointUrl, expiresAt)
-                discovery.endpointUrl
+        if (!forceRediscovery) {
+            when (val cached = endpointCacheService.lookup(targetUrl, now)) {
+                is EndpointCacheResult.Fresh -> return cached.endpointUrl
+                is EndpointCacheResult.Miss -> Unit
             }
         }
+
+        val discovery = discover(targetUrl)
+        val expiresAt = WebmentionUtil.effectiveCacheExpiry(
+            cacheControl = discovery.cacheControl,
+            expiresHeader = discovery.expiresHeader,
+            now = now,
+        )
+        if (expiresAt != null) {
+            endpointCacheService.store(targetUrl, discovery.endpointUrl, expiresAt)
+        } else {
+            endpointCacheService.evict(targetUrl)
+        }
+        return discovery.endpointUrl
     }
 
     private fun discover(targetUrl: String): EndpointDiscovery {
@@ -175,7 +183,7 @@ class WebmentionService(
         notificationService.scheduleNextAttempt(sourceUrl, targetUrl, null)
     }
 
-    private fun enqueueSend(sourceUrl: String, targetUrl: String) {
-        jobScheduler.enqueue { sendWebmention(sourceUrl, targetUrl) }
+    private fun enqueueSend(sourceUrl: String, targetUrl: String, forceRediscovery: Boolean = false) {
+        jobScheduler.enqueue { sendWebmention(sourceUrl, targetUrl, forceRediscovery) }
     }
 }

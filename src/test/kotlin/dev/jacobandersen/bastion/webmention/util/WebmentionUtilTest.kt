@@ -125,59 +125,64 @@ class WebmentionUtilTest {
     fun expiryUsesMaxAge() {
         val now = Instant.parse("2026-01-01T00:00:00Z")
 
-        val expiry = WebmentionUtil.computeDiscoveryExpiry(
+        val expiry = WebmentionUtil.effectiveCacheExpiry(
             cacheControl = "public, max-age=1200",
             expiresHeader = null,
             now = now,
-            defaultTtlSeconds = 3600,
-            minCacheSeconds = 300,
         )
 
         assertEquals(now.plusSeconds(1200), expiry)
     }
 
     @Test
-    fun expiryFloorsShortMaxAge() {
+    fun maxAgeOfZeroIsNotCacheable() {
         val now = Instant.parse("2026-01-01T00:00:00Z")
 
-        val expiry = WebmentionUtil.computeDiscoveryExpiry(
-            cacheControl = "max-age=0",
+        val expiry = WebmentionUtil.effectiveCacheExpiry(
+            cacheControl = "no-cache, max-age=0",
             expiresHeader = null,
             now = now,
-            defaultTtlSeconds = 3600,
-            minCacheSeconds = 300,
         )
 
-        assertEquals(now.plusSeconds(300), expiry)
+        assertNull(expiry)
     }
 
     @Test
     fun expiryUsesExpiresHeader() {
         val now = Instant.parse("2026-01-01T00:00:00Z")
 
-        val expiry = WebmentionUtil.computeDiscoveryExpiry(
+        val expiry = WebmentionUtil.effectiveCacheExpiry(
             cacheControl = null,
             expiresHeader = "Thu, 01 Jan 2026 02:00:00 GMT",
             now = now,
-            defaultTtlSeconds = 3600,
-            minCacheSeconds = 300,
         )
 
         assertEquals(now.plusSeconds(7200), expiry)
     }
 
     @Test
-    fun expiryFallsBackToDefault() {
+    fun noCacheHeadersMeansNotCacheable() {
         val now = Instant.parse("2026-01-01T00:00:00Z")
 
-        val expiry = WebmentionUtil.computeDiscoveryExpiry(
+        val expiry = WebmentionUtil.effectiveCacheExpiry(
             cacheControl = null,
             expiresHeader = null,
             now = now,
-            defaultTtlSeconds = 3600,
-            minCacheSeconds = 300,
         )
 
-        assertEquals(now.plusSeconds(3600), expiry)
+        assertNull(expiry)
+    }
+
+    @Test
+    fun pastExpiresHeaderIsNotCacheable() {
+        val now = Instant.parse("2026-01-01T00:00:00Z")
+
+        val expiry = WebmentionUtil.effectiveCacheExpiry(
+            cacheControl = null,
+            expiresHeader = "Wed, 31 Dec 2025 23:00:00 GMT",
+            now = now,
+        )
+
+        assertNull(expiry)
     }
 }
