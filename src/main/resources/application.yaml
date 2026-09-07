@@ -20,9 +20,6 @@ bastion:
     max-attempts: ${BASTION_WEBMENTION_MAX_ATTEMPTS:5}
     backoff-base-seconds: ${BASTION_WEBMENTION_BACKOFF_BASE_SECONDS:1800}
     backoff-max-seconds: ${BASTION_WEBMENTION_BACKOFF_MAX_SECONDS:86400}
-    discovery-cache-ttl-seconds: ${BASTION_WEBMENTION_DISCOVERY_CACHE_TTL_SECONDS:3600}
-    negative-cache-ttl-seconds: ${BASTION_WEBMENTION_NEGATIVE_CACHE_TTL_SECONDS:86400}
-    min-cache-seconds: ${BASTION_WEBMENTION_MIN_CACHE_SECONDS:300}
     connect-timeout-seconds: ${BASTION_WEBMENTION_CONNECT_TIMEOUT_SECONDS:10}
     read-timeout-seconds: ${BASTION_WEBMENTION_READ_TIMEOUT_SECONDS:10}
 

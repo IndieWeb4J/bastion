@@ -8,9 +8,6 @@ data class WebmentionConfig(
     val maxAttempts: Int = 5,
     val backoffBaseSeconds: Long = 1800,
     val backoffMaxSeconds: Long = 86400,
-    val discoveryCacheTtlSeconds: Long = 3600,
-    val negativeCacheTtlSeconds: Long = 86400,
-    val minCacheSeconds: Long = 300,
     val connectTimeoutSeconds: Long = 10,
     val readTimeoutSeconds: Long = 10,
 )
