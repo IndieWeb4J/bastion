@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/jacobsandersen/bastion/compare/v1.2.0...v1.2.1) (2026-09-07)
+
+
+### Bug Fixes
+
+* allow graphql schema introspection ([f6e9e49](https://github.com/jacobsandersen/bastion/commit/f6e9e49af903045818fe1ce66728c597355a15f5))
+
 ## [1.2.0](https://github.com/jacobsandersen/bastion/compare/v1.1.0...v1.2.0) (2026-09-07)
 
 
