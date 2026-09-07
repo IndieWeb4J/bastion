@@ -108,6 +108,11 @@ class ReceivedWebmentionService(
         return repository.findByPostIdAndState(postId, VERIFIED).map { it.toDomain() }
     }
 
+    @Transactional(readOnly = true)
+    fun verifiedByPostIds(postIds: Collection<UUID>): List<ReceivedWebmention> {
+        return repository.findByPostIdInAndState(postIds, VERIFIED).map { it.toDomain() }
+    }
+
     private fun setTerminal(
         sourceUrl: String,
         postId: UUID,
