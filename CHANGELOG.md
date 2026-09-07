@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.3.2](https://github.com/jacobsandersen/bastion/compare/v1.3.1...v1.3.2) (2026-09-07)
+
+
+### Code Refactoring
+
+* deslop the webmention, micropub and mf2 layers ([#11](https://github.com/jacobsandersen/bastion/issues/11)) ([a478f24](https://github.com/jacobsandersen/bastion/commit/a478f24590d850da817bba0bcfca1b24a97a4482))
+
+
+### Continuous Integration
+
+* bump patch releases on every merge and surface all commit types in the changelog ([01b81f8](https://github.com/jacobsandersen/bastion/commit/01b81f898d5552aab40987cc185283e1b2aaa187))
+
 ## [1.3.1](https://github.com/jacobsandersen/bastion/compare/v1.3.0...v1.3.1) (2026-09-07)
 
 
