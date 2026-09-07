@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.1](https://github.com/jacobsandersen/bastion/compare/v1.3.0...v1.3.1) (2026-09-07)
+
+
+### Bug Fixes
+
+* update posts through the managed entity without touching generated columns ([5588056](https://github.com/jacobsandersen/bastion/commit/55880567bf0ca9e7994082262d91b112ac975424))
+
 ## [1.3.0](https://github.com/jacobsandersen/bastion/compare/v1.2.4...v1.3.0) (2026-09-07)
 
 
