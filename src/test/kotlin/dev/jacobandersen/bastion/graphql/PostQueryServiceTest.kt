@@ -12,6 +12,7 @@ import java.util.UUID
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
@@ -66,7 +67,7 @@ class PostQueryServiceTest {
         `when`(urlService.extractPostSlug("https://bastion.test/2026/01/01/hello")).thenReturn("hello")
         `when`(postService.findBySlug("hello")).thenReturn(publicPost("hello"))
 
-        assertEquals("hello", service.post(null, "https://bastion.test/2026/01/01/hello")?.slug)
+        assertEquals("hello", slugOf(service.post(null, "https://bastion.test/2026/01/01/hello")))
     }
 
     @Test
@@ -76,12 +77,14 @@ class PostQueryServiceTest {
     }
 
     @Test
-    fun `post hides deleted, draft and private posts`() {
+    fun `deleted public post surfaces as gone while draft and private stay hidden`() {
         `when`(postService.findBySlug("deleted")).thenReturn(post("deleted", PostStatus.PUBLISHED, PostVisibility.PUBLIC, deleted = true))
         `when`(postService.findBySlug("draft")).thenReturn(post("draft", PostStatus.DRAFT, PostVisibility.PUBLIC))
         `when`(postService.findBySlug("private")).thenReturn(post("private", PostStatus.PUBLISHED, PostVisibility.PRIVATE))
 
-        assertNull(service.post("deleted", null))
+        val gone = service.post("deleted", null)
+        assertTrue(gone is PostLookupResult.Gone)
+        assertEquals("deleted", (gone as PostLookupResult.Gone).slug)
         assertNull(service.post("draft", null))
         assertNull(service.post("private", null))
     }
@@ -91,8 +94,16 @@ class PostQueryServiceTest {
         `when`(postService.findBySlug("public")).thenReturn(publicPost("public"))
         `when`(postService.findBySlug("unlisted")).thenReturn(post("unlisted", PostStatus.PUBLISHED, PostVisibility.UNLISTED))
 
-        assertEquals("public", service.post("public", null)?.slug)
-        assertEquals("unlisted", service.post("unlisted", null)?.slug)
+        assertEquals("public", slugOf(service.post("public", null)))
+        assertEquals("unlisted", slugOf(service.post("unlisted", null)))
+    }
+
+    private fun slugOf(result: PostLookupResult?): String? {
+        return when (result) {
+            is PostLookupResult.Found -> result.post.slug
+            is PostLookupResult.Gone -> result.slug
+            null -> null
+        }
     }
 
     private fun publicPost(slug: String): Post =
