@@ -109,7 +109,9 @@ class UpdateService(
             }
         }
 
-        syndicationService.syndicateUpdated(updated, update)
+        if (isPublic) {
+            syndicationService.syndicateUpdated(updated, update)
+        }
 
         return if (targetSlug != post.slug) {
             ApiResponse.Success.Created(urlService.generatePostUrl(updated))

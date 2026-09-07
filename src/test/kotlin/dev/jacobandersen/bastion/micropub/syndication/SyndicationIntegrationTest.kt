@@ -125,6 +125,34 @@ class SyndicationIntegrationTest {
     }
 
     @Test
+    fun `create does not syndicate a draft`() {
+        val slug = uniqueSlug("draft")
+        val response =
+            createService.create(
+                createPayload("""{"name": ["Hello"], "content": ["Body"], "mp-slug": ["$slug"], "mp-syndicate-to": ["bridgy"], "post-status": ["draft"]}"""),
+                null,
+            )
+        assertInstanceOf(ApiResponse.Success.Created::class.java, response)
+
+        val post = postService.findBySlug(slug)!!
+        assertTrue(postSyndicationService.findByPostId(post.id).isEmpty())
+    }
+
+    @Test
+    fun `create does not syndicate a private post`() {
+        val slug = uniqueSlug("private")
+        val response =
+            createService.create(
+                createPayload("""{"name": ["Hello"], "content": ["Body"], "mp-slug": ["$slug"], "mp-syndicate-to": ["bridgy"], "visibility": ["private"]}"""),
+                null,
+            )
+        assertInstanceOf(ApiResponse.Success.Created::class.java, response)
+
+        val post = postService.findBySlug(slug)!!
+        assertTrue(postSyndicationService.findByPostId(post.id).isEmpty())
+    }
+
+    @Test
     fun `delete syndicates to recorded targets that support delete`() {
         `when`(httpClient.sendDelete(org.mockito.kotlin.any(), org.mockito.kotlin.any()))
             .thenReturn(SyndicationSendResult.Success(204, null))

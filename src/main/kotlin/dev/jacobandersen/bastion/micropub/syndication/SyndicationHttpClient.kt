@@ -68,12 +68,15 @@ class SyndicationHttpClient(
         sourceUrl: String,
         update: SyndicationUpdate,
     ): SyndicationSendResult {
-        val payload = LinkedMultiValueMap<String, String>()
-        payload.add("url", sourceUrl)
-        update.replace?.let { payload.add("replace", it) }
-        update.add?.let { payload.add("add", it) }
-        update.delete?.let { payload.add("delete", it) }
-        return send(target, MediaType.APPLICATION_FORM_URLENCODED, payload)
+        val body: MutableMap<String, Any> =
+            linkedMapOf(
+                "action" to "update",
+                "url" to sourceUrl,
+            )
+        update.replace?.let { body["replace"] = objectMapper.readTree(it) }
+        update.add?.let { body["add"] = objectMapper.readTree(it) }
+        update.delete?.let { body["delete"] = objectMapper.readTree(it) }
+        return send(target, MediaType.APPLICATION_JSON, objectMapper.writeValueAsString(body))
     }
 
     fun serializeUpdate(update: MicropubUpdatePayload): SyndicationUpdate =

@@ -65,7 +65,7 @@ class DeleteService(
             }
         }
 
-        if (delete && !wasDeleted) {
+        if (delete && !wasDeleted && isPublic) {
             syndicationService.syndicateDeleted(post)
         }
 
