@@ -36,4 +36,9 @@ class TokenService(
             )
         )
     }
+
+    fun forgetToken(token: String) {
+        val entity = tokenRepository.findByToken(token) ?: return
+        tokenRepository.delete(entity)
+    }
 }
