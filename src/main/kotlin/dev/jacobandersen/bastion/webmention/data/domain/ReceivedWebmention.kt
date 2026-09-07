@@ -21,6 +21,7 @@ data class ReceivedWebmention(
     val lastError: String?,
     val firstSeenAt: Instant,
     val verifiedAt: Instant?,
+    val lastRecheckedAt: Instant?,
     val updatedAtUtc: Instant,
 ) {
     fun toEntity(): ReceivedWebmentionEntity =
@@ -40,6 +41,7 @@ data class ReceivedWebmention(
             lastError = lastError,
             firstSeenAt = firstSeenAt,
             verifiedAt = verifiedAt,
+            lastRecheckedAt = lastRecheckedAt,
             updatedAtUtc = updatedAtUtc,
         )
 }

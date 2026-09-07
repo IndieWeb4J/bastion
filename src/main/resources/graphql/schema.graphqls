@@ -60,6 +60,17 @@ type Webmention {
     contentHtml: String
     firstSeenAt: String
     verifiedAt: String
+    nestedResponses: [SalmentionResponse!]!
+}
+
+type SalmentionResponse {
+    responseUrl: String!
+    interaction: WebmentionInteraction!
+    authorName: String
+    authorUrl: String
+    authorPhoto: String
+    contentText: String
+    contentHtml: String
 }
 
 type WebmentionCounts {

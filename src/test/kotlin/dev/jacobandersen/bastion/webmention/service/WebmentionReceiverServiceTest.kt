@@ -4,23 +4,29 @@ import dev.jacobandersen.bastion.microformats2.Mf2Object
 import dev.jacobandersen.bastion.microformats2.Mf2ParseResult
 import dev.jacobandersen.bastion.microformats2.Mf2Parser
 import dev.jacobandersen.bastion.microformats2.Mf2Value
+import dev.jacobandersen.bastion.webmention.data.domain.ReceivedWebmention
 import dev.jacobandersen.bastion.webmention.data.domain.ReceivedWebmentionAnalysis
+import dev.jacobandersen.bastion.webmention.data.domain.ReceivedWebmentionState
 import dev.jacobandersen.bastion.webmention.data.domain.WebmentionInteraction
 import dev.jacobandersen.bastion.webmention.data.service.ReceivedWebmentionService
 import dev.jacobandersen.bastion.webmention.http.SourceFetch
 import dev.jacobandersen.bastion.webmention.http.WebmentionSourceFetcher
+import dev.jacobandersen.bastion.webmention.salmention.service.SalmentionReceiver
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers.anyString
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
+import org.mockito.kotlin.any
+import java.time.Instant
 import java.util.UUID
 
 class WebmentionReceiverServiceTest {
     private val notificationService = mock(ReceivedWebmentionService::class.java)
     private val sourceFetcher = mock(WebmentionSourceFetcher::class.java)
     private val parser = mock(Mf2Parser::class.java)
-    private val receiver = WebmentionReceiverService(notificationService, sourceFetcher, parser)
+    private val salmentionReceiver = mock(SalmentionReceiver::class.java)
+    private val receiver = WebmentionReceiverService(notificationService, sourceFetcher, parser, salmentionReceiver)
 
     private val sourceUrl = "https://source.example/reply"
     private val targetUrl = "https://bastion.test/2026/01/01/post"
@@ -32,8 +38,35 @@ class WebmentionReceiverServiceTest {
         contentType: String = "text/html",
     ) = SourceFetch(status, sourceUrl, contentType, body)
 
+    private fun givenPending(interaction: WebmentionInteraction? = null) {
+        val now = Instant.now()
+        `when`(notificationService.ensurePending(anyString(), anyString(), any()))
+            .thenReturn(
+                ReceivedWebmention(
+                    id = UUID.randomUUID(),
+                    postId = postId,
+                    sourceUrl = sourceUrl,
+                    targetUrl = targetUrl,
+                    state = ReceivedWebmentionState.PENDING,
+                    interaction = interaction,
+                    authorName = null,
+                    authorUrl = null,
+                    authorPhoto = null,
+                    contentText = null,
+                    contentHtml = null,
+                    rawMf2 = null,
+                    lastError = null,
+                    firstSeenAt = now,
+                    verifiedAt = null,
+                    lastRecheckedAt = null,
+                    updatedAtUtc = now,
+                ),
+            )
+    }
+
     @Test
     fun `verifies a linking html source and stores the analysis`() {
+        givenPending()
         val parseResult =
             Mf2ParseResult(
                 items =
@@ -63,6 +96,7 @@ class WebmentionReceiverServiceTest {
 
     @Test
     fun `marks the webmention deleted when the source is gone`() {
+        givenPending()
         `when`(sourceFetcher.fetch(sourceUrl)).thenReturn(fetch(status = 410, body = ""))
 
         receiver.verify(sourceUrl, targetUrl, postId)
@@ -72,6 +106,7 @@ class WebmentionReceiverServiceTest {
 
     @Test
     fun `rejects the webmention when the source does not link`() {
+        givenPending()
         `when`(sourceFetcher.fetch(sourceUrl)).thenReturn(fetch(body = "<p>no link</p>"))
 
         receiver.verify(sourceUrl, targetUrl, postId)
@@ -81,6 +116,7 @@ class WebmentionReceiverServiceTest {
 
     @Test
     fun `flags the webmention when the source is unreachable`() {
+        givenPending()
         `when`(sourceFetcher.fetch(sourceUrl)).thenReturn(
             SourceFetch(0, sourceUrl, null, "", error = "connection refused"),
         )
@@ -92,6 +128,7 @@ class WebmentionReceiverServiceTest {
 
     @Test
     fun `verifies a source whose document has no microformats as a plain mention`() {
+        givenPending()
         val emptyParse = Mf2ParseResult(items = emptyList(), rels = emptyMap(), relUrls = emptyMap())
         `when`(sourceFetcher.fetch(sourceUrl)).thenReturn(fetch())
         `when`(parser.parse(anyString(), anyString())).thenReturn(emptyParse)

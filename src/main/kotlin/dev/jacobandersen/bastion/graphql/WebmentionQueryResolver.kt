@@ -5,6 +5,8 @@ import dev.jacobandersen.bastion.webmention.data.domain.ReceivedWebmention
 import dev.jacobandersen.bastion.webmention.data.domain.WebmentionInteraction
 import dev.jacobandersen.bastion.webmention.data.domain.WebmentionInteraction.MENTION
 import dev.jacobandersen.bastion.webmention.data.service.ReceivedWebmentionService
+import dev.jacobandersen.bastion.webmention.salmention.data.domain.SalmentionResponse
+import dev.jacobandersen.bastion.webmention.salmention.data.service.SalmentionResponseService
 import org.springframework.graphql.data.method.annotation.BatchMapping
 import org.springframework.graphql.data.method.annotation.SchemaMapping
 import org.springframework.stereotype.Controller
@@ -16,6 +18,7 @@ import org.springframework.stereotype.Controller
 @Controller
 class WebmentionQueryResolver(
     private val webmentionService: ReceivedWebmentionService,
+    private val salmentionResponseService: SalmentionResponseService,
 ) {
     @SchemaMapping(typeName = "Post", field = "webmentions")
     fun webmentions(post: Post): List<ReceivedWebmention> = webmentionService.verifiedByPost(post.id).sortedBy { it.firstSeenAt }
@@ -41,4 +44,8 @@ class WebmentionQueryResolver(
 
     @SchemaMapping(typeName = "Webmention", field = "verifiedAt")
     fun verifiedAt(webmention: ReceivedWebmention): String? = webmention.verifiedAt?.toString()
+
+    @SchemaMapping(typeName = "Webmention", field = "nestedResponses")
+    fun nestedResponses(webmention: ReceivedWebmention): List<SalmentionResponse> =
+        salmentionResponseService.bySourceUrl(webmention.sourceUrl).sortedBy { it.firstSeenAt }
 }

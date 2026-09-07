@@ -22,6 +22,10 @@ bastion:
     backoff-max-seconds: ${BASTION_WEBMENTION_BACKOFF_MAX_SECONDS:86400}
     connect-timeout-seconds: ${BASTION_WEBMENTION_CONNECT_TIMEOUT_SECONDS:10}
     read-timeout-seconds: ${BASTION_WEBMENTION_READ_TIMEOUT_SECONDS:10}
+    salmention:
+      enabled: ${BASTION_WEBMENTION_SALMENTION_ENABLED:true}
+      max-nested-responses-per-source: ${BASTION_WEBMENTION_SALMENTION_MAX_NESTED_RESPONSES_PER_SOURCE:20}
+      recheck-cooldown-minutes: ${BASTION_WEBMENTION_SALMENTION_RECHECK_COOLDOWN_MINUTES:15}
 
 
 logging:

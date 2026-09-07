@@ -1,9 +1,8 @@
-package dev.jacobandersen.bastion.webmention.data.entity
+package dev.jacobandersen.bastion.webmention.salmention.data.entity
 
 import dev.jacobandersen.bastion.microformats2.Mf2Object
-import dev.jacobandersen.bastion.webmention.data.domain.ReceivedWebmention
-import dev.jacobandersen.bastion.webmention.data.domain.ReceivedWebmentionState
 import dev.jacobandersen.bastion.webmention.data.domain.WebmentionInteraction
+import dev.jacobandersen.bastion.webmention.salmention.data.domain.SalmentionResponse
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
@@ -18,25 +17,21 @@ import java.time.Instant
 import java.util.UUID
 
 @Entity
-@Table(name = "received_webmentions")
-class ReceivedWebmentionEntity(
+@Table(name = "salmention_responses")
+class SalmentionResponseEntity(
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     var id: UUID? = null,
     @Column(nullable = false)
-    var postId: UUID,
+    var receivedWebmentionId: UUID,
     @Column(nullable = false)
     var sourceUrl: String,
     @Column(nullable = false)
-    var targetUrl: String,
+    var responseUrl: String,
     @Column(nullable = false)
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Enumerated(EnumType.STRING)
-    var state: ReceivedWebmentionState,
-    @Column(nullable = true)
-    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
-    @Enumerated(EnumType.STRING)
-    var interaction: WebmentionInteraction?,
+    var interaction: WebmentionInteraction,
     @Column(nullable = true)
     var authorName: String?,
     @Column(nullable = true)
@@ -50,24 +45,17 @@ class ReceivedWebmentionEntity(
     @Column(nullable = true)
     @JdbcTypeCode(SqlTypes.JSON)
     var rawMf2: Mf2Object?,
-    @Column(nullable = true)
-    var lastError: String?,
     @Column(nullable = false)
     var firstSeenAt: Instant,
-    @Column(nullable = true)
-    var verifiedAt: Instant?,
-    @Column(nullable = true)
-    var lastRecheckedAt: Instant?,
     @Column(nullable = false)
     var updatedAtUtc: Instant,
 ) {
-    fun toDomain(): ReceivedWebmention =
-        ReceivedWebmention(
+    fun toDomain(): SalmentionResponse =
+        SalmentionResponse(
             id = requireNotNull(id),
-            postId = postId,
+            receivedWebmentionId = receivedWebmentionId,
             sourceUrl = sourceUrl,
-            targetUrl = targetUrl,
-            state = state,
+            responseUrl = responseUrl,
             interaction = interaction,
             authorName = authorName,
             authorUrl = authorUrl,
@@ -75,10 +63,7 @@ class ReceivedWebmentionEntity(
             contentText = contentText,
             contentHtml = contentHtml,
             rawMf2 = rawMf2,
-            lastError = lastError,
             firstSeenAt = firstSeenAt,
-            verifiedAt = verifiedAt,
-            lastRecheckedAt = lastRecheckedAt,
             updatedAtUtc = updatedAtUtc,
         )
 }
