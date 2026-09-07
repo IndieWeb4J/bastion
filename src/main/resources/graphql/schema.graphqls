@@ -28,6 +28,40 @@ type Post {
     contentHtml: String
     category: [String!]
     properties(names: [String!]): JSON
+    webmentions: [Webmention!]!
+    webmentionCounts: WebmentionCounts!
+}
+
+enum WebmentionInteraction {
+    REPLY
+    LIKE
+    REPOST
+    BOOKMARK
+    RSVP
+    MENTION
+}
+
+type Webmention {
+    sourceUrl: String!
+    targetUrl: String!
+    interaction: WebmentionInteraction!
+    authorName: String
+    authorUrl: String
+    authorPhoto: String
+    contentText: String
+    contentHtml: String
+    firstSeenAt: String
+    verifiedAt: String
+}
+
+type WebmentionCounts {
+    total: Int!
+    reply: Int!
+    like: Int!
+    repost: Int!
+    bookmark: Int!
+    rsvp: Int!
+    mention: Int!
 }
 
 scalar JSON
