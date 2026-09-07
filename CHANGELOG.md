@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.2](https://github.com/jacobsandersen/bastion/compare/v1.2.1...v1.2.2) (2026-09-07)
+
+
+### Bug Fixes
+
+* ignore unknown scopes when deserializing micropub tokens ([94b8186](https://github.com/jacobsandersen/bastion/commit/94b818639cee2354ee5c8a3774a5680652cf3787))
+* reject micropub tokens issued for other identities ([49eebee](https://github.com/jacobsandersen/bastion/commit/49eebee7c5a2201e61ff5afcc59d4282a2616d1a))
+
 ## [1.2.1](https://github.com/jacobsandersen/bastion/compare/v1.2.0...v1.2.1) (2026-09-07)
 
 
