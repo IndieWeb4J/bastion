@@ -1,4 +1,4 @@
-package dev.jacobandersen.bastion.graphql
+package dev.jacobandersen.bastion.micropub.type
 
 /** Post types that can be requested, mirroring the stored `subtype` values. */
 enum class PostType {

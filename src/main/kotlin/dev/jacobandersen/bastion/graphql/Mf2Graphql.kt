@@ -14,15 +14,15 @@ import tools.jackson.databind.node.ObjectNode
 internal object Mf2Graphql {
 
     fun firstText(obj: Mf2Object, key: String): String? {
-        return obj.getProperty(key).mapNotNull { textOf(it) }.firstOrNull()?.takeIf { it.isNotBlank() }
+        return obj.getProperty(key).firstNotNullOfOrNull { textOf(it) }?.takeIf { it.isNotBlank() }
     }
 
     fun firstHtml(obj: Mf2Object, key: String): String? {
         for (value in obj.getProperty(key)) {
             if (value is Mf2Value.Json) {
                 val html = value.value.get("html")
-                if (html != null && html.isTextual && html.asText().isNotBlank()) {
-                    return html.asText()
+                if (html != null && html.isString && html.asText().isNotBlank()) {
+                    return html.asString()
                 }
             }
         }
@@ -71,12 +71,12 @@ internal object Mf2Graphql {
 
     private fun valueText(node: JsonNode): String? {
         val value = node.get("value")
-        if (value != null && value.isTextual && value.asText().isNotBlank()) {
-            return value.asText()
+        if (value != null && value.isString && value.asText().isNotBlank()) {
+            return value.asString()
         }
         val html = node.get("html")
-        if (html != null && html.isTextual && html.asText().isNotBlank()) {
-            return html.asText()
+        if (html != null && html.isString && html.asText().isNotBlank()) {
+            return html.asString()
         }
         return null
     }
@@ -84,7 +84,7 @@ internal object Mf2Graphql {
     private fun nodeToPlain(node: JsonNode): Any? {
         return when {
             node.isNull -> null
-            node.isTextual -> node.asText()
+            node.isString -> node.asString()
             node.isBoolean -> node.asBoolean()
             node.isIntegralNumber -> node.asLong()
             node.isFloatingPointNumber -> node.asDouble()
