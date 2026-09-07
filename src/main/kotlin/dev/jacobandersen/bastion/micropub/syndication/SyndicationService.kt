@@ -3,6 +3,7 @@ package dev.jacobandersen.bastion.micropub.syndication
 import dev.jacobandersen.bastion.micropub.data.domain.Post
 import dev.jacobandersen.bastion.micropub.data.service.PostService
 import dev.jacobandersen.bastion.micropub.data.service.PostSyndicationService
+import dev.jacobandersen.bastion.micropub.type.req.MicropubUpdatePayload
 import dev.jacobandersen.bastion.url.UrlService
 import dev.jacobandersen.bastion.webmention.util.HttpUtil
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -17,7 +18,7 @@ private val logger = KotlinLogging.logger {}
  * Sends posts to configured downstream micropub syndication targets (such as
  * Bridgy). Syndication is best-effort: work is dispatched asynchronously, every
  * failure is logged rather than retried, and it never affects the outcome of
- * the originating create/delete request.
+ * the originating create/update/delete request.
  */
 @Service
 class SyndicationService(
@@ -46,6 +47,22 @@ class SyndicationService(
             .forEach { target ->
                 jobScheduler.enqueue<SyndicationService> { it.runDeleteJob(post.id, target.uid) }
             }
+    }
+
+    fun syndicateUpdated(
+        post: Post,
+        update: MicropubUpdatePayload,
+    ) {
+        val targets =
+            postSyndicationService
+                .findByPostId(post.id)
+                .mapNotNull { record -> config.targetByUid(record.targetUid)?.takeIf { it.supports(SyndicationAction.UPDATE) } }
+        if (targets.isEmpty()) return
+
+        val serialized = httpClient.serializeUpdate(update)
+        targets.forEach { target ->
+            jobScheduler.enqueue<SyndicationService> { it.runUpdateJob(post.id, target.uid, serialized) }
+        }
     }
 
     @Job(retries = 0)
@@ -116,6 +133,42 @@ class SyndicationService(
             }
         } catch (e: Exception) {
             logger.error(e) { "Syndication delete to target \"$targetUid\" for post $postId failed unexpectedly" }
+        }
+    }
+
+    @Job(retries = 0)
+    fun runUpdateJob(
+        postId: UUID,
+        targetUid: String,
+        update: SyndicationUpdate,
+    ) {
+        try {
+            val post = postService.findById(postId)
+            if (post == null) {
+                logger.warn { "Skipping syndication update: post $postId no longer exists" }
+                return
+            }
+            val target = config.targetByUid(targetUid)
+            if (target == null) {
+                logger.warn { "Skipping syndication update: unknown target \"$targetUid\"" }
+                return
+            }
+            if (HttpUtil.isBlockedHost(target.endpoint, failClosedOnDnsError = false)) {
+                logger.warn { "Skipping syndication update for post $postId to blocked target \"$targetUid\"" }
+                return
+            }
+
+            when (val result = httpClient.sendUpdate(target, urlService.generatePostUrl(post), update)) {
+                is SyndicationSendResult.Success -> {
+                    logger.info { "Syndication update sent for post $postId to target \"$targetUid\" (HTTP ${result.statusCode})" }
+                }
+
+                is SyndicationSendResult.Failure -> {
+                    logger.warn { "Syndication update to target \"$targetUid\" for post $postId failed: ${result.message}" }
+                }
+            }
+        } catch (e: Exception) {
+            logger.error(e) { "Syndication update to target \"$targetUid\" for post $postId failed unexpectedly" }
         }
     }
 }

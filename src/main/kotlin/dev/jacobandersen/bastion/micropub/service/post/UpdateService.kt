@@ -3,6 +3,7 @@ package dev.jacobandersen.bastion.micropub.service.post
 import dev.jacobandersen.bastion.microformats2.Mf2Object
 import dev.jacobandersen.bastion.micropub.data.service.PostService
 import dev.jacobandersen.bastion.micropub.service.MicropubCommandResolver
+import dev.jacobandersen.bastion.micropub.syndication.SyndicationService
 import dev.jacobandersen.bastion.micropub.type.MicropubCommand
 import dev.jacobandersen.bastion.micropub.type.req.MicropubPayload
 import dev.jacobandersen.bastion.micropub.type.req.MicropubUpdatePayload
@@ -20,6 +21,7 @@ class UpdateService(
     private val commandResolver: MicropubCommandResolver,
     private val webmentionService: WebmentionService,
     private val websubPublisher: WebsubPublisher,
+    private val syndicationService: SyndicationService,
 ) {
     @PreAuthorize("hasAuthority('UPDATE')")
     fun update(payload: MicropubPayload): ApiResponse<*> {
@@ -106,6 +108,8 @@ class UpdateService(
                 websubPublisher.publish()
             }
         }
+
+        syndicationService.syndicateUpdated(updated, update)
 
         return if (targetSlug != post.slug) {
             ApiResponse.Success.Created(urlService.generatePostUrl(updated))

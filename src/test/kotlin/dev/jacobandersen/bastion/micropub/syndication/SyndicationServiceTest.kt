@@ -8,6 +8,7 @@ import dev.jacobandersen.bastion.micropub.data.service.PostService
 import dev.jacobandersen.bastion.micropub.data.service.PostSyndicationService
 import dev.jacobandersen.bastion.micropub.type.PostStatus
 import dev.jacobandersen.bastion.micropub.type.PostVisibility
+import dev.jacobandersen.bastion.micropub.type.req.MicropubUpdatePayload
 import dev.jacobandersen.bastion.url.UrlService
 import org.jobrunr.scheduling.JobScheduler
 import org.junit.jupiter.api.Assertions.assertDoesNotThrow
@@ -62,6 +63,29 @@ class SyndicationServiceTest {
             actions = setOf(SyndicationAction.DELETE),
         )
 
+    private val updateTarget =
+        SyndicationConfig.Target(
+            uid = "update-capable",
+            name = "Update Capable",
+            endpoint = "https://example.com/micropub",
+            actions = setOf(SyndicationAction.UPDATE),
+        )
+
+    private val updatePayload =
+        MicropubUpdatePayload(
+            url = "https://bastion.test/2026/01/01/slug",
+            replacements = mapOf("name" to listOf(Mf2Value.String("Updated"))),
+            additions = null,
+            removals = null,
+        )
+
+    private val serializedUpdate =
+        SyndicationUpdate(
+            replace = """{"name":["Updated"]}""",
+            add = null,
+            delete = null,
+        )
+
     @Test
     fun `syndicateCreated records and enqueues for targets supporting create`() {
         `when`(config.targetsSupporting(listOf("bridgy"), SyndicationAction.CREATE)).thenReturn(listOf(createTarget))
@@ -111,6 +135,36 @@ class SyndicationServiceTest {
     }
 
     @Test
+    fun `syndicateUpdated enqueues only for recorded targets supporting update`() {
+        `when`(postSyndicationService.findByPostId(postId))
+            .thenReturn(
+                listOf(
+                    PostSyndicationEntity(postId = postId, targetUid = "bridgy"),
+                    PostSyndicationEntity(postId = postId, targetUid = "update-capable"),
+                    PostSyndicationEntity(postId = postId, targetUid = "missing"),
+                ),
+            )
+        `when`(config.targetByUid("bridgy")).thenReturn(createTarget)
+        `when`(config.targetByUid("update-capable")).thenReturn(updateTarget)
+        `when`(config.targetByUid("missing")).thenReturn(null)
+        `when`(httpClient.serializeUpdate(updatePayload)).thenReturn(serializedUpdate)
+
+        service.syndicateUpdated(post, updatePayload)
+
+        verify(jobScheduler, times(1)).enqueue<SyndicationService>(org.mockito.kotlin.any())
+    }
+
+    @Test
+    fun `syndicateUpdated does nothing when no records exist`() {
+        `when`(postSyndicationService.findByPostId(postId)).thenReturn(emptyList())
+
+        service.syndicateUpdated(post, updatePayload)
+
+        verify(jobScheduler, never()).enqueue<SyndicationService>(org.mockito.kotlin.any())
+        verify(httpClient, never()).serializeUpdate(org.mockito.kotlin.any())
+    }
+
+    @Test
     fun `runCreateJob does not throw when the http client fails`() {
         `when`(postService.findById(postId)).thenReturn(post)
         `when`(config.targetByUid("bridgy")).thenReturn(createTarget)
@@ -143,5 +197,16 @@ class SyndicationServiceTest {
         `when`(httpClient.sendDelete(createTarget, "https://bastion.test/2026/01/01/slug")).thenThrow(RuntimeException("boom"))
 
         assertDoesNotThrow { service.runDeleteJob(postId, "bridgy") }
+    }
+
+    @Test
+    fun `runUpdateJob does not throw when the http client fails`() {
+        `when`(postService.findById(postId)).thenReturn(post)
+        `when`(config.targetByUid("update-capable")).thenReturn(updateTarget)
+        `when`(urlService.generatePostUrl(post)).thenReturn("https://bastion.test/2026/01/01/slug")
+        `when`(httpClient.sendUpdate(updateTarget, "https://bastion.test/2026/01/01/slug", serializedUpdate))
+            .thenThrow(RuntimeException("boom"))
+
+        assertDoesNotThrow { service.runUpdateJob(postId, "update-capable", serializedUpdate) }
     }
 }

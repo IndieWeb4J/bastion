@@ -1,6 +1,7 @@
 package dev.jacobandersen.bastion.micropub.syndication
 
 import dev.jacobandersen.bastion.microformats2.Mf2Object
+import dev.jacobandersen.bastion.micropub.type.req.MicropubUpdatePayload
 import dev.jacobandersen.bastion.util.StringUtil.excerpt
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
@@ -26,6 +27,12 @@ sealed interface SyndicationSendResult {
         val message: String,
     ) : SyndicationSendResult
 }
+
+data class SyndicationUpdate(
+    val replace: String?,
+    val add: String?,
+    val delete: String?,
+)
 
 @Service
 class SyndicationHttpClient(
@@ -55,6 +62,32 @@ class SyndicationHttpClient(
         payload.add("url", sourceUrl)
         return send(target, MediaType.APPLICATION_FORM_URLENCODED, payload)
     }
+
+    fun sendUpdate(
+        target: SyndicationConfig.Target,
+        sourceUrl: String,
+        update: SyndicationUpdate,
+    ): SyndicationSendResult {
+        val payload = LinkedMultiValueMap<String, String>()
+        payload.add("url", sourceUrl)
+        update.replace?.let { payload.add("replace", it) }
+        update.add?.let { payload.add("add", it) }
+        update.delete?.let { payload.add("delete", it) }
+        return send(target, MediaType.APPLICATION_FORM_URLENCODED, payload)
+    }
+
+    fun serializeUpdate(update: MicropubUpdatePayload): SyndicationUpdate =
+        SyndicationUpdate(
+            replace = update.replacements?.let { objectMapper.writeValueAsString(it) },
+            add = update.additions?.let { objectMapper.writeValueAsString(it) },
+            delete =
+                update.removals?.let { removals ->
+                    when (removals) {
+                        is MicropubUpdatePayload.Removals.All -> objectMapper.writeValueAsString(removals.properties)
+                        is MicropubUpdatePayload.Removals.Many -> objectMapper.writeValueAsString(removals.properties)
+                    }
+                },
+        )
 
     private fun send(
         target: SyndicationConfig.Target,
