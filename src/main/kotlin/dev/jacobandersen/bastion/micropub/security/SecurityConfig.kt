@@ -16,9 +16,10 @@ class SecurityConfig(
     objectMapper: ObjectMapper,
 ) {
     private val authFilter = MicropubAuthenticationFilter(validator, objectMapper)
+
     @Bean
-    fun micropubSecurityFilterChain(http: HttpSecurity): SecurityFilterChain {
-        return http
+    fun micropubSecurityFilterChain(http: HttpSecurity): SecurityFilterChain =
+        http
             .securityMatcher("/micropub", "/micropub/**")
             .csrf { it.disable() }
             .formLogin { it.disable() }
@@ -28,5 +29,4 @@ class SecurityConfig(
             .authorizeHttpRequests { it.anyRequest().authenticated() }
             .exceptionHandling { it.accessDeniedHandler(accessDeniedHandler) }
             .build()
-    }
 }

@@ -2,9 +2,9 @@ package dev.jacobandersen.bastion.webmention.service
 
 import dev.jacobandersen.bastion.webmention.config.WebmentionConfig
 import jakarta.annotation.PostConstruct
-import java.time.Duration
 import org.jobrunr.scheduling.JobScheduler
 import org.springframework.stereotype.Component
+import java.time.Duration
 
 @Component
 class WebmentionRetryScheduler(

@@ -8,11 +8,14 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 
 class WebmentionSourceVerifierTest {
-
     private val target = "https://blog.example/2026/01/01/post"
     private val parser = Mf2ParserImpl()
 
-    private fun html(body: String, status: Int = 200, type: String = "text/html") = SourceFetch(
+    private fun html(
+        body: String,
+        status: Int = 200,
+        type: String = "text/html",
+    ) = SourceFetch(
         statusCode = status,
         finalUrl = "https://source.example/reply",
         contentType = type,
@@ -21,42 +24,46 @@ class WebmentionSourceVerifierTest {
 
     @Test
     fun `verifies an html source that links to the target`() {
-        val result = WebmentionSourceVerifier.verify(
-            html("""<div class="h-entry"><p>see <a href="$target">this</a></p></div>"""),
-            target,
-            parser,
-        )
+        val result =
+            WebmentionSourceVerifier.verify(
+                html("""<div class="h-entry"><p>see <a href="$target">this</a></p></div>"""),
+                target,
+                parser,
+            )
         assertEquals(SourceVerdict.VERIFIED, result.verdict)
         assertNotNull(result.parse)
     }
 
     @Test
     fun `rejects an html source that does not link to the target`() {
-        val result = WebmentionSourceVerifier.verify(
-            html("""<div class="h-entry"><p>no links here</p></div>"""),
-            target,
-            parser,
-        )
+        val result =
+            WebmentionSourceVerifier.verify(
+                html("""<div class="h-entry"><p>no links here</p></div>"""),
+                target,
+                parser,
+            )
         assertEquals(SourceVerdict.NO_LINK, result.verdict)
     }
 
     @Test
     fun `matches an img src as a mention of the target`() {
-        val result = WebmentionSourceVerifier.verify(
-            html("""<div class="h-entry"><img src="$target" alt="post"/></div>"""),
-            target,
-            parser,
-        )
+        val result =
+            WebmentionSourceVerifier.verify(
+                html("""<div class="h-entry"><img src="$target" alt="post"/></div>"""),
+                target,
+                parser,
+            )
         assertEquals(SourceVerdict.VERIFIED, result.verdict)
     }
 
     @Test
     fun `a link that differs only by a fragment still mentions the target`() {
-        val result = WebmentionSourceVerifier.verify(
-            html("""<a href="$target#reply-1">reply</a>"""),
-            target,
-            parser,
-        )
+        val result =
+            WebmentionSourceVerifier.verify(
+                html("""<a href="$target#reply-1">reply</a>"""),
+                target,
+                parser,
+            )
         assertEquals(SourceVerdict.VERIFIED, result.verdict)
     }
 
@@ -71,30 +78,33 @@ class WebmentionSourceVerifierTest {
 
     @Test
     fun `an unreachable source is flagged`() {
-        val result = WebmentionSourceVerifier.verify(
-            SourceFetch(0, target, null, "", error = "connection refused"),
-            target,
-            parser,
-        )
+        val result =
+            WebmentionSourceVerifier.verify(
+                SourceFetch(0, target, null, "", error = "connection refused"),
+                target,
+                parser,
+            )
         assertEquals(SourceVerdict.UNREACHABLE, result.verdict)
         assertEquals("connection refused", result.reason)
     }
 
     @Test
     fun `plain text sources are checked by substring`() {
-        val matching = WebmentionSourceVerifier.verify(
-            SourceFetch(200, "https://source.example/note", "text/plain", "Reading $target today"),
-            target,
-            parser,
-        )
+        val matching =
+            WebmentionSourceVerifier.verify(
+                SourceFetch(200, "https://source.example/note", "text/plain", "Reading $target today"),
+                target,
+                parser,
+            )
         assertEquals(SourceVerdict.VERIFIED, matching.verdict)
         assertNull(matching.parse)
 
-        val notMatching = WebmentionSourceVerifier.verify(
-            SourceFetch(200, "https://source.example/note", "text/plain", "nothing here"),
-            target,
-            parser,
-        )
+        val notMatching =
+            WebmentionSourceVerifier.verify(
+                SourceFetch(200, "https://source.example/note", "text/plain", "nothing here"),
+                target,
+                parser,
+            )
         assertEquals(SourceVerdict.NO_LINK, notMatching.verdict)
     }
 }

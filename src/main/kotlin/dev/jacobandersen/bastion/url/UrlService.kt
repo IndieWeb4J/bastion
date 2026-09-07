@@ -2,14 +2,19 @@ package dev.jacobandersen.bastion.url
 
 import dev.jacobandersen.bastion.micropub.data.domain.Post
 import jakarta.annotation.PostConstruct
-import java.net.URI
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.stereotype.Service
+import java.net.URI
 
 @Service
-class UrlService(val config: BastionContentUrlConfig) {
+class UrlService(
+    val config: BastionContentUrlConfig,
+) {
     @ConfigurationProperties(prefix = "bastion.content")
-    data class BastionContentUrlConfig(val baseUrl: String, val pathPattern: String)
+    data class BastionContentUrlConfig(
+        val baseUrl: String,
+        val pathPattern: String,
+    )
 
     @PostConstruct
     fun validatePathPattern() {
@@ -18,13 +23,12 @@ class UrlService(val config: BastionContentUrlConfig) {
         }
     }
 
-    fun generatePostUrl(post: Post): String {
-        return "${config.baseUrl.trimEnd('/')}/${generatePostPath(post)}"
-    }
+    fun generatePostUrl(post: Post): String = "${config.baseUrl.trimEnd('/')}/${generatePostPath(post)}"
 
     fun generatePostPath(post: Post): String {
-        val published = post.publishedAt
-            ?: throw IllegalStateException("Post '${post.slug}' has no parseable published timestamp")
+        val published =
+            post.publishedAt
+                ?: throw IllegalStateException("Post '${post.slug}' has no parseable published timestamp")
 
         return config.pathPattern
             .replace("{year}", published.year.toString())
@@ -35,12 +39,10 @@ class UrlService(val config: BastionContentUrlConfig) {
 
     fun extractPostSlug(url: String): String? {
         val parsedUrl = runCatching { URI(url) }.getOrNull() ?: return null
-        val parsedBaseUrl = runCatching { URI(config.baseUrl) }.getOrNull() ?: return null
+        val urlAuthority = UrlNormalizer.authority(url) ?: return null
+        val baseAuthority = UrlNormalizer.authority(config.baseUrl) ?: return null
 
-        if (parsedUrl.scheme != parsedBaseUrl.scheme ||
-            parsedUrl.host != parsedBaseUrl.host ||
-            parsedUrl.port != parsedBaseUrl.port
-        ) {
+        if (urlAuthority != baseAuthority) {
             return null
         }
 

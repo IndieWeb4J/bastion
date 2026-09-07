@@ -8,10 +8,11 @@ import org.springframework.stereotype.Service
 class ConfigService(
     @Value($$"${bastion.public-url}") val publicUrl: String,
 ) {
-    fun getConfig(): ApiResponse<*> {
-        return ApiResponse.Success.Ok(mapOf(
-            "media-endpoint" to "${publicUrl.trimEnd('/')}/micropub/media",
-            "syndicate-to" to emptyList<Map<String, String>>(),
-        ))
-    }
+    fun getConfig(): ApiResponse<*> =
+        ApiResponse.Success.Ok(
+            mapOf(
+                "media-endpoint" to "${publicUrl.trimEnd('/')}/micropub/media",
+                "syndicate-to" to emptyList<Map<String, String>>(),
+            ),
+        )
 }

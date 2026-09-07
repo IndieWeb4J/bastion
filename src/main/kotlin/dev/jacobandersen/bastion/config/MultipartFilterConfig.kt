@@ -1,13 +1,19 @@
-package dev.jacobandersen.bastion.security
+package dev.jacobandersen.bastion.config
 
-import org.springframework.beans.factory.annotation.Configurable
 import org.springframework.boot.web.servlet.FilterRegistrationBean
 import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
 import org.springframework.core.Ordered
 import org.springframework.web.multipart.support.MultipartFilter
 
-@Configurable
-class SecurityConfig {
+/**
+ * Registers [MultipartFilter] ahead of the security filter chain so that
+ * `multipart/form-data` requests are parsed before the Micropub authentication
+ * filter inspects their parameters (e.g. `access_token` submitted in the form
+ * body).
+ */
+@Configuration
+class MultipartFilterConfig {
     @Bean
     fun multipartFilterRegistrationBean(): FilterRegistrationBean<MultipartFilter> {
         val bean = FilterRegistrationBean<MultipartFilter>()

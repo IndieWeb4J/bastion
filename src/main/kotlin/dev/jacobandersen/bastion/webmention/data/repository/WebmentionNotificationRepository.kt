@@ -9,9 +9,15 @@ import java.util.UUID
 
 @Repository
 interface WebmentionNotificationRepository : JpaRepository<WebmentionNotificationEntity, UUID> {
-    fun findBySourceUrlAndState(sourceUrl: String, state: WebmentionState): List<WebmentionNotificationEntity>
+    fun findBySourceUrlAndState(
+        sourceUrl: String,
+        state: WebmentionState,
+    ): List<WebmentionNotificationEntity>
 
-    fun findBySourceUrlAndTargetUrl(sourceUrl: String, targetUrl: String): WebmentionNotificationEntity?
+    fun findBySourceUrlAndTargetUrl(
+        sourceUrl: String,
+        targetUrl: String,
+    ): WebmentionNotificationEntity?
 
     fun findByStateInAndDeliveredFalseAndNextAttemptAtNotNullAndNextAttemptAtLessThanEqual(
         states: Collection<WebmentionState>,

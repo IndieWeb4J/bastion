@@ -10,10 +10,10 @@ import dev.jacobandersen.bastion.webmention.data.domain.ReceivedWebmentionState.
 import dev.jacobandersen.bastion.webmention.data.domain.ReceivedWebmentionState.VERIFIED
 import dev.jacobandersen.bastion.webmention.data.entity.ReceivedWebmentionEntity
 import dev.jacobandersen.bastion.webmention.data.repository.ReceivedWebmentionRepository
-import java.time.Instant
-import java.util.UUID
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.Instant
+import java.util.UUID
 
 @Service
 class ReceivedWebmentionService(
@@ -25,27 +25,32 @@ class ReceivedWebmentionService(
      * that was previously deleted, rejected or errored is reopened.
      */
     @Transactional
-    fun ensurePending(sourceUrl: String, targetUrl: String, postId: UUID): ReceivedWebmention {
+    fun ensurePending(
+        sourceUrl: String,
+        targetUrl: String,
+        postId: UUID,
+    ): ReceivedWebmention {
         val now = Instant.now()
         val existing = repository.findBySourceUrlAndPostId(sourceUrl, postId)
         if (existing == null) {
-            val created = ReceivedWebmentionEntity(
-                postId = postId,
-                sourceUrl = sourceUrl,
-                targetUrl = targetUrl,
-                state = PENDING,
-                interaction = null,
-                authorName = null,
-                authorUrl = null,
-                authorPhoto = null,
-                contentText = null,
-                contentHtml = null,
-                rawMf2 = null,
-                lastError = null,
-                firstSeenAt = now,
-                verifiedAt = null,
-                updatedAtUtc = now,
-            )
+            val created =
+                ReceivedWebmentionEntity(
+                    postId = postId,
+                    sourceUrl = sourceUrl,
+                    targetUrl = targetUrl,
+                    state = PENDING,
+                    interaction = null,
+                    authorName = null,
+                    authorUrl = null,
+                    authorPhoto = null,
+                    contentText = null,
+                    contentHtml = null,
+                    rawMf2 = null,
+                    lastError = null,
+                    firstSeenAt = now,
+                    verifiedAt = null,
+                    updatedAtUtc = now,
+                )
             return repository.save(created).toDomain()
         }
 
@@ -60,10 +65,15 @@ class ReceivedWebmentionService(
     }
 
     @Transactional
-    fun markVerified(sourceUrl: String, postId: UUID, analysis: ReceivedWebmentionAnalysis): ReceivedWebmention {
+    fun markVerified(
+        sourceUrl: String,
+        postId: UUID,
+        analysis: ReceivedWebmentionAnalysis,
+    ): ReceivedWebmention {
         val now = Instant.now()
-        val entity = repository.findBySourceUrlAndPostId(sourceUrl, postId)
-            ?: throw IllegalStateException("No received webmention for $sourceUrl on post $postId")
+        val entity =
+            repository.findBySourceUrlAndPostId(sourceUrl, postId)
+                ?: throw IllegalStateException("No received webmention for $sourceUrl on post $postId")
         entity.state = VERIFIED
         entity.interaction = analysis.interaction
         entity.authorName = analysis.authorName
@@ -79,39 +89,40 @@ class ReceivedWebmentionService(
     }
 
     @Transactional
-    fun markRejected(sourceUrl: String, postId: UUID, reason: String): ReceivedWebmention {
-        return setTerminal(sourceUrl, postId, REJECTED, reason)
-    }
+    fun markRejected(
+        sourceUrl: String,
+        postId: UUID,
+        reason: String,
+    ): ReceivedWebmention = setTerminal(sourceUrl, postId, REJECTED, reason)
 
     @Transactional
-    fun markDeleted(sourceUrl: String, postId: UUID): ReceivedWebmention {
-        return setTerminal(sourceUrl, postId, DELETED, null)
-    }
+    fun markDeleted(
+        sourceUrl: String,
+        postId: UUID,
+    ): ReceivedWebmention = setTerminal(sourceUrl, postId, DELETED, null)
 
     @Transactional
-    fun markError(sourceUrl: String, postId: UUID, reason: String): ReceivedWebmention {
-        return setTerminal(sourceUrl, postId, ERROR, reason)
-    }
+    fun markError(
+        sourceUrl: String,
+        postId: UUID,
+        reason: String,
+    ): ReceivedWebmention = setTerminal(sourceUrl, postId, ERROR, reason)
 
     @Transactional(readOnly = true)
-    fun notification(sourceUrl: String, postId: UUID): ReceivedWebmention? {
-        return repository.findBySourceUrlAndPostId(sourceUrl, postId)?.toDomain()
-    }
+    fun notification(
+        sourceUrl: String,
+        postId: UUID,
+    ): ReceivedWebmention? = repository.findBySourceUrlAndPostId(sourceUrl, postId)?.toDomain()
 
     @Transactional(readOnly = true)
-    fun byPost(postId: UUID): List<ReceivedWebmention> {
-        return repository.findByPostId(postId).map { it.toDomain() }
-    }
+    fun byPost(postId: UUID): List<ReceivedWebmention> = repository.findByPostId(postId).map { it.toDomain() }
 
     @Transactional(readOnly = true)
-    fun verifiedByPost(postId: UUID): List<ReceivedWebmention> {
-        return repository.findByPostIdAndState(postId, VERIFIED).map { it.toDomain() }
-    }
+    fun verifiedByPost(postId: UUID): List<ReceivedWebmention> = repository.findByPostIdAndState(postId, VERIFIED).map { it.toDomain() }
 
     @Transactional(readOnly = true)
-    fun verifiedByPostIds(postIds: Collection<UUID>): List<ReceivedWebmention> {
-        return repository.findByPostIdInAndState(postIds, VERIFIED).map { it.toDomain() }
-    }
+    fun verifiedByPostIds(postIds: Collection<UUID>): List<ReceivedWebmention> =
+        repository.findByPostIdInAndState(postIds, VERIFIED).map { it.toDomain() }
 
     private fun setTerminal(
         sourceUrl: String,
@@ -120,8 +131,9 @@ class ReceivedWebmentionService(
         reason: String?,
     ): ReceivedWebmention {
         val now = Instant.now()
-        val entity = repository.findBySourceUrlAndPostId(sourceUrl, postId)
-            ?: throw IllegalStateException("No received webmention for $sourceUrl on post $postId")
+        val entity =
+            repository.findBySourceUrlAndPostId(sourceUrl, postId)
+                ?: throw IllegalStateException("No received webmention for $sourceUrl on post $postId")
 
         entity.state = state
         entity.lastError = reason

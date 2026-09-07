@@ -6,6 +6,7 @@ plugins {
     id("org.hibernate.orm") version "7.4.5.Final"
     kotlin("plugin.jpa") version "2.3.21"
     kotlin("plugin.serialization") version "2.3.21"
+    id("org.jlleitschuh.gradle.ktlint") version "12.2.0"
 }
 
 group = "dev.jacobandersen"
@@ -43,7 +44,6 @@ dependencies {
     implementation("org.apache.logging.log4j:log4j-api")
     implementation("org.apache.logging.log4j:log4j-core")
     implementation("io.github.oshai:kotlin-logging-jvm:7.0.3")
-    implementation("org.springframework.boot:spring-boot-starter-data-jdbc")
     implementation("com.github.slugify:slugify:4.0.1")
     runtimeOnly("com.github.slugify:slugify") {
         capabilities {
@@ -54,6 +54,7 @@ dependencies {
     implementation("org.nibor.autolink:autolink:0.12.0")
     implementation("org.jsoup:jsoup:1.23.2")
     testImplementation("org.springframework.security:spring-security-test")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:6.2.0")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     runtimeOnly("org.postgresql:postgresql")
     testImplementation("org.springframework.boot:spring-boot-starter-actuator-test")
@@ -67,7 +68,6 @@ dependencies {
     testImplementation("org.testcontainers:testcontainers-postgresql")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
-
 
 kotlin {
     compilerOptions {
@@ -92,4 +92,8 @@ allOpen {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+}
+
+ktlint {
+    version.set("1.8.0")
 }

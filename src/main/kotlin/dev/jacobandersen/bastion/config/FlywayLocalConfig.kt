@@ -12,12 +12,11 @@ private val logger = KotlinLogging.logger {}
 @Profile("local")
 class FlywayLocalConfig {
     @Bean
-    fun flywayMigrationStrategy(): FlywayMigrationStrategy {
-        return {
+    fun flywayMigrationStrategy(): FlywayMigrationStrategy =
+        {
             logger.info { "Using LOCAL migration strategy" }
 
             it.clean()
             it.migrate()
         }
-    }
 }

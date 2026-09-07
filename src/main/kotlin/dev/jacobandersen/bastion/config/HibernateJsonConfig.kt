@@ -11,18 +11,19 @@ import tools.jackson.module.kotlin.KotlinModule
 class HibernateJsonConfig {
     @Bean
     fun hibernateJsonFormatMapper(): Jackson3JsonFormatMapper {
-        val jsonMapper = JsonMapper.builder()
-            .addModule(KotlinModule.Builder().build())
-            .build()
+        val jsonMapper =
+            JsonMapper
+                .builder()
+                .addModule(KotlinModule.Builder().build())
+                .build()
         return Jackson3JsonFormatMapper(jsonMapper)
     }
 
     @Bean
-    fun hibernateJsonFormatMapperCustomizer(mapper: Jackson3JsonFormatMapper): HibernatePropertiesCustomizer {
-        return HibernatePropertiesCustomizer { properties ->
+    fun hibernateJsonFormatMapperCustomizer(mapper: Jackson3JsonFormatMapper): HibernatePropertiesCustomizer =
+        HibernatePropertiesCustomizer { properties ->
             properties[HIBERNATE_JSON_FORMAT_MAPPER] = mapper
         }
-    }
 
     companion object {
         const val HIBERNATE_JSON_FORMAT_MAPPER = "hibernate.type.json_format_mapper"

@@ -6,7 +6,5 @@ object MicropubCommand {
     const val POST_STATUS = "post-status"
     const val VISIBILITY = "visibility"
 
-    fun isCommandProperty(key: String): Boolean {
-        return key.startsWith(MP_PREFIX) || key == POST_STATUS || key == VISIBILITY
-    }
+    fun isCommandProperty(key: String): Boolean = key.startsWith(MP_PREFIX) || key == POST_STATUS || key == VISIBILITY
 }

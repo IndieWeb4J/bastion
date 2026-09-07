@@ -1,16 +1,15 @@
 package dev.jacobandersen.bastion.graphql
 
 import dev.jacobandersen.bastion.TestcontainersConfiguration
-import dev.jacobandersen.bastion.micropub.type.req.MicropubPayload
-import dev.jacobandersen.bastion.micropub.type.resp.ApiResponse
+import dev.jacobandersen.bastion.micropub.data.repository.PostRepository
 import dev.jacobandersen.bastion.micropub.service.post.CreateService
 import dev.jacobandersen.bastion.micropub.service.post.DeleteService
-import dev.jacobandersen.bastion.micropub.data.repository.PostRepository
-import dev.jacobandersen.bastion.webmention.data.domain.WebmentionInteraction
+import dev.jacobandersen.bastion.micropub.type.req.MicropubPayload
+import dev.jacobandersen.bastion.micropub.type.resp.ApiResponse
 import dev.jacobandersen.bastion.webmention.data.domain.ReceivedWebmentionState
+import dev.jacobandersen.bastion.webmention.data.domain.WebmentionInteraction
 import dev.jacobandersen.bastion.webmention.data.entity.ReceivedWebmentionEntity
 import dev.jacobandersen.bastion.webmention.data.repository.ReceivedWebmentionRepository
-import java.time.Instant
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -22,21 +21,21 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.context.annotation.Import
 import org.springframework.graphql.test.tester.GraphQlTester
 import org.springframework.security.test.context.support.WithMockUser
-import tools.jackson.databind.node.ObjectNode
 import tools.jackson.databind.json.JsonMapper
+import tools.jackson.databind.node.ObjectNode
+import java.time.Instant
 
 @Import(TestcontainersConfiguration::class)
 @SpringBootTest(
     properties = [
         "jobrunr.dashboard.enabled=false",
         "jobrunr.background-job-server.enabled=false",
-    ]
+    ],
 )
 @AutoConfigureMockMvc
 @AutoConfigureGraphQlTester
 @WithMockUser(authorities = ["CREATE", "UPDATE", "DELETE", "UNDELETE"])
 class PostGraphQlIntegrationTest {
-
     @Autowired
     lateinit var createService: CreateService
 
@@ -88,39 +87,49 @@ class PostGraphQlIntegrationTest {
         val noteId = postRepository.findBySlug(publicNote)!!.id!!
         saveWebmention(noteId, "https://reply.example/1", WebmentionInteraction.REPLY, ReceivedWebmentionState.VERIFIED, "Reply author")
         saveWebmention(noteId, "https://rsvp.example/1", WebmentionInteraction.RSVP, ReceivedWebmentionState.VERIFIED, "RSVP author")
-        saveWebmention(noteId, "https://rejected.example/1", WebmentionInteraction.REPLY, ReceivedWebmentionState.REJECTED, "Rejected author")
+        saveWebmention(
+            noteId,
+            "https://rejected.example/1",
+            WebmentionInteraction.REPLY,
+            ReceivedWebmentionState.REJECTED,
+            "Rejected author",
+        )
     }
 
     @Test
     fun listExcludesUnlistedPrivateAndDraftPosts() {
-        val slugs = graphQlTester.document("""query { posts { slug } }""")
-            .execute()
-            .path("posts")
-            .entityList<Map<*, *>>(mapClass)
-            .get()
-            .map { it["slug"] }
+        val slugs =
+            graphQlTester
+                .document("""query { posts { slug } }""")
+                .execute()
+                .path("posts")
+                .entityList<Map<*, *>>(mapClass)
+                .get()
+                .map { it["slug"] }
 
         assertEquals(setOf(publicNote, publicPhoto), slugs.toSet())
     }
 
     @Test
     fun listFiltersByPostType() {
-        val slugs = graphQlTester.document("""query { posts(types: [NOTE]) { slug } }""")
-            .execute()
-            .path("posts")
-            .entityList<Map<*, *>>(mapClass)
-            .get()
-            .map { it["slug"] }
+        val slugs =
+            graphQlTester
+                .document("""query { posts(types: [NOTE]) { slug } }""")
+                .execute()
+                .path("posts")
+                .entityList<Map<*, *>>(mapClass)
+                .get()
+                .map { it["slug"] }
 
         assertEquals(listOf(publicNote), slugs)
     }
 
     @Test
     fun directQueryReturnsAnUnlistedPostBySlugAndUrl() {
-        graphQlTester.document(
-            """query { post(slug: "$unlistedNote") { __typename ... on Post { slug } } }"""
-        )
-            .execute()
+        graphQlTester
+            .document(
+                """query { post(slug: "$unlistedNote") { __typename ... on Post { slug } } }""",
+            ).execute()
             .path("post.slug")
             .entity(String::class.java)
             .isEqualTo(unlistedNote)
@@ -128,12 +137,14 @@ class PostGraphQlIntegrationTest {
 
     @Test
     fun directQueryHidesPrivateAndDraftPosts() {
-        graphQlTester.document("""query { post(slug: "$privateNote") { __typename } }""")
+        graphQlTester
+            .document("""query { post(slug: "$privateNote") { __typename } }""")
             .execute()
             .path("post")
             .valueIsNull()
 
-        graphQlTester.document("""query { post(slug: "$draftNote") { __typename } }""")
+        graphQlTester
+            .document("""query { post(slug: "$draftNote") { __typename } }""")
             .execute()
             .path("post")
             .valueIsNull()
@@ -141,21 +152,22 @@ class PostGraphQlIntegrationTest {
 
     @Test
     fun deletedPublicPostDirectQueryReturnsGone() {
-        graphQlTester.document(
-            """query { post(slug: "$deletedNote") { __typename ... on PostGone { slug url published } } }"""
-        )
-            .execute()
+        graphQlTester
+            .document(
+                """query { post(slug: "$deletedNote") { __typename ... on PostGone { slug url published } } }""",
+            ).execute()
             .path("post.__typename")
             .entity(String::class.java)
             .isEqualTo("PostGone")
 
-        val gone = graphQlTester.document(
-            """query { post(slug: "$deletedNote") { __typename ... on PostGone { slug url } } }"""
-        )
-            .execute()
-            .path("post")
-            .entity<Map<*, *>>(mapClass)
-            .get()
+        val gone =
+            graphQlTester
+                .document(
+                    """query { post(slug: "$deletedNote") { __typename ... on PostGone { slug url } } }""",
+                ).execute()
+                .path("post")
+                .entity<Map<*, *>>(mapClass)
+                .get()
 
         assertEquals(deletedNote, gone["slug"])
         assertEquals(true, gone["url"] != null)
@@ -163,10 +175,10 @@ class PostGraphQlIntegrationTest {
 
     @Test
     fun propertiesReturnsOnlyRequestedNames() {
-        graphQlTester.document(
-            """query { post(slug: "$publicNote") { __typename ... on Post { properties(names: ["name"]) } } }"""
-        )
-            .execute()
+        graphQlTester
+            .document(
+                """query { post(slug: "$publicNote") { __typename ... on Post { properties(names: ["name"]) } } }""",
+            ).execute()
             .path("post.properties")
             .entity<Map<*, *>>(mapClass)
             .satisfies { props -> assertEquals(setOf("name"), props.keys) }
@@ -174,13 +186,14 @@ class PostGraphQlIntegrationTest {
 
     @Test
     fun singlePostReturnsVerifiedWebmentionsOnly() {
-        val webmentions = graphQlTester.document(
-            """query { post(slug: "$publicNote") { __typename ... on Post { webmentions { sourceUrl interaction authorName } } } }"""
-        )
-            .execute()
-            .path("post.webmentions")
-            .entityList<Map<*, *>>(mapClass)
-            .get()
+        val webmentions =
+            graphQlTester
+                .document(
+                    """query { post(slug: "$publicNote") { __typename ... on Post { webmentions { sourceUrl interaction authorName } } } }""",
+                ).execute()
+                .path("post.webmentions")
+                .entityList<Map<*, *>>(mapClass)
+                .get()
 
         assertEquals(2, webmentions.size)
         val interactions = webmentions.map { it["interaction"] }.toSet()
@@ -190,13 +203,14 @@ class PostGraphQlIntegrationTest {
 
     @Test
     fun webmentionCountsAreReportedPerPost() {
-        val posts = graphQlTester.document(
-            """query { posts { slug webmentionCounts { total reply rsvp like } } }"""
-        )
-            .execute()
-            .path("posts")
-            .entityList<Map<*, *>>(mapClass)
-            .get()
+        val posts =
+            graphQlTester
+                .document(
+                    """query { posts { slug webmentionCounts { total reply rsvp like } } }""",
+                ).execute()
+                .path("posts")
+                .entityList<Map<*, *>>(mapClass)
+                .get()
 
         val countsBySlug = posts.associate { it["slug"] to it["webmentionCounts"] as Map<*, *> }
 
@@ -235,23 +249,29 @@ class PostGraphQlIntegrationTest {
                 firstSeenAt = now,
                 verifiedAt = if (state == ReceivedWebmentionState.VERIFIED) now else null,
                 updatedAtUtc = now,
-            )
+            ),
         )
     }
 
-    private fun createPost(slug: String, visibility: String = "public", status: String = "published", extra: String = ""): String {
-        val root = mapper.readTree(
-            """
-            {"type": ["h-entry"], "properties": {
-              "name": ["$slug"],
-              "content": ["$slug content"],
-              $extra
-              "mp-slug": ["$slug"],
-              "post-status": ["$status"],
-              "visibility": ["$visibility"]
-            }}
-            """.trimIndent()
-        ) as ObjectNode
+    private fun createPost(
+        slug: String,
+        visibility: String = "public",
+        status: String = "published",
+        extra: String = "",
+    ): String {
+        val root =
+            mapper.readTree(
+                """
+                {"type": ["h-entry"], "properties": {
+                  "name": ["$slug"],
+                  "content": ["$slug content"],
+                  $extra
+                  "mp-slug": ["$slug"],
+                  "post-status": ["$status"],
+                  "visibility": ["$visibility"]
+                }}
+                """.trimIndent(),
+            ) as ObjectNode
         val response = createService.create(MicropubPayload.Json(root), null)
         return (response as ApiResponse.Success.Created).location
     }

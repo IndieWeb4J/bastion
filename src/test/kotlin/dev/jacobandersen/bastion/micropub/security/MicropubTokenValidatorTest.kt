@@ -3,8 +3,6 @@ package dev.jacobandersen.bastion.micropub.security
 import dev.jacobandersen.bastion.micropub.data.domain.Token
 import dev.jacobandersen.bastion.micropub.data.service.TokenService
 import dev.jacobandersen.bastion.micropub.security.auth.IndieAuthService
-import java.time.Instant
-import java.util.UUID
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
@@ -12,29 +10,35 @@ import org.mockito.Mockito.mock
 import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
+import java.time.Instant
+import java.util.UUID
 
 class MicropubTokenValidatorTest {
-
     private val expectedMe = "https://example.com"
 
     private val tokenService = mock(TokenService::class.java)
     private val indieAuth = mock(IndieAuthService::class.java)
     private val validator = MicropubTokenValidator(tokenService, indieAuth, expectedMe)
 
-    private fun token(me: String = expectedMe, clientId: String = "https://client.example") = MicropubToken(
+    private fun token(
+        me: String = expectedMe,
+        clientId: String = "https://client.example",
+    ) = MicropubToken(
         me = me,
         clientId = clientId,
         scope = listOf(MicropubTokenScope.CREATE),
     )
 
-    private fun cached(rawToken: String, me: String = expectedMe): Token {
-        return Token(
+    private fun cached(
+        rawToken: String,
+        me: String = expectedMe,
+    ): Token =
+        Token(
             id = UUID.randomUUID(),
             token = rawToken,
             decoded = token(me),
             expiresAt = Instant.now().plusSeconds(60),
         )
-    }
 
     @Test
     fun matchingCachedTokenIsUsedWithoutCallingIndieAuth() {
@@ -72,7 +76,8 @@ class MicropubTokenValidatorTest {
         `when`(tokenService.checkToken("abc")).thenReturn(null)
         `when`(indieAuth.modernValidation("abc")).thenReturn(token(me = "https://EXAMPLE.com/#frag"))
 
-        org.junit.jupiter.api.Assertions.assertDoesNotThrow { validator.validateToken("abc") }
+        org.junit.jupiter.api.Assertions
+            .assertDoesNotThrow { validator.validateToken("abc") }
         verify(tokenService).rememberToken("abc", token(me = "https://EXAMPLE.com/#frag"))
     }
 }

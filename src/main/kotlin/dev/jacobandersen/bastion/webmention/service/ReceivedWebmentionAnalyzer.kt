@@ -3,6 +3,9 @@ package dev.jacobandersen.bastion.webmention.service
 import dev.jacobandersen.bastion.microformats2.Mf2Object
 import dev.jacobandersen.bastion.microformats2.Mf2ParseResult
 import dev.jacobandersen.bastion.microformats2.Mf2Value
+import dev.jacobandersen.bastion.microformats2.firstText
+import dev.jacobandersen.bastion.microformats2.htmlOrNull
+import dev.jacobandersen.bastion.microformats2.plainTextOrNull
 import dev.jacobandersen.bastion.webmention.data.domain.ReceivedWebmentionAnalysis
 import dev.jacobandersen.bastion.webmention.data.domain.WebmentionInteraction
 import dev.jacobandersen.bastion.webmention.data.domain.WebmentionInteraction.BOOKMARK
@@ -20,27 +23,29 @@ import dev.jacobandersen.bastion.webmention.data.domain.WebmentionInteraction.RS
  * none) and extracts author/content data.
  */
 object ReceivedWebmentionAnalyzer {
+    private val interactionProperties: List<Pair<String, WebmentionInteraction>> =
+        listOf(
+            "rsvp" to RSVP,
+            "in-reply-to" to REPLY,
+            "like-of" to LIKE,
+            "repost-of" to REPOST,
+            "bookmark-of" to BOOKMARK,
+        )
 
-    private val interactionProperties: List<Pair<String, WebmentionInteraction>> = listOf(
-        "rsvp" to RSVP,
-        "in-reply-to" to REPLY,
-        "like-of" to LIKE,
-        "repost-of" to REPOST,
-        "bookmark-of" to BOOKMARK,
-    )
-
-    private val interactionRels: List<Pair<String, WebmentionInteraction>> = listOf(
-        "in-reply-to" to REPLY,
-        "like-of" to LIKE,
-        "repost-of" to REPOST,
-        "bookmark-of" to BOOKMARK,
-    )
+    private val interactionRels: List<Pair<String, WebmentionInteraction>> =
+        listOf(
+            "in-reply-to" to REPLY,
+            "like-of" to LIKE,
+            "repost-of" to REPOST,
+            "bookmark-of" to BOOKMARK,
+        )
 
     fun analyze(parseResult: Mf2ParseResult): ReceivedWebmentionAnalysis {
         val primary = primaryObject(parseResult)
-        val interaction = primary?.let { classifyProperties(it) }
-            ?: classifyRels(parseResult)
-            ?: MENTION
+        val interaction =
+            primary?.let(::classifyProperties)
+                ?: classifyRels(parseResult)
+                ?: MENTION
 
         if (primary == null) {
             return ReceivedWebmentionAnalysis(interaction = interaction, primary = null)
@@ -103,15 +108,21 @@ object ReceivedWebmentionAnalyzer {
         val authorValue = entry.getProperty("author").firstOrNull() ?: return null
         return when (authorValue) {
             is Mf2Value.Object -> {
-                val card = authorValue.value
                 Triple(
-                    card.firstText("name"),
-                    card.firstUrl("url"),
-                    card.firstUrl("photo"),
+                    authorValue.value.firstText("name"),
+                    authorValue.value.firstText("url"),
+                    authorValue.value.firstText("photo"),
                 )
             }
-            is Mf2Value.String -> Triple(null, authorValue.value, null)
-            else -> null
+
+            // A plain string author is treated as the author's URL.
+            is Mf2Value.String -> {
+                Triple(null, authorValue.value, null)
+            }
+
+            else -> {
+                null
+            }
         }
     }
 
@@ -120,34 +131,11 @@ object ReceivedWebmentionAnalyzer {
         if (contentValue != null) {
             return when (contentValue) {
                 is Mf2Value.String -> Pair(contentValue.value, null)
-                is Mf2Value.Json -> Pair(
-                    contentValue.value.get("value")?.asText(),
-                    contentValue.value.get("html")?.asText(),
-                )
+                is Mf2Value.Json -> Pair(contentValue.plainTextOrNull, contentValue.htmlOrNull)
                 else -> null
             }
         }
-        val summary = entry.getProperty("summary").firstOrNull() as? Mf2Value.String
-        return summary?.let { Pair(it.value, null) }
-    }
-
-    private fun Mf2Object.firstText(key: String): String? {
-        return getProperty(key).mapNotNull { value ->
-            when (value) {
-                is Mf2Value.String -> value.value
-                is Mf2Value.Json -> value.value.get("value")?.asText()
-                else -> null
-            }
-        }.firstOrNull()?.takeIf { it.isNotBlank() }
-    }
-
-    private fun Mf2Object.firstUrl(key: String): String? {
-        return getProperty(key).mapNotNull { value ->
-            when (value) {
-                is Mf2Value.String -> value.value
-                is Mf2Value.Json -> value.value.get("value")?.asText()
-                else -> null
-            }
-        }.firstOrNull()?.takeIf { it.isNotBlank() }
+        val summary = entry.firstText("summary")
+        return summary?.let { Pair(it, null) }
     }
 }

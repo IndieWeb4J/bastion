@@ -13,17 +13,26 @@ class WebmentionNotificationService(
     private val repository: WebmentionNotificationRepository,
 ) {
     @Transactional
-    fun setActivePending(sourceUrl: String, targetUrl: String) {
+    fun setActivePending(
+        sourceUrl: String,
+        targetUrl: String,
+    ) {
         transitionToPending(sourceUrl, targetUrl, WebmentionState.ACTIVE)
     }
 
     @Transactional
-    fun markInactivePendingRetraction(sourceUrl: String, targetUrl: String) {
+    fun markInactivePendingRetraction(
+        sourceUrl: String,
+        targetUrl: String,
+    ) {
         transitionToPending(sourceUrl, targetUrl, WebmentionState.INACTIVE)
     }
 
     @Transactional
-    fun markInactiveSilent(sourceUrl: String, targetUrl: String) {
+    fun markInactiveSilent(
+        sourceUrl: String,
+        targetUrl: String,
+    ) {
         val entity = repository.findBySourceUrlAndTargetUrl(sourceUrl, targetUrl) ?: return
         setSilentInactive(entity, Instant.now())
         repository.save(entity)
@@ -38,7 +47,11 @@ class WebmentionNotificationService(
     }
 
     @Transactional
-    fun recordSuccess(sourceUrl: String, targetUrl: String, statusCode: Int?) {
+    fun recordSuccess(
+        sourceUrl: String,
+        targetUrl: String,
+        statusCode: Int?,
+    ) {
         applyOutcome(sourceUrl, targetUrl) { entity, now ->
             entity.delivered = true
             entity.attempts = 0
@@ -50,7 +63,12 @@ class WebmentionNotificationService(
     }
 
     @Transactional
-    fun recordFailure(sourceUrl: String, targetUrl: String, statusCode: Int?, error: String): Int {
+    fun recordFailure(
+        sourceUrl: String,
+        targetUrl: String,
+        statusCode: Int?,
+        error: String,
+    ): Int {
         var attempts = 0
         applyOutcome(sourceUrl, targetUrl) { entity, now ->
             entity.delivered = false
@@ -64,7 +82,11 @@ class WebmentionNotificationService(
     }
 
     @Transactional
-    fun scheduleNextAttempt(sourceUrl: String, targetUrl: String, nextAttemptAt: Instant?) {
+    fun scheduleNextAttempt(
+        sourceUrl: String,
+        targetUrl: String,
+        nextAttemptAt: Instant?,
+    ) {
         val entity = repository.findBySourceUrlAndTargetUrl(sourceUrl, targetUrl) ?: return
         entity.nextAttemptAt = nextAttemptAt
         entity.updatedAtUtc = Instant.now()
@@ -72,22 +94,29 @@ class WebmentionNotificationService(
     }
 
     @Transactional(readOnly = true)
-    fun notification(sourceUrl: String, targetUrl: String): WebmentionNotification? {
-        return repository.findBySourceUrlAndTargetUrl(sourceUrl, targetUrl)?.toDomain()
-    }
+    fun notification(
+        sourceUrl: String,
+        targetUrl: String,
+    ): WebmentionNotification? = repository.findBySourceUrlAndTargetUrl(sourceUrl, targetUrl)?.toDomain()
 
     @Transactional(readOnly = true)
-    fun activeNotificationsBySource(sourceUrl: String): List<WebmentionNotification> {
-        return repository.findBySourceUrlAndState(sourceUrl, WebmentionState.ACTIVE).map { it.toDomain() }
-    }
+    fun activeNotificationsBySource(sourceUrl: String): List<WebmentionNotification> =
+        repository.findBySourceUrlAndState(sourceUrl, WebmentionState.ACTIVE).map { it.toDomain() }
 
     @Transactional(readOnly = true)
-    fun dueForRetry(now: Instant, states: Collection<WebmentionState>): List<WebmentionNotification> {
-        return repository.findByStateInAndDeliveredFalseAndNextAttemptAtNotNullAndNextAttemptAtLessThanEqual(states, now)
+    fun dueForRetry(
+        now: Instant,
+        states: Collection<WebmentionState>,
+    ): List<WebmentionNotification> =
+        repository
+            .findByStateInAndDeliveredFalseAndNextAttemptAtNotNullAndNextAttemptAtLessThanEqual(states, now)
             .map { it.toDomain() }
-    }
 
-    private fun transitionToPending(sourceUrl: String, targetUrl: String, state: WebmentionState) {
+    private fun transitionToPending(
+        sourceUrl: String,
+        targetUrl: String,
+        state: WebmentionState,
+    ) {
         val now = Instant.now()
         val entity = findOrCreate(sourceUrl, targetUrl)
         entity.state = state
@@ -101,7 +130,10 @@ class WebmentionNotificationService(
         repository.save(entity)
     }
 
-    private fun setSilentInactive(entity: WebmentionNotificationEntity, now: Instant) {
+    private fun setSilentInactive(
+        entity: WebmentionNotificationEntity,
+        now: Instant,
+    ) {
         entity.state = WebmentionState.INACTIVE
         entity.delivered = false
         entity.attempts = 0
@@ -110,7 +142,11 @@ class WebmentionNotificationService(
         entity.updatedAtUtc = now
     }
 
-    private fun applyOutcome(sourceUrl: String, targetUrl: String, block: (WebmentionNotificationEntity, Instant) -> Unit) {
+    private fun applyOutcome(
+        sourceUrl: String,
+        targetUrl: String,
+        block: (WebmentionNotificationEntity, Instant) -> Unit,
+    ) {
         val now = Instant.now()
         val entity = findOrCreate(sourceUrl, targetUrl)
         block(entity, now)
@@ -118,8 +154,11 @@ class WebmentionNotificationService(
         repository.save(entity)
     }
 
-    private fun findOrCreate(sourceUrl: String, targetUrl: String): WebmentionNotificationEntity {
-        return repository.findBySourceUrlAndTargetUrl(sourceUrl, targetUrl)
+    private fun findOrCreate(
+        sourceUrl: String,
+        targetUrl: String,
+    ): WebmentionNotificationEntity =
+        repository.findBySourceUrlAndTargetUrl(sourceUrl, targetUrl)
             ?: WebmentionNotificationEntity(
                 sourceUrl = sourceUrl,
                 targetUrl = targetUrl,
@@ -127,5 +166,4 @@ class WebmentionNotificationService(
                 createdAtUtc = Instant.now(),
                 updatedAtUtc = Instant.now(),
             )
-    }
 }

@@ -1,10 +1,9 @@
 package dev.jacobandersen.bastion.micropub.service.post
 
 import com.github.slugify.Slugify
-import dev.jacobandersen.bastion.micropub.type.resp.ApiResponse
 import dev.jacobandersen.bastion.microformats2.Mf2Object
-import dev.jacobandersen.bastion.micropub.type.req.MicropubPayload
-import dev.jacobandersen.bastion.microformats2.asMf2Value
+import dev.jacobandersen.bastion.microformats2.Mf2Value
+import dev.jacobandersen.bastion.microformats2.firstText
 import dev.jacobandersen.bastion.micropub.data.service.PostService
 import dev.jacobandersen.bastion.micropub.media.FileUploadResult
 import dev.jacobandersen.bastion.micropub.media.FileUploadService
@@ -12,6 +11,8 @@ import dev.jacobandersen.bastion.micropub.service.MicropubCommandResolver
 import dev.jacobandersen.bastion.micropub.type.MicropubCommand
 import dev.jacobandersen.bastion.micropub.type.PostStatus
 import dev.jacobandersen.bastion.micropub.type.PostVisibility
+import dev.jacobandersen.bastion.micropub.type.req.MicropubPayload
+import dev.jacobandersen.bastion.micropub.type.resp.ApiResponse
 import dev.jacobandersen.bastion.url.UrlService
 import dev.jacobandersen.bastion.util.StringUtil.excerpt
 import dev.jacobandersen.bastion.webmention.service.WebmentionService
@@ -31,18 +32,22 @@ class CreateService(
     private val fileUploadService: FileUploadService,
     private val urlService: UrlService,
     private val commandResolver: MicropubCommandResolver,
-    private val webmentionService: WebmentionService
+    private val webmentionService: WebmentionService,
 ) {
     @PreAuthorize("hasAuthority('CREATE')")
-    fun create(payload: MicropubPayload, files: MultiValueMap<String, MultipartFile>?): ApiResponse<*> {
+    fun create(
+        payload: MicropubPayload,
+        files: MultiValueMap<String, MultipartFile>?,
+    ): ApiResponse<*> {
         logger.info { "Parsing post payload..." }
-        val obj = payload.asMf2Object()
+        var obj = payload.asMf2Object()
 
         logger.info { "Resolving post commands..." }
-        val commands = commandResolver.resolve { key -> obj.properties[key] }
-            ?: return ApiResponse.Error.InvalidRequest(errorDescription = "Invalid command parameters in create")
+        val commands =
+            commandResolver.resolve { key -> obj.properties[key] }
+                ?: return ApiResponse.Error.InvalidRequest(errorDescription = "Invalid command parameters in create")
 
-        obj.properties.keys.filter { MicropubCommand.isCommandProperty(it) }.forEach { obj.deleteProperty(it) }
+        obj = obj.copy(properties = obj.properties.filterKeys { !MicropubCommand.isCommandProperty(it) })
 
         logger.info { "Determining post slug..." }
         val slug = postService.deduplicateSlug(commands.slug ?: deriveSlug(obj))
@@ -52,10 +57,10 @@ class CreateService(
         val visibility = commands.visibility ?: PostVisibility.PUBLIC
 
         logger.info { "Uploading files (if any)..." }
-        files?.entries?.forEach { (_, files) ->
-            files.forEach { file ->
+        files?.entries?.forEach { (_, fileValues) ->
+            fileValues.forEach { file ->
                 try {
-                    uploadFile(obj, file)
+                    obj = uploadFile(obj, file)
                 } catch (_: Exception) {
                     return ApiResponse.Error.Unknown(errorDescription = "file upload error")
                 }
@@ -63,12 +68,13 @@ class CreateService(
         }
 
         logger.info { "Creating post..." }
-        val post = try {
-            postService.create(slug, status, visibility, deleted = false, post = obj)
-        } catch (e: IllegalArgumentException) {
-            logger.warn { "Failed to create post: ${e.message}" }
-            return ApiResponse.Error.InvalidRequest(errorDescription = "Invalid published value: ${e.message}")
-        }
+        val post =
+            try {
+                postService.create(slug, status, visibility, deleted = false, post = obj)
+            } catch (e: IllegalArgumentException) {
+                logger.warn { "Failed to create post: ${e.message}" }
+                return ApiResponse.Error.InvalidRequest(errorDescription = "Invalid published value: ${e.message}")
+            }
         val url = urlService.generatePostUrl(post)
 
         logger.info { "Dispatching webmention processing..." }
@@ -83,25 +89,32 @@ class CreateService(
     private fun deriveSlug(obj: Mf2Object): String {
         logger.info { "No suggested slug, generating..." }
 
-        return if (obj.hasProperty("name")) {
+        val name = obj.firstText("name")
+        if (name != null) {
             logger.info { "Using name property for slug..." }
-            slugify.slugify(obj.getFirstProperty("name")!!.toString().excerpt(30))
-        } else if (obj.hasProperty("content")) {
-            logger.info { "Using content property for slug..." }
-            slugify.slugify(obj.getFirstProperty("content")!!.toString().excerpt(30))
-        } else {
-            logger.info { "No name or content, using UUID..." }
-            UUID.randomUUID().toString()
+            return slugify.slugify(name.excerpt(MAX_SLUG_SOURCE_LENGTH))
         }
+
+        val content = obj.firstText("content")
+        if (content != null) {
+            logger.info { "Using content property for slug..." }
+            return slugify.slugify(content.excerpt(MAX_SLUG_SOURCE_LENGTH))
+        }
+
+        logger.info { "No name or content, using UUID..." }
+        return UUID.randomUUID().toString()
     }
 
-    private fun uploadFile(obj: Mf2Object, file: MultipartFile?) {
-        if (file == null) return
+    private fun uploadFile(
+        obj: Mf2Object,
+        file: MultipartFile?,
+    ): Mf2Object {
+        if (file == null) return obj
 
-        when (val result = fileUploadService.upload(file)) {
+        return when (val result = fileUploadService.upload(file)) {
             is FileUploadResult.Success -> {
                 logger.info { "File uploaded successfully" }
-                obj.addProperty(result.name, result.url.asMf2Value())
+                obj.addProperty(result.name, Mf2Value.String(result.url))
             }
 
             is FileUploadResult.Failure -> {
@@ -109,5 +122,9 @@ class CreateService(
                 throw result.error
             }
         }
+    }
+
+    companion object {
+        private const val MAX_SLUG_SOURCE_LENGTH = 30
     }
 }

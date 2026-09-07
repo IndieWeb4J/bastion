@@ -1,9 +1,12 @@
 package dev.jacobandersen.bastion.micropub.type
 
-enum class GetQueryOption(val param: String?) {
+enum class GetQueryOption(
+    val param: String?,
+) {
     CONFIG(null),
     SOURCE(null),
-    SYNDICATE_TO("syndicate-to");
+    SYNDICATE_TO("syndicate-to"),
+    ;
 
     companion object {
         fun fromString(value: String?): GetQueryOption? {

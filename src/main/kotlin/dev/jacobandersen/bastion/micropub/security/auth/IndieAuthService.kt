@@ -8,12 +8,16 @@ import org.springframework.web.service.annotation.PostExchange
 
 interface IndieAuthService {
     @PostExchange(
-        headers = ["Content-Type=application/x-www-form-urlencoded", "Accept=application/json"]
+        headers = ["Content-Type=application/x-www-form-urlencoded", "Accept=application/json"],
     )
-    fun modernValidation(@RequestParam("token") token: String): MicropubToken
+    fun modernValidation(
+        @RequestParam("token") token: String,
+    ): MicropubToken
 
     @GetExchange(
-        accept = ["application/json"]
+        accept = ["application/json"],
     )
-    fun legacyValidation(@RequestHeader("Authorization") bearerToken: String): MicropubToken
+    fun legacyValidation(
+        @RequestHeader("Authorization") bearerToken: String,
+    ): MicropubToken
 }

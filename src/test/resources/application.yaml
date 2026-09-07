@@ -1,0 +1,51 @@
+bastion:
+  timezone: ${BASTION_TIMEZONE:Asia/Manila}
+  public-url: ${BASTION_PUBLIC_URL:https://bastion.test}
+  content:
+    base-url: ${BASTION_CONTENT_BASE_URL:https://bastion.test}
+    path-pattern: "{year}/{month}/{day}/{slug}"
+  media:
+    base-url: ${BASTION_MEDIA_BASE_URL:https://media.bastion.test}
+    s3:
+      access-key-id: ${BASTION_MEDIA_S3_ACCESS_KEY_ID:test-access-key}
+      secret-access-key: ${BASTION_MEDIA_S3_SECRET_ACCESS_KEY:test-secret-key}
+      endpoint: ${BASTION_MEDIA_S3_ENDPOINT:https://s3.bastion.test}
+      region: ${BASTION_MEDIA_S3_REGION:us-east-1}
+      bucket: ${BASTION_MEDIA_S3_BUCKET:bastion-test}
+  indieauth:
+    validate-token-url: ${BASTION_INDIEAUTH_VALIDATE_TOKEN_URL:https://tokens.indieauth.com/token}
+    me: ${BASTION_INDIEAUTH_ME:https://bastion.test}
+
+logging:
+  level:
+    root: info
+
+spring:
+  application:
+    name: bastion
+  jackson:
+    default-property-inclusion: non_null
+  graphql:
+    schema:
+      inspection:
+        enabled: true
+      introspection:
+        enabled: true
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  flyway:
+    baseline-version: 0
+    baseline-on-migrate: true
+
+jobrunr:
+  background-job-server:
+    enabled: ${JOBRUNR_BACKGROUND_JOB_SERVER:false}
+  dashboard:
+    enabled: ${JOBRUNR_DASHBOARD_ENABLE:false}
+  database:
+    type: sql

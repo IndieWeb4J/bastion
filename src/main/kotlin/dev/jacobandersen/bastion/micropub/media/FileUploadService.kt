@@ -16,49 +16,57 @@ private val logger = KotlinLogging.logger {}
 class FileUploadService(
     val slugify: Slugify,
     val s3Client: S3Client,
-    val mediaConfiguration: BastionMediaConfiguration
+    val mediaConfiguration: BastionMediaConfiguration,
 ) {
     fun upload(file: MultipartFile): FileUploadResult {
         val fileId = UUID.randomUUID().toString()
 
-        val originalName = file.originalFilename
-            ?.substringAfterLast('/')
-            ?.substringAfterLast('\\')
-            ?.takeIf { it.isNotBlank() }
+        val originalName =
+            file.originalFilename
+                ?.substringAfterLast('/')
+                ?.substringAfterLast('\\')
+                ?.takeIf { it.isNotBlank() }
 
-        val fileExt = originalName
-            ?.substringAfterLast('.', "")
-            ?.takeIf { it.isNotBlank() }
-            ?: "blob"
+        val fileExt =
+            originalName
+                ?.substringAfterLast('.', "")
+                ?.takeIf { it.isNotBlank() }
+                ?: "blob"
 
-        val stem = originalName
-            ?.substringBeforeLast('.')
-            ?.takeIf { it.isNotBlank() }
-            ?: file.name
+        val stem =
+            originalName
+                ?.substringBeforeLast('.')
+                ?.takeIf { it.isNotBlank() }
+                ?: file.name
 
         val safeStem = slugify.slugify(stem)
         val fileName = "$safeStem-$fileId.$fileExt"
 
-        val contentType = file.contentType?.takeIf { it.isNotBlank() }
-            ?: originalName?.let { MediaTypeFactory.getMediaType(it).orElse(null)?.toString() }
+        val contentType =
+            file.contentType?.takeIf { it.isNotBlank() }
+                ?: originalName?.let { MediaTypeFactory.getMediaType(it).orElse(null)?.toString() }
 
         return try {
-            logger.info { "Uploading ${fileName}..." }
+            logger.info { "Uploading $fileName..." }
 
-            val requestBuilder = PutObjectRequest.builder()
-                .bucket(mediaConfiguration.s3.bucket)
-                .key(fileName)
+            val requestBuilder =
+                PutObjectRequest
+                    .builder()
+                    .bucket(mediaConfiguration.s3.bucket)
+                    .key(fileName)
 
             if (contentType != null) {
                 requestBuilder.contentType(contentType)
             }
 
-            s3Client.putObject(
-                requestBuilder.build(),
-                RequestBody.fromBytes(file.bytes)
-            )
+            file.inputStream.use { stream ->
+                s3Client.putObject(
+                    requestBuilder.build(),
+                    RequestBody.fromInputStream(stream, file.size),
+                )
+            }
 
-            FileUploadResult.Success(file.name, "${mediaConfiguration.baseUrl.trimEnd('/')}/${fileName}")
+            FileUploadResult.Success(file.name, "${mediaConfiguration.baseUrl.trimEnd('/')}/$fileName")
         } catch (e: Exception) {
             FileUploadResult.Failure(e)
         }

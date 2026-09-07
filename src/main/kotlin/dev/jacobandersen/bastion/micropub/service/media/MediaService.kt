@@ -12,10 +12,14 @@ private val logger = KotlinLogging.logger { }
 
 @Service
 class MediaService(
-    val fileUploadService: FileUploadService
+    val fileUploadService: FileUploadService,
 ) {
     @PreAuthorize("hasAnyAuthority('MEDIA', 'CREATE')")
     fun handle(file: MultipartFile): ApiResponse<*> {
+        if (file.isEmpty) {
+            return ApiResponse.Error.InvalidRequest(errorDescription = "uploaded file is empty")
+        }
+
         return when (val result = fileUploadService.upload(file)) {
             is FileUploadResult.Success -> {
                 logger.info { "Media endpoint file upload success" }
@@ -23,7 +27,7 @@ class MediaService(
             }
 
             is FileUploadResult.Failure -> {
-                logger.info { "Media endpoint file upload failure: ${result.error.message}" }
+                logger.warn(result.error) { "Media endpoint file upload failure" }
                 ApiResponse.Error.Unknown(errorDescription = "Media endpoint file upload failure")
             }
         }

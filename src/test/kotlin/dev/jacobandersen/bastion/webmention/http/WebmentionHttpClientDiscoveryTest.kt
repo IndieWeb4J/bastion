@@ -2,16 +2,18 @@ package dev.jacobandersen.bastion.webmention.http
 
 import com.sun.net.httpserver.HttpServer
 import dev.jacobandersen.bastion.webmention.config.WebmentionConfig
-import java.net.InetSocketAddress
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
+import java.net.InetSocketAddress
 
 class WebmentionHttpClientDiscoveryTest {
-
     private val client = WebmentionHttpClient(WebmentionConfig())
 
-    private fun withServer(html: String, run: (String) -> Unit) {
+    private fun withServer(
+        html: String,
+        run: (String) -> Unit,
+    ) {
         val server = HttpServer.create(InetSocketAddress(0), 0)
         server.createContext("/") { exchange ->
             val body = html.toByteArray()
@@ -30,7 +32,7 @@ class WebmentionHttpClientDiscoveryTest {
     @Test
     fun `skips rel webmention elements without an href and finds the real endpoint`() {
         withServer(
-            """<html><head><link rel="webmention"></head><body><a href="/ep" rel="webmention">endpoint</a></body></html>"""
+            """<html><head><link rel="webmention"></head><body><a href="/ep" rel="webmention">endpoint</a></body></html>""",
         ) { base ->
             val discovery = client.discoverWebmentionEndpoint("$base/page")
             assertEquals("$base/ep", discovery.endpointUrl)
@@ -40,7 +42,7 @@ class WebmentionHttpClientDiscoveryTest {
     @Test
     fun `preserves query string parameters on the discovered endpoint`() {
         withServer(
-            """<html><head><link rel="webmention" href="/ep?query=yes"></head></html>"""
+            """<html><head><link rel="webmention" href="/ep?query=yes"></head></html>""",
         ) { base ->
             val discovery = client.discoverWebmentionEndpoint("$base/page")
             assertEquals("$base/ep?query=yes", discovery.endpointUrl)
@@ -50,7 +52,7 @@ class WebmentionHttpClientDiscoveryTest {
     @Test
     fun `returns no endpoint when no rel webmention element has an href`() {
         withServer(
-            """<html><head><link rel="webmention"></head><body><a>no rel here</a></body></html>"""
+            """<html><head><link rel="webmention"></head><body><a>no rel here</a></body></html>""",
         ) { base ->
             val discovery = client.discoverWebmentionEndpoint("$base/page")
             assertNull(discovery.endpointUrl)

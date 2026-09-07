@@ -6,20 +6,18 @@ enum class PostVisibility {
     PUBLIC,
     UNLISTED,
     PRIVATE,
-    UNKNOWN;
+    UNKNOWN,
+    ;
 
-    fun canGetByUrl(): Boolean {
-        return this == PUBLIC || this == UNLISTED
-    }
+    fun canGetByUrl(): Boolean = this == PUBLIC || this == UNLISTED
 
     companion object {
-        fun fromString(str: String): PostVisibility {
-            return when (str.lowercase(Locale.getDefault())) {
+        fun fromString(str: String): PostVisibility =
+            when (str.lowercase(Locale.getDefault())) {
                 "public" -> PUBLIC
                 "private" -> PRIVATE
                 "unlisted" -> UNLISTED
                 else -> UNKNOWN
             }
-        }
     }
 }

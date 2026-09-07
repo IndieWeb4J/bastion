@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Test
 import tools.jackson.databind.json.JsonMapper
 
 class MicropubTokenDeserializerTest {
-
     private val mapper = JsonMapper.builder().build()
 
     private fun deserialize(scope: String): MicropubToken {

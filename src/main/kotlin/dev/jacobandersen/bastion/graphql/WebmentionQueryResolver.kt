@@ -18,26 +18,23 @@ class WebmentionQueryResolver(
     private val webmentionService: ReceivedWebmentionService,
 ) {
     @SchemaMapping(typeName = "Post", field = "webmentions")
-    fun webmentions(post: Post): List<ReceivedWebmention> {
-        return webmentionService.verifiedByPost(post.id).sortedBy { it.firstSeenAt }
-    }
+    fun webmentions(post: Post): List<ReceivedWebmention> = webmentionService.verifiedByPost(post.id).sortedBy { it.firstSeenAt }
 
     @BatchMapping(typeName = "Post", field = "webmentionCounts")
     fun webmentionCounts(posts: List<Post>): Map<Post, WebmentionCounts> {
         val byPost = webmentionService.verifiedByPostIds(posts.map { it.id }).groupBy { it.postId }
         return posts.associateWith { post ->
-            val counts = byPost[post.id]
-                ?.groupingBy { it.interaction ?: MENTION }
-                ?.eachCount()
-                ?: emptyMap()
+            val counts =
+                byPost[post.id]
+                    ?.groupingBy { it.interaction ?: MENTION }
+                    ?.eachCount()
+                    ?: emptyMap()
             WebmentionCounts.of(counts)
         }
     }
 
     @SchemaMapping(typeName = "Webmention", field = "interaction")
-    fun interaction(webmention: ReceivedWebmention): WebmentionInteraction {
-        return webmention.interaction ?: MENTION
-    }
+    fun interaction(webmention: ReceivedWebmention): WebmentionInteraction = webmention.interaction ?: MENTION
 
     @SchemaMapping(typeName = "Webmention", field = "firstSeenAt")
     fun firstSeenAt(webmention: ReceivedWebmention): String = webmention.firstSeenAt.toString()
