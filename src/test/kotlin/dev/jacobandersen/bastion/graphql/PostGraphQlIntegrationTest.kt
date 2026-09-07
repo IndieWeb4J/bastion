@@ -4,6 +4,7 @@ import dev.jacobandersen.bastion.TestcontainersConfiguration
 import dev.jacobandersen.bastion.micropub.type.req.MicropubPayload
 import dev.jacobandersen.bastion.micropub.type.resp.ApiResponse
 import dev.jacobandersen.bastion.micropub.service.post.CreateService
+import dev.jacobandersen.bastion.micropub.service.post.DeleteService
 import dev.jacobandersen.bastion.micropub.data.repository.PostRepository
 import dev.jacobandersen.bastion.webmention.data.domain.WebmentionInteraction
 import dev.jacobandersen.bastion.webmention.data.domain.ReceivedWebmentionState
@@ -40,6 +41,9 @@ class PostGraphQlIntegrationTest {
     lateinit var createService: CreateService
 
     @Autowired
+    lateinit var deleteService: DeleteService
+
+    @Autowired
     lateinit var postRepository: PostRepository
 
     @Autowired
@@ -58,6 +62,7 @@ class PostGraphQlIntegrationTest {
     private lateinit var unlistedNote: String
     private lateinit var privateNote: String
     private lateinit var draftNote: String
+    private lateinit var deletedNote: String
 
     @BeforeEach
     fun seed() {
@@ -69,12 +74,16 @@ class PostGraphQlIntegrationTest {
         unlistedNote = uniqueSlug("gql-unlisted")
         privateNote = uniqueSlug("gql-private")
         draftNote = uniqueSlug("gql-draft")
+        deletedNote = uniqueSlug("gql-deleted")
 
         createPost(publicNote, visibility = "public")
         createPost(publicPhoto, visibility = "public", extra = """"photo":["https://example.com/pic.jpg"],""")
         createPost(unlistedNote, visibility = "unlisted")
         createPost(privateNote, visibility = "private")
         createPost(draftNote, status = "draft")
+
+        val deletedLocation = createPost(deletedNote, visibility = "public")
+        deleteService.delete(MicropubPayload.Json(mapper.createObjectNode().put("url", deletedLocation)))
 
         val noteId = postRepository.findBySlug(publicNote)!!.id!!
         saveWebmention(noteId, "https://reply.example/1", WebmentionInteraction.REPLY, ReceivedWebmentionState.VERIFIED, "Reply author")
@@ -108,7 +117,9 @@ class PostGraphQlIntegrationTest {
 
     @Test
     fun directQueryReturnsAnUnlistedPostBySlugAndUrl() {
-        graphQlTester.document("""query { post(slug: "$unlistedNote") { slug } }""")
+        graphQlTester.document(
+            """query { post(slug: "$unlistedNote") { __typename ... on Post { slug } } }"""
+        )
             .execute()
             .path("post.slug")
             .entity(String::class.java)
@@ -117,21 +128,43 @@ class PostGraphQlIntegrationTest {
 
     @Test
     fun directQueryHidesPrivateAndDraftPosts() {
-        graphQlTester.document("""query { post(slug: "$privateNote") { slug } }""")
+        graphQlTester.document("""query { post(slug: "$privateNote") { __typename } }""")
             .execute()
             .path("post")
             .valueIsNull()
 
-        graphQlTester.document("""query { post(slug: "$draftNote") { slug } }""")
+        graphQlTester.document("""query { post(slug: "$draftNote") { __typename } }""")
             .execute()
             .path("post")
             .valueIsNull()
     }
 
     @Test
+    fun deletedPublicPostDirectQueryReturnsGone() {
+        graphQlTester.document(
+            """query { post(slug: "$deletedNote") { __typename ... on PostGone { slug url published } } }"""
+        )
+            .execute()
+            .path("post.__typename")
+            .entity(String::class.java)
+            .isEqualTo("PostGone")
+
+        val gone = graphQlTester.document(
+            """query { post(slug: "$deletedNote") { __typename ... on PostGone { slug url } } }"""
+        )
+            .execute()
+            .path("post")
+            .entity<Map<*, *>>(mapClass)
+            .get()
+
+        assertEquals(deletedNote, gone["slug"])
+        assertEquals(true, gone["url"] != null)
+    }
+
+    @Test
     fun propertiesReturnsOnlyRequestedNames() {
         graphQlTester.document(
-            """query { post(slug: "$publicNote") { properties(names: ["name"]) } }"""
+            """query { post(slug: "$publicNote") { __typename ... on Post { properties(names: ["name"]) } } }"""
         )
             .execute()
             .path("post.properties")
@@ -142,7 +175,7 @@ class PostGraphQlIntegrationTest {
     @Test
     fun singlePostReturnsVerifiedWebmentionsOnly() {
         val webmentions = graphQlTester.document(
-            """query { post(slug: "$publicNote") { webmentions { sourceUrl interaction authorName } } }"""
+            """query { post(slug: "$publicNote") { __typename ... on Post { webmentions { sourceUrl interaction authorName } } } }"""
         )
             .execute()
             .path("post.webmentions")
@@ -206,7 +239,7 @@ class PostGraphQlIntegrationTest {
         )
     }
 
-    private fun createPost(slug: String, visibility: String = "public", status: String = "published", extra: String = "") {
+    private fun createPost(slug: String, visibility: String = "public", status: String = "published", extra: String = ""): String {
         val root = mapper.readTree(
             """
             {"type": ["h-entry"], "properties": {
@@ -220,7 +253,7 @@ class PostGraphQlIntegrationTest {
             """.trimIndent()
         ) as ObjectNode
         val response = createService.create(MicropubPayload.Json(root), null)
-        assertEquals(true, response is ApiResponse.Success.Created)
+        return (response as ApiResponse.Success.Created).location
     }
 
     private fun uniqueSlug(prefix: String): String = "$prefix-${System.nanoTime()}"
