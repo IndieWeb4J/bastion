@@ -38,31 +38,24 @@ internal object WebmentionUtil {
         return runCatching { URI(baseUrl).resolve(endpoint).toString() }.getOrNull()
     }
 
-    fun computeDiscoveryExpiry(
-        cacheControl: String?,
-        expiresHeader: String?,
-        now: Instant,
-        defaultTtlSeconds: Long,
-        minCacheSeconds: Long,
-    ): Instant {
-        val floor = Duration.ofSeconds(minCacheSeconds)
-
+    /**
+     * When a discovery response explicitly advertises cacheability, returns the
+     * instant at which the discovered endpoint may be reused. Returns null when
+     * the target sends no usable cache metadata (or says not to cache), in which
+     * case the endpoint must be rediscovered on the next send.
+     */
+    fun effectiveCacheExpiry(cacheControl: String?, expiresHeader: String?, now: Instant): Instant? {
         val maxAge = cacheControl
             ?.let { Regex("(?:^|,)\\s*max-age\\s*=\\s*(\\d+)", RegexOption.IGNORE_CASE).find(it) }
             ?.groupValues?.get(1)
             ?.toLongOrNull()
         if (maxAge != null) {
-            val ttl = Duration.ofSeconds(maxAge)
-            return now.plus(if (ttl > floor) ttl else floor)
+            return if (maxAge > 0) now.plus(Duration.ofSeconds(maxAge)) else null
         }
 
         val expires = expiresHeader?.let { header ->
             runCatching { ZonedDateTime.parse(header.trim(), DateTimeFormatter.RFC_1123_DATE_TIME).toInstant() }.getOrNull()
         }
-        if (expires != null) {
-            return if (expires.isAfter(now.plus(floor))) expires else now.plus(floor)
-        }
-
-        return now.plus(Duration.ofSeconds(defaultTtlSeconds))
+        return expires?.takeIf { it.isAfter(now) }
     }
 }

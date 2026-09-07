@@ -41,4 +41,24 @@ class WebmentionEndpointCacheService(
         entry.updatedAt = now
         repository.save(entry)
     }
+
+    /** Remove any cached entry for the target, e.g. after an uncacheable discovery. */
+    @Transactional
+    fun evict(targetUrl: String) {
+        repository.deleteByTargetUrl(targetUrl)
+    }
+
+    /** Delete entries whose cache window has passed, returning how many were removed. */
+    @Transactional
+    fun purgeExpired(now: Instant): Int {
+        val expired = repository.findByExpiresAtLessThanEqual(now)
+        if (expired.isNotEmpty()) {
+            repository.deleteAll(expired)
+        }
+        return expired.size
+    }
+
+    /** No-arg convenience for the recurring cleanup job. */
+    @Transactional
+    fun cleanupExpired(): Int = purgeExpired(Instant.now())
 }
