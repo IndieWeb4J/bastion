@@ -8,7 +8,10 @@ import dev.jacobandersen.bastion.micropub.type.PostStatus
 import dev.jacobandersen.bastion.micropub.type.PostVisibility
 import dev.jacobandersen.bastion.url.UrlService
 import dev.jacobandersen.bastion.webmention.data.service.ReceivedWebmentionService
+import dev.jacobandersen.bastion.webmention.http.SourceHostValidator
 import dev.jacobandersen.bastion.webmention.service.WebmentionReceiverService
+import dev.jacobandersen.bastion.webmention.service.WebmentionSubmissionLimiter
+import java.time.Instant
 import java.util.UUID
 import org.jobrunr.scheduling.JobScheduler
 import org.junit.jupiter.api.BeforeEach
@@ -30,6 +33,8 @@ class WebmentionControllerTest {
     private lateinit var postService: PostService
     private lateinit var urlService: UrlService
     private lateinit var jobScheduler: JobScheduler
+    private lateinit var hostValidator: SourceHostValidator
+    private lateinit var submissionLimiter: WebmentionSubmissionLimiter
     private lateinit var mockMvc: MockMvc
 
     private val sourceUrl = "https://source.example/reply"
@@ -43,6 +48,8 @@ class WebmentionControllerTest {
         postService = mock(PostService::class.java)
         urlService = mock(UrlService::class.java)
         jobScheduler = mock(JobScheduler::class.java)
+        hostValidator = SourceHostValidator { it.startsWith("http://127.0.0.1") }
+        submissionLimiter = WebmentionSubmissionLimiter()
 
         mockMvc = MockMvcBuilders.standaloneSetup(
             WebmentionController(
@@ -51,6 +58,8 @@ class WebmentionControllerTest {
                 postService = postService,
                 urlService = urlService,
                 jobScheduler = jobScheduler,
+                hostValidator = hostValidator,
+                submissionLimiter = submissionLimiter,
             )
         ).build()
 
@@ -168,6 +177,30 @@ class WebmentionControllerTest {
 
     }
 
+
+    @Test
+    fun `rejects a source on a blocked host`() {
+        mockMvc.perform(
+            post("/webmention")
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .param("source", "http://127.0.0.1/internal")
+                .param("target", targetUrl)
+        )
+            .andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `rejects a submission over the rate limit`() {
+        submissionLimiter.allow(sourceUrl, targetUrl, Instant.now())
+
+        mockMvc.perform(
+            post("/webmention")
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .param("source", sourceUrl)
+                .param("target", targetUrl)
+        )
+            .andExpect(status().isBadRequest)
+    }
 
     private fun publicPost(slug: String): Post {
         return post(slug, PostStatus.PUBLISHED, PostVisibility.PUBLIC)

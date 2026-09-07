@@ -3,7 +3,9 @@ package dev.jacobandersen.bastion.webmention.controller
 import dev.jacobandersen.bastion.micropub.data.service.PostService
 import dev.jacobandersen.bastion.url.UrlService
 import dev.jacobandersen.bastion.webmention.data.service.ReceivedWebmentionService
+import dev.jacobandersen.bastion.webmention.http.SourceHostValidator
 import dev.jacobandersen.bastion.webmention.service.WebmentionReceiverService
+import dev.jacobandersen.bastion.webmention.service.WebmentionSubmissionLimiter
 import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.servlet.http.HttpServletRequest
 import java.net.URI
@@ -31,6 +33,8 @@ class WebmentionController(
     private val postService: PostService,
     private val urlService: UrlService,
     private val jobScheduler: JobScheduler,
+    private val hostValidator: SourceHostValidator,
+    private val submissionLimiter: WebmentionSubmissionLimiter,
 ) {
     @PostMapping(consumes = [MediaType.APPLICATION_FORM_URLENCODED_VALUE])
     fun onUrlEncoded(request: HttpServletRequest): ResponseEntity<*> {
@@ -60,6 +64,12 @@ class WebmentionController(
         }
         if (sourceUrl == targetUrl) {
             return invalidRequest("The source and target URLs must be different")
+        }
+        if (hostValidator.isBlocked(sourceUrl)) {
+            return invalidRequest("The source URL host is not reachable")
+        }
+        if (!submissionLimiter.allow(sourceUrl, targetUrl)) {
+            return invalidRequest("Too many recent webmentions from this source")
         }
 
         val slug = urlService.extractPostSlug(targetUrl)

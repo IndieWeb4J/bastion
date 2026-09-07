@@ -99,9 +99,9 @@ class WebmentionService(
     fun sendWebmention(sourceUrl: String, targetUrl: String, forceRediscovery: Boolean = false) {
         logger.info { "Sending webmention for $sourceUrl to $targetUrl..." }
 
-        if (HttpUtil.isLoopbackOrLocal(targetUrl)) {
-            logger.info { "Skipping webmention to loopback/local target $targetUrl" }
-            recordTerminalFailure(sourceUrl, targetUrl, "target URL is loopback/local")
+        if (HttpUtil.isBlockedHost(targetUrl, failClosedOnDnsError = false)) {
+            logger.info { "Skipping webmention to blocked target $targetUrl" }
+            recordTerminalFailure(sourceUrl, targetUrl, "target URL resolves to a blocked address")
             return
         }
 
@@ -112,9 +112,9 @@ class WebmentionService(
             return
         }
 
-        if (HttpUtil.isLoopbackOrLocal(endpointUrl)) {
-            logger.info { "Skipping webmention to loopback/local endpoint $endpointUrl" }
-            recordTerminalFailure(sourceUrl, targetUrl, "webmention endpoint is loopback/local")
+        if (HttpUtil.isBlockedHost(endpointUrl, failClosedOnDnsError = false)) {
+            logger.info { "Skipping webmention to blocked endpoint $endpointUrl" }
+            recordTerminalFailure(sourceUrl, targetUrl, "webmention endpoint resolves to a blocked address")
             return
         }
 
