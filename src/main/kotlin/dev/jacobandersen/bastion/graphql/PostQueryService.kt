@@ -11,7 +11,8 @@ import org.springframework.stereotype.Service
  * Read queries over published posts for public (unauthenticated) GraphQL use.
  * Lists return only PUBLIC posts; direct lookups additionally allow UNLISTED.
  * PRIVATE and DRAFT posts are never returned here (private is only reachable
- * through the authenticated Micropub source query).
+ * through the authenticated Micropub source query). A post that was publicly
+ * reachable and is now soft-deleted surfaces as [PostGone].
  */
 @Service
 class PostQueryService(
@@ -31,7 +32,12 @@ class PostQueryService(
         return postService.findFeedPosts(types?.map { it.subtype() }, limit, offset)
     }
 
-    fun post(slug: String?, url: String?): Post? {
+    /**
+     * Resolves a direct post lookup. Returns null when the post does not exist
+     * or was never publicly reachable (draft/private); [PostLookupResult.Gone]
+     * when the post existed publicly and has since been deleted.
+     */
+    fun post(slug: String?, url: String?): PostLookupResult? {
         val slugToFind = when {
             slug != null && url != null ->
                 throw IllegalArgumentException("provide exactly one of slug or url, not both")
@@ -42,7 +48,20 @@ class PostQueryService(
             else -> throw IllegalArgumentException("provide either a slug or a url")
         }
 
-        val post = postService.findBySlug(slugToFind) ?: return null
-        return post.takeIf { it.publiclyReachable }
+        val found = postService.findBySlug(slugToFind) ?: return null
+        return when {
+            found.deleted && found.isPublicContent -> PostLookupResult.Gone(
+                slug = found.slug,
+                url = runCatching { urlService.generatePostUrl(found) }.getOrNull(),
+                published = Mf2Graphql.firstText(found.post, "published"),
+            )
+            found.publiclyReachable -> PostLookupResult.Found(found)
+            else -> null
+        }
     }
+}
+
+sealed interface PostLookupResult {
+    data class Found(val post: Post) : PostLookupResult
+    data class Gone(val slug: String, val url: String?, val published: String?) : PostLookupResult
 }
