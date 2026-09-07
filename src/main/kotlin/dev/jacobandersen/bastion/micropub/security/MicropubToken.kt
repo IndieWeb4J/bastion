@@ -38,7 +38,10 @@ class MicropubTokenDeserializer : StdDeserializer<MicropubToken>(MicropubToken::
         val node = ctxt.readTree(p)
         val me = node["me"].asString()
         val clientId = node["client_id"].asString()
-        val scope = node["scope"].asString().split(" ").map { MicropubTokenScope.fromString(it) }
+        val rawScope = node.get("scope")?.asString() ?: ""
+        val scope = rawScope.split(' ')
+            .filter { it.isNotBlank() }
+            .mapNotNull { MicropubTokenScope.fromStringOrNull(it) }
         return MicropubToken(me, clientId, scope)
     }
 }
