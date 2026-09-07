@@ -9,5 +9,4 @@ enum class SyndicationAction {
     CREATE,
     DELETE,
     UPDATE,
-    UPLOAD,
 }

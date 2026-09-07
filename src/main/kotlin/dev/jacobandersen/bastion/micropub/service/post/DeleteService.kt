@@ -65,8 +65,11 @@ class DeleteService(
             }
         }
 
-        if (delete && !wasDeleted && isPublic) {
+        if (delete && !wasDeleted) {
             syndicationService.syndicateDeleted(post)
+        }
+        if (!delete && wasDeleted && isPublic) {
+            syndicationService.syndicateUndeleted(post)
         }
 
         return ApiResponse.Success.NoContent

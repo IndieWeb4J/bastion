@@ -43,8 +43,22 @@ class SyndicationHttpClientTest {
         val body = mapper.readTree(capturedBody!!)
         assertEquals("update", body.get("action").asString())
         assertEquals("https://bastion.test/post/1", body.get("url").asString())
-        assertEquals("Renamed", body.get("replace").get("name").get(0).asString())
-        assertEquals("extra", body.get("add").get("category").get(0).asString())
+        assertEquals(
+            "Renamed",
+            body
+                .get("replace")
+                .get("name")
+                .get(0)
+                .asString(),
+        )
+        assertEquals(
+            "extra",
+            body
+                .get("add")
+                .get("category")
+                .get(0)
+                .asString(),
+        )
         assertEquals("name", body.get("delete").get(0).asString())
     }
 

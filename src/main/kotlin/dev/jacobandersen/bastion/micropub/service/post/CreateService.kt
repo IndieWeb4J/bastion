@@ -89,9 +89,13 @@ class CreateService(
             websubPublisher.publish()
         }
 
-        if (post.publiclyReachable && requestedSyndicationUids.isNotEmpty()) {
+        if (requestedSyndicationUids.isNotEmpty()) {
             logger.info { "Dispatching syndication processing..." }
-            syndicationService.syndicateCreated(post, requestedSyndicationUids)
+            if (post.publiclyReachable) {
+                syndicationService.syndicateCreated(post, requestedSyndicationUids)
+            } else {
+                syndicationService.retainSyndicationTargets(post, requestedSyndicationUids)
+            }
         }
 
         logger.info { "Post created: $url" }

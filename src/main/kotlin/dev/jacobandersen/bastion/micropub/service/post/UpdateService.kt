@@ -97,20 +97,26 @@ class UpdateService(
         when {
             wasPublic && !isPublic -> {
                 webmentionService.deactivateWebmentions(previousUrl)
+                syndicationService.syndicateDeleted(updated, previousUrl)
+            }
+
+            isPublic && !wasPublic -> {
+                webmentionService.processWebmentions(updatedUrl, postObj)
+                syndicationService.syndicatePublished(updated)
+                websubPublisher.publish()
+            }
+
+            isPublic && updatedUrl != previousUrl -> {
+                webmentionService.processWebmentions(updatedUrl, postObj)
+                syndicationService.syndicateRebased(updated, previousUrl)
+                websubPublisher.publish()
             }
 
             isPublic -> {
-                if (updatedUrl != previousUrl || !wasPublic) {
-                    webmentionService.processWebmentions(updatedUrl, postObj)
-                } else {
-                    webmentionService.processUpdatedWebmentions(updatedUrl, previousTargetUrls, postObj)
-                }
+                webmentionService.processUpdatedWebmentions(updatedUrl, previousTargetUrls, postObj)
+                syndicationService.syndicateUpdated(updated, update)
                 websubPublisher.publish()
             }
-        }
-
-        if (isPublic) {
-            syndicationService.syndicateUpdated(updated, update)
         }
 
         return if (targetSlug != post.slug) {

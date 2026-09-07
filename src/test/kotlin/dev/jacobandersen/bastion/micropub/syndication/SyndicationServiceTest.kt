@@ -107,7 +107,69 @@ class SyndicationServiceTest {
     }
 
     @Test
-    fun `syndicateDeleted enqueues only for recorded targets supporting delete`() {
+    fun `retainSyndicationTargets records create-capable targets without enqueueing`() {
+        `when`(config.targetsSupporting(listOf("bridgy"), SyndicationAction.CREATE)).thenReturn(listOf(createTarget))
+
+        service.retainSyndicationTargets(post, listOf("bridgy"))
+
+        verify(postSyndicationService, times(1)).record(postId, "bridgy")
+        verify(jobScheduler, never()).enqueue<SyndicationService>(org.mockito.kotlin.any())
+    }
+
+    @Test
+    fun `retainSyndicationTargets skips targets without create support`() {
+        `when`(config.targetsSupporting(listOf("delete-only"), SyndicationAction.CREATE)).thenReturn(emptyList())
+
+        service.retainSyndicationTargets(post, listOf("delete-only"))
+
+        verify(postSyndicationService, never()).record(org.mockito.kotlin.any(), org.mockito.kotlin.any())
+        verify(jobScheduler, never()).enqueue<SyndicationService>(org.mockito.kotlin.any())
+    }
+
+    @Test
+    fun `syndicateDeleted enqueues only for recorded targets supporting delete that hold a copy`() {
+        `when`(postSyndicationService.findByPostId(postId))
+            .thenReturn(
+                listOf(
+                    PostSyndicationEntity(postId = postId, targetUid = "bridgy").apply { syndicatedUrl = "https://brid.gy/syndicated" },
+                    PostSyndicationEntity(postId = postId, targetUid = "delete-only").apply { syndicatedUrl = "https://example.com/copy" },
+                    PostSyndicationEntity(postId = postId, targetUid = "missing").apply { syndicatedUrl = "https://example.com/missing" },
+                ),
+            )
+        `when`(config.targetByUid("bridgy")).thenReturn(createTarget)
+        `when`(config.targetByUid("delete-only")).thenReturn(deleteOnlyTarget)
+        `when`(config.targetByUid("missing")).thenReturn(null)
+        `when`(urlService.generatePostUrl(post)).thenReturn("https://bastion.test/2026/01/01/slug")
+
+        service.syndicateDeleted(post)
+
+        verify(jobScheduler, times(2)).enqueue<SyndicationService>(org.mockito.kotlin.any())
+    }
+
+    @Test
+    fun `syndicateDeleted does not enqueue for recorded targets without a syndication outcome`() {
+        `when`(postSyndicationService.findByPostId(postId))
+            .thenReturn(listOf(PostSyndicationEntity(postId = postId, targetUid = "bridgy")))
+        `when`(config.targetByUid("bridgy")).thenReturn(createTarget)
+        `when`(urlService.generatePostUrl(post)).thenReturn("https://bastion.test/2026/01/01/slug")
+
+        service.syndicateDeleted(post)
+
+        verify(jobScheduler, never()).enqueue<SyndicationService>(org.mockito.kotlin.any())
+    }
+
+    @Test
+    fun `syndicateDeleted does nothing when no records exist`() {
+        `when`(postSyndicationService.findByPostId(postId)).thenReturn(emptyList())
+        `when`(urlService.generatePostUrl(post)).thenReturn("https://bastion.test/2026/01/01/slug")
+
+        service.syndicateDeleted(post)
+
+        verify(jobScheduler, never()).enqueue<SyndicationService>(org.mockito.kotlin.any())
+    }
+
+    @Test
+    fun `syndicatePublished enqueues create for recorded targets supporting create`() {
         `when`(postSyndicationService.findByPostId(postId))
             .thenReturn(
                 listOf(
@@ -120,18 +182,50 @@ class SyndicationServiceTest {
         `when`(config.targetByUid("delete-only")).thenReturn(deleteOnlyTarget)
         `when`(config.targetByUid("missing")).thenReturn(null)
 
-        service.syndicateDeleted(post)
+        service.syndicatePublished(post)
 
-        verify(jobScheduler, times(2)).enqueue<SyndicationService>(org.mockito.kotlin.any())
+        verify(jobScheduler, times(1)).enqueue<SyndicationService>(org.mockito.kotlin.any())
     }
 
     @Test
-    fun `syndicateDeleted does nothing when no records exist`() {
-        `when`(postSyndicationService.findByPostId(postId)).thenReturn(emptyList())
+    fun `syndicatePublished does nothing when no create-capable records exist`() {
+        `when`(postSyndicationService.findByPostId(postId))
+            .thenReturn(listOf(PostSyndicationEntity(postId = postId, targetUid = "delete-only")))
+        `when`(config.targetByUid("delete-only")).thenReturn(deleteOnlyTarget)
 
-        service.syndicateDeleted(post)
+        service.syndicatePublished(post)
 
         verify(jobScheduler, never()).enqueue<SyndicationService>(org.mockito.kotlin.any())
+    }
+
+    @Test
+    fun `syndicateUndeleted enqueues create for recorded targets supporting create`() {
+        `when`(postSyndicationService.findByPostId(postId))
+            .thenReturn(listOf(PostSyndicationEntity(postId = postId, targetUid = "bridgy")))
+        `when`(config.targetByUid("bridgy")).thenReturn(createTarget)
+
+        service.syndicateUndeleted(post)
+
+        verify(jobScheduler, times(1)).enqueue<SyndicationService>(org.mockito.kotlin.any())
+    }
+
+    @Test
+    fun `syndicateRebased enqueues rebase for recorded targets supporting create and delete`() {
+        `when`(postSyndicationService.findByPostId(postId))
+            .thenReturn(
+                listOf(
+                    PostSyndicationEntity(postId = postId, targetUid = "bridgy"),
+                    PostSyndicationEntity(postId = postId, targetUid = "delete-only"),
+                    PostSyndicationEntity(postId = postId, targetUid = "missing"),
+                ),
+            )
+        `when`(config.targetByUid("bridgy")).thenReturn(createTarget)
+        `when`(config.targetByUid("delete-only")).thenReturn(deleteOnlyTarget)
+        `when`(config.targetByUid("missing")).thenReturn(null)
+
+        service.syndicateRebased(post, "https://bastion.test/2026/01/01/old-slug")
+
+        verify(jobScheduler, times(1)).enqueue<SyndicationService>(org.mockito.kotlin.any())
     }
 
     @Test
@@ -193,10 +287,38 @@ class SyndicationServiceTest {
     fun `runDeleteJob does not throw when the http client fails`() {
         `when`(postService.findById(postId)).thenReturn(post)
         `when`(config.targetByUid("bridgy")).thenReturn(createTarget)
-        `when`(urlService.generatePostUrl(post)).thenReturn("https://bastion.test/2026/01/01/slug")
         `when`(httpClient.sendDelete(createTarget, "https://bastion.test/2026/01/01/slug")).thenThrow(RuntimeException("boom"))
 
-        assertDoesNotThrow { service.runDeleteJob(postId, "bridgy") }
+        assertDoesNotThrow { service.runDeleteJob(postId, "bridgy", "https://bastion.test/2026/01/01/slug") }
+    }
+
+    @Test
+    fun `runRebaseJob deletes the old copy and records the re-created copy on success`() {
+        `when`(postService.findById(postId)).thenReturn(post)
+        `when`(config.targetByUid("bridgy")).thenReturn(createTarget)
+        `when`(urlService.generatePostUrl(post)).thenReturn("https://bastion.test/2026/01/01/slug")
+        `when`(httpClient.sendDelete(createTarget, "https://bastion.test/2026/01/01/old-slug"))
+            .thenReturn(SyndicationSendResult.Success(204, null))
+        `when`(httpClient.sendCreate(createTarget, post.post))
+            .thenReturn(SyndicationSendResult.Success(201, "https://brid.gy/rebased"))
+
+        service.runRebaseJob(postId, "bridgy", "https://bastion.test/2026/01/01/old-slug")
+
+        verify(httpClient, times(1)).sendDelete(createTarget, "https://bastion.test/2026/01/01/old-slug")
+        verify(httpClient, times(1)).sendCreate(createTarget, post.post)
+        verify(postSyndicationService, times(1)).recordOutcome(postId, "bridgy", "https://brid.gy/rebased")
+    }
+
+    @Test
+    fun `runRebaseJob does not throw when the http client fails`() {
+        `when`(postService.findById(postId)).thenReturn(post)
+        `when`(config.targetByUid("bridgy")).thenReturn(createTarget)
+        `when`(urlService.generatePostUrl(post)).thenReturn("https://bastion.test/2026/01/01/slug")
+        `when`(httpClient.sendDelete(createTarget, "https://bastion.test/2026/01/01/old-slug")).thenThrow(RuntimeException("boom"))
+
+        assertDoesNotThrow { service.runRebaseJob(postId, "bridgy", "https://bastion.test/2026/01/01/old-slug") }
+
+        verify(postSyndicationService, never()).recordOutcome(org.mockito.kotlin.any(), org.mockito.kotlin.any(), org.mockito.kotlin.any())
     }
 
     @Test
