@@ -13,8 +13,13 @@ bastion:
       region: ${BASTION_MEDIA_S3_REGION:us-east-1}
       bucket: ${BASTION_MEDIA_S3_BUCKET:bastion-test}
   indieauth:
-    validate-token-url: ${BASTION_INDIEAUTH_VALIDATE_TOKEN_URL:https://tokens.indieauth.com/token}
     me: ${BASTION_INDIEAUTH_ME:https://bastion.test}
+    herald:
+      base-url: ${BASTION_INDIEAUTH_HERALD_BASE_URL:https://herald.test}
+      authorize-path: ${BASTION_INDIEAUTH_HERALD_AUTHORIZE_PATH:/auth}
+    github:
+      client-id: ${BASTION_INDIEAUTH_GITHUB_CLIENT_ID:test-client-id}
+      client-secret: ${BASTION_INDIEAUTH_GITHUB_CLIENT_SECRET:test-client-secret}
 
 logging:
   level:
