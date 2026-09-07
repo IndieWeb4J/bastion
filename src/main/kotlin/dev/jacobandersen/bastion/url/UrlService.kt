@@ -35,12 +35,10 @@ class UrlService(val config: BastionContentUrlConfig) {
 
     fun extractPostSlug(url: String): String? {
         val parsedUrl = runCatching { URI(url) }.getOrNull() ?: return null
-        val parsedBaseUrl = runCatching { URI(config.baseUrl) }.getOrNull() ?: return null
+        val urlAuthority = UrlNormalizer.authority(url) ?: return null
+        val baseAuthority = UrlNormalizer.authority(config.baseUrl) ?: return null
 
-        if (parsedUrl.scheme != parsedBaseUrl.scheme ||
-            parsedUrl.host != parsedBaseUrl.host ||
-            parsedUrl.port != parsedBaseUrl.port
-        ) {
+        if (urlAuthority != baseAuthority) {
             return null
         }
 

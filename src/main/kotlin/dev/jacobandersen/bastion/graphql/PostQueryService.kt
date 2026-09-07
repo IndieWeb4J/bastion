@@ -19,13 +19,11 @@ class PostQueryService(
     private val postService: PostService,
     private val urlService: UrlService,
 ) {
-    private val maxLimit = 100
-
     fun feed(types: List<PostType>?, limitArg: Int?, offsetArg: Int?): List<Post> {
         val limit = limitArg ?: 10
         val offset = offsetArg ?: 0
 
-        require(limit in 1..maxLimit) { "limit must be an integer between 1 and $maxLimit" }
+        require(limit in 1..PostService.MAX_PAGE_SIZE) { "limit must be an integer between 1 and ${PostService.MAX_PAGE_SIZE}" }
         require(offset >= 0) { "offset must be a non-negative integer" }
         require(offset % limit == 0) { "offset must be a multiple of limit ($offset % $limit != 0)" }
 

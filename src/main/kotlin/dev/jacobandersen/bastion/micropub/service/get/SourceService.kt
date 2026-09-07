@@ -14,8 +14,6 @@ class SourceService(
     val postService: PostService,
     private val urlService: UrlService,
 ) {
-    private val maxLimit = 100
-
     fun getSource(params: MutableMap<String, Array<String>>): ApiResponse<*> {
         val url = params["url"]?.firstOrNull()
         params.remove("url")
@@ -59,8 +57,8 @@ class SourceService(
         val parsedLimit = limit?.toIntOrNull()
         val parsedOffset = offset?.toIntOrNull()
 
-        if (limit != null && (parsedLimit == null || parsedLimit < 1 || parsedLimit > maxLimit)) {
-            return ApiResponse.Error.InvalidRequest(errorDescription = "limit must be an integer between 1 and $maxLimit")
+        if (limit != null && (parsedLimit == null || parsedLimit < 1 || parsedLimit > PostService.MAX_PAGE_SIZE)) {
+            return ApiResponse.Error.InvalidRequest(errorDescription = "limit must be an integer between 1 and ${PostService.MAX_PAGE_SIZE}")
         }
         if (offset != null && (parsedOffset == null || parsedOffset < 0)) {
             return ApiResponse.Error.InvalidRequest(errorDescription = "offset must be a non-negative integer")

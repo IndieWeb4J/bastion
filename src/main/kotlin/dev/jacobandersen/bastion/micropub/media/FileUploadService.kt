@@ -53,10 +53,12 @@ class FileUploadService(
                 requestBuilder.contentType(contentType)
             }
 
-            s3Client.putObject(
-                requestBuilder.build(),
-                RequestBody.fromBytes(file.bytes)
-            )
+            file.inputStream.use { stream ->
+                s3Client.putObject(
+                    requestBuilder.build(),
+                    RequestBody.fromInputStream(stream, file.size),
+                )
+            }
 
             FileUploadResult.Success(file.name, "${mediaConfiguration.baseUrl.trimEnd('/')}/${fileName}")
         } catch (e: Exception) {

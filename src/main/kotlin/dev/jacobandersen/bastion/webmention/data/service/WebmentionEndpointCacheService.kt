@@ -57,8 +57,4 @@ class WebmentionEndpointCacheService(
         }
         return expired.size
     }
-
-    /** No-arg convenience for the recurring cleanup job. */
-    @Transactional
-    fun cleanupExpired(): Int = purgeExpired(Instant.now())
 }

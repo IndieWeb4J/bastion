@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController
 class GetController(val service: GetDispatchService) {
     @GetMapping
     fun handle(@RequestParam params: MultiValueMap<String, String>): ResponseEntity<*> {
-        val params = MicropubParamNormalizer.normalizeDuplicates(params);
+        val params = MicropubParamNormalizer.normalizeDuplicates(params)
 
         val command = GetQueryOption.fromString(params["q"]?.firstOrNull())
             ?: return ApiResponse.Error.InvalidRequest(

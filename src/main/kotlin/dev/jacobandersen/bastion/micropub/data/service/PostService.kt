@@ -15,6 +15,9 @@ class PostService(
     val repository: PostRepository,
     private val postTimeService: PostTimeService,
 ) {
+    companion object {
+        const val MAX_PAGE_SIZE = 100
+    }
     @Transactional
     fun create(slug: String, status: PostStatus, visibility: PostVisibility, deleted: Boolean, post: Mf2Object): Post {
         val stamped = postTimeService.applyCreateTimestamps(post)

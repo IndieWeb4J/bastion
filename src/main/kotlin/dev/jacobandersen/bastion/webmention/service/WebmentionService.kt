@@ -30,11 +30,7 @@ class WebmentionService(
 ) {
     fun processWebmentions(sourceUrl: String, obj: Mf2Object) {
         targetUrlsOf(obj).forEach { target ->
-            val current = notificationService.notification(sourceUrl, target)
-            if (current == null || current.state != WebmentionState.ACTIVE) {
-                notificationService.setActivePending(sourceUrl, target)
-                enqueueSend(sourceUrl, target)
-            }
+            enqueueIfInactive(sourceUrl, target)
         }
     }
 
@@ -44,11 +40,7 @@ class WebmentionService(
 
         val new = current - previous
         new.forEach { target ->
-            val existing = notificationService.notification(sourceUrl, target)
-            if (existing == null || existing.state != WebmentionState.ACTIVE) {
-                notificationService.setActivePending(sourceUrl, target)
-                enqueueSend(sourceUrl, target)
-            }
+            enqueueIfInactive(sourceUrl, target)
         }
 
         val unchanged = previous.intersect(current)
@@ -181,6 +173,14 @@ class WebmentionService(
     private fun recordTerminalFailure(sourceUrl: String, targetUrl: String, reason: String) {
         notificationService.recordFailure(sourceUrl, targetUrl, null, reason)
         notificationService.scheduleNextAttempt(sourceUrl, targetUrl, null)
+    }
+
+    private fun enqueueIfInactive(sourceUrl: String, targetUrl: String) {
+        val current = notificationService.notification(sourceUrl, targetUrl)
+        if (current == null || current.state != WebmentionState.ACTIVE) {
+            notificationService.setActivePending(sourceUrl, targetUrl)
+            enqueueSend(sourceUrl, targetUrl)
+        }
     }
 
     private fun enqueueSend(sourceUrl: String, targetUrl: String, forceRediscovery: Boolean = false) {

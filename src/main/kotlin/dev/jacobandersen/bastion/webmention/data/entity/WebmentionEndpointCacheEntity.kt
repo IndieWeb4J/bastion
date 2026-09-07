@@ -1,6 +1,5 @@
 package dev.jacobandersen.bastion.webmention.data.entity
 
-import dev.jacobandersen.bastion.webmention.data.domain.WebmentionEndpointCache
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
@@ -25,13 +24,4 @@ class WebmentionEndpointCacheEntity(
 
     @Column(nullable = false)
     var updatedAt: Instant,
-) {
-    fun toDomain(): WebmentionEndpointCache {
-        return WebmentionEndpointCache(
-            targetUrl = this.targetUrl,
-            endpointUrl = this.endpointUrl,
-            discoveredAt = this.discoveredAt,
-            expiresAt = this.expiresAt,
-        )
-    }
-}
+)
