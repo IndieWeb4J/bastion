@@ -208,4 +208,66 @@ class SalmentionIntegrationTest {
         assertEquals(0, salmentionResponseRepository.findByReceivedWebmentionId(receivedWebmentionId()).size)
         verify(salmentionSender, times(1)).resendToActiveTargets(postUrl)
     }
+
+    @Test
+    fun `re-receipt refreshes a nested response whose content changed on the source`() {
+        val nestedWithContent =
+            { content: String ->
+                """<div class="h-entry"><a class="u-url" href="$carolUrl">Carol</a><div class="e-content">$content</div></div>"""
+            }
+        `when`(sourceFetcher.fetch(sourceUrl))
+            .thenReturn(fetch(sourceHtml()))
+            .thenReturn(fetch(sourceHtml(nested = listOf(nestedWithContent("original")))))
+            .thenReturn(fetch(sourceHtml(nested = listOf(nestedWithContent("edited")))))
+
+        receiverService.verify(sourceUrl, postUrl, postId)
+        receiverService.verify(sourceUrl, postUrl, postId)
+        receiverService.verify(sourceUrl, postUrl, postId)
+
+        val responses = salmentionResponseRepository.findByReceivedWebmentionId(receivedWebmentionId())
+        assertEquals(1, responses.size)
+        assertEquals("edited", responses[0].contentText)
+        verify(salmentionSender, times(3)).resendToActiveTargets(postUrl)
+    }
+
+    @Test
+    fun `re-receipt retires a nested response no longer present on the source`() {
+        `when`(sourceFetcher.fetch(sourceUrl))
+            .thenReturn(fetch(sourceHtml()))
+            .thenReturn(fetch(sourceHtml(listOf(carolUrl))))
+            .thenReturn(fetch(sourceHtml()))
+
+        receiverService.verify(sourceUrl, postUrl, postId)
+        receiverService.verify(sourceUrl, postUrl, postId)
+        receiverService.verify(sourceUrl, postUrl, postId)
+
+        assertEquals(0, salmentionResponseRepository.findByReceivedWebmentionId(receivedWebmentionId()).size)
+        verify(salmentionSender, times(3)).resendToActiveTargets(postUrl)
+    }
+
+    @Test
+    fun `re-receipt ingests a sibling-of-entry reply rendered outside the article`() {
+        val html =
+            """
+            <article class="h-entry">
+              <a class="u-url" href="$sourceUrl">Bob's reply</a>
+              <a href="$postUrl">the post</a>
+              <div class="e-content">Bob's reply</div>
+            </article>
+            <div class="h-cite">
+              <a class="u-url" href="$carolUrl">Carol's reply</a>
+              <a class="u-in-reply-to" href="$sourceUrl">in reply to Bob</a>
+            </div>
+            """.trimIndent()
+        `when`(sourceFetcher.fetch(sourceUrl))
+            .thenReturn(fetch(sourceHtml()))
+            .thenReturn(fetch(html))
+
+        receiverService.verify(sourceUrl, postUrl, postId)
+        receiverService.verify(sourceUrl, postUrl, postId)
+
+        val responses = salmentionResponseRepository.findByReceivedWebmentionId(receivedWebmentionId())
+        assertEquals(listOf(carolUrl), responses.map { it.responseUrl })
+        verify(salmentionSender, times(2)).resendToActiveTargets(postUrl)
+    }
 }

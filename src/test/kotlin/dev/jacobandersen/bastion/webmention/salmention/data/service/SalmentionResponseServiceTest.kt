@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentCaptor
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.never
 import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
@@ -55,23 +56,7 @@ class SalmentionResponseServiceTest {
 
     @Test
     fun `ingest is a no-op for an already seen response on the same received webmention`() {
-        val existing =
-            SalmentionResponseEntity(
-                receivedWebmentionId = receivedWebmentionId,
-                sourceUrl = sourceUrl,
-                responseUrl = responseUrl,
-                interaction = WebmentionInteraction.REPLY,
-                authorName = null,
-                authorUrl = null,
-                authorPhoto = null,
-                contentText = null,
-                contentHtml = null,
-                rawMf2 = null,
-                firstSeenAt = Instant.now(),
-                updatedAtUtc = Instant.now(),
-            )
-        existing.id = UUID.randomUUID()
-        `when`(repository.findByReceivedWebmentionIdAndResponseUrl(receivedWebmentionId, responseUrl)).thenReturn(existing)
+        `when`(repository.findByReceivedWebmentionIdAndResponseUrl(receivedWebmentionId, responseUrl)).thenReturn(entity())
 
         val result = service.ingest(sourceUrl, receivedWebmentionId, responseUrl, analysis)
 
@@ -93,13 +78,15 @@ class SalmentionResponseServiceTest {
         assertEquals(otherReceivedWebmentionId, result?.receivedWebmentionId)
     }
 
-    @Test
-    fun `responseUrlsByReceivedWebmention returns the stored response urls`() {
+    private fun entity(
+        receivedId: UUID = receivedWebmentionId,
+        url: String = responseUrl,
+    ): SalmentionResponseEntity {
         val entity =
             SalmentionResponseEntity(
-                receivedWebmentionId = receivedWebmentionId,
+                receivedWebmentionId = receivedId,
                 sourceUrl = sourceUrl,
-                responseUrl = responseUrl,
+                responseUrl = url,
                 interaction = WebmentionInteraction.REPLY,
                 authorName = null,
                 authorUrl = null,
@@ -110,9 +97,15 @@ class SalmentionResponseServiceTest {
                 firstSeenAt = Instant.now(),
                 updatedAtUtc = Instant.now(),
             )
-        `when`(repository.findByReceivedWebmentionId(receivedWebmentionId)).thenReturn(listOf(entity))
+        entity.id = UUID.randomUUID()
+        return entity
+    }
 
-        assertEquals(setOf(responseUrl), service.responseUrlsByReceivedWebmention(receivedWebmentionId))
+    @Test
+    fun `responseUrls are exposed via byReceivedWebmention`() {
+        `when`(repository.findByReceivedWebmentionId(receivedWebmentionId)).thenReturn(listOf(entity()))
+
+        assertEquals(listOf(responseUrl), service.byReceivedWebmention(receivedWebmentionId).map { it.responseUrl })
     }
 
     @Test
@@ -120,5 +113,59 @@ class SalmentionResponseServiceTest {
         `when`(repository.deleteByReceivedWebmentionId(receivedWebmentionId)).thenReturn(2)
 
         assertEquals(2, service.retireByReceivedWebmention(receivedWebmentionId))
+    }
+
+    @Test
+    fun `refresh rewrites the snapshot of an existing response`() {
+        `when`(repository.findByReceivedWebmentionIdAndResponseUrl(receivedWebmentionId, responseUrl)).thenReturn(entity())
+        val updated =
+            ReceivedWebmentionAnalysis(
+                interaction = WebmentionInteraction.MENTION,
+                primary = null,
+                authorName = "Carol edited",
+                contentText = "changed my mind",
+            )
+
+        val result = service.refresh(receivedWebmentionId, responseUrl, updated)
+
+        val captor = ArgumentCaptor.forClass(SalmentionResponseEntity::class.java)
+        verify(repository).save(captor.capture())
+        assertEquals(WebmentionInteraction.MENTION, captor.value.interaction)
+        assertEquals("Carol edited", captor.value.authorName)
+        assertEquals("changed my mind", captor.value.contentText)
+        assertEquals(responseUrl, result?.responseUrl)
+    }
+
+    @Test
+    fun `refresh returns null when no row exists for the pair`() {
+        `when`(repository.findByReceivedWebmentionIdAndResponseUrl(receivedWebmentionId, responseUrl)).thenReturn(null)
+
+        val result = service.refresh(receivedWebmentionId, responseUrl, analysis)
+
+        assertNull(result)
+        verify(repository, never()).save(any())
+    }
+
+    @Test
+    fun `retireRemoved deletes stored responses no longer present on the source`() {
+        val carol = entity(url = "https://carol.example/reply")
+        val dave = entity(url = "https://dave.example/reply")
+        `when`(repository.findByReceivedWebmentionId(receivedWebmentionId)).thenReturn(listOf(carol, dave))
+
+        val removed = service.retireRemoved(receivedWebmentionId, setOf("https://carol.example/reply"))
+
+        assertEquals(1, removed)
+        verify(repository).deleteAll(listOf(dave))
+    }
+
+    @Test
+    fun `retireRemoved keeps everything when all stored responses are still present`() {
+        val carol = entity(url = "https://carol.example/reply")
+        `when`(repository.findByReceivedWebmentionId(receivedWebmentionId)).thenReturn(listOf(carol))
+
+        val removed = service.retireRemoved(receivedWebmentionId, setOf("https://carol.example/reply"))
+
+        assertEquals(0, removed)
+        verify(repository, never()).deleteAll(any())
     }
 }

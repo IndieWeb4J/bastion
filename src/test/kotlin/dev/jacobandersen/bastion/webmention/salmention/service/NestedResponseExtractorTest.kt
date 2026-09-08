@@ -6,10 +6,17 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class NestedResponseExtractorTest {
+    private val sourceUrl = "https://source.example/reply"
+
     private fun extract(
         html: String,
-        baseUrl: String = "https://source.example/reply",
-    ): List<NestedResponse> = NestedResponseExtractor.extract(Mf2ParserImpl().parse(html, baseUrl))
+        baseUrl: String = sourceUrl,
+        source: String? = null,
+    ): List<NestedResponse> =
+        NestedResponseExtractor.extract(
+            Mf2ParserImpl().parse(html, baseUrl),
+            sourceUrl = source,
+        )
 
     @Test
     fun `extracts a nested h-entry child carrying a u-url`() {
@@ -172,5 +179,84 @@ class NestedResponseExtractorTest {
             )
 
         assertTrue(responses.isEmpty())
+    }
+
+    @Test
+    fun `collects a top-level sibling h-cite that replies to the received source`() {
+        val responses =
+            extract(
+                """
+                <article class="h-entry">
+                  <a class="u-url" href="$sourceUrl">Bob's reply</a>
+                  <p class="e-content">Bob's reply</p>
+                </article>
+                <div class="h-cite">
+                  <a class="u-url" href="https://carol.example/reply">Carol's reply</a>
+                  <a class="u-in-reply-to" href="$sourceUrl">in reply to Bob</a>
+                </div>
+                """.trimIndent(),
+                source = sourceUrl,
+            )
+
+        assertEquals(listOf("https://carol.example/reply"), responses.map { it.responseUrl })
+    }
+
+    @Test
+    fun `collects a top-level sibling h-entry that comments on the received source`() {
+        val responses =
+            extract(
+                """
+                <article class="h-entry">
+                  <a class="u-url" href="$sourceUrl">Bob's reply</a>
+                  <p class="e-content">Bob's reply</p>
+                </article>
+                <div class="h-entry">
+                  <a class="u-url" href="https://carol.example/reply">Carol's reply</a>
+                  <a class="u-comment-of" href="$sourceUrl">a comment on Bob</a>
+                </div>
+                """.trimIndent(),
+                source = sourceUrl,
+            )
+
+        assertEquals(listOf("https://carol.example/reply"), responses.map { it.responseUrl })
+    }
+
+    @Test
+    fun `ignores top-level siblings that reply to something other than the received source`() {
+        val responses =
+            extract(
+                """
+                <article class="h-entry">
+                  <a class="u-url" href="$sourceUrl">Bob's reply</a>
+                  <p class="e-content">Bob's reply</p>
+                </article>
+                <div class="h-cite">
+                  <a class="u-url" href="https://carol.example/reply">Carol's reply</a>
+                  <a class="u-in-reply-to" href="https://other.example/post">in reply to someone else</a>
+                </div>
+                """.trimIndent(),
+                source = sourceUrl,
+            )
+
+        assertTrue(responses.isEmpty())
+    }
+
+    @Test
+    fun `collects top-level siblings replying to the received source without a DOM-nested source`() {
+        val responses =
+            extract(
+                """
+                <article class="h-entry">
+                  <p class="e-content">Bob's reply</p>
+                </article>
+                <div class="h-cite">
+                  <a class="u-url" href="https://carol.example/reply">Carol's reply</a>
+                  <a class="u-in-reply-to" href="$sourceUrl">in reply to Bob</a>
+                </div>
+                """.trimIndent(),
+                source = sourceUrl,
+            )
+
+        assertEquals(listOf("https://carol.example/reply"), responses.map { it.responseUrl })
     }
 }

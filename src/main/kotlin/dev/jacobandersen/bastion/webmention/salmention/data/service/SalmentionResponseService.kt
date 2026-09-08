@@ -13,7 +13,9 @@ import java.util.UUID
  * Persistence for Salmention nested responses. Idempotent ingestion is
  * guaranteed by the `(received_webmention_id, response_url)` unique index,
  * mirrored here by a lookup before insert so a repeated identical re-receipt
- * is a no-op.
+ * is a no-op. Re-receipts that change a stored response rewrite its snapshot
+ * ([refresh]) and responses that are no longer on the source are retired
+ * ([retireRemoved]).
  */
 @Service
 class SalmentionResponseService(
@@ -47,11 +49,54 @@ class SalmentionResponseService(
         return repository.save(entity).toDomain()
     }
 
-    @Transactional(readOnly = true)
-    fun responseUrlsByReceivedWebmention(receivedWebmentionId: UUID): Set<String> = repository.findByReceivedWebmentionId(receivedWebmentionId).map { it.responseUrl }.toSet()
+    /**
+     * Rewrites an existing response's snapshot (interaction, author, content and
+     * raw microformats) from [analysis] and bumps its updated time. Returns the
+     * refreshed response, or null when no row exists for the pair.
+     */
+    @Transactional
+    fun refresh(
+        receivedWebmentionId: UUID,
+        responseUrl: String,
+        analysis: ReceivedWebmentionAnalysis,
+    ): SalmentionResponse? {
+        val entity =
+            repository.findByReceivedWebmentionIdAndResponseUrl(receivedWebmentionId, responseUrl)
+                ?: return null
+        entity.interaction = analysis.interaction
+        entity.authorName = analysis.authorName
+        entity.authorUrl = analysis.authorUrl
+        entity.authorPhoto = analysis.authorPhoto
+        entity.contentText = analysis.contentText
+        entity.contentHtml = analysis.contentHtml
+        entity.rawMf2 = analysis.primary
+        entity.updatedAtUtc = Instant.now()
+        return repository.save(entity).toDomain()
+    }
+
+    /**
+     * Deletes the stored responses of a received webmention whose URL is no
+     * longer among [keepResponseUrls], returning how many were removed. A
+     * response that is absent from the freshly re-fetched source is gone from
+     * the thread and must no longer surface.
+     */
+    @Transactional
+    fun retireRemoved(
+        receivedWebmentionId: UUID,
+        keepResponseUrls: Set<String>,
+    ): Int {
+        val toRemove =
+            repository
+                .findByReceivedWebmentionId(receivedWebmentionId)
+                .filter { it.responseUrl !in keepResponseUrls }
+        if (toRemove.isEmpty()) return 0
+        repository.deleteAll(toRemove)
+        return toRemove.size
+    }
 
     @Transactional(readOnly = true)
-    fun byReceivedWebmention(receivedWebmentionId: UUID): List<SalmentionResponse> = repository.findByReceivedWebmentionId(receivedWebmentionId).map { it.toDomain() }
+    fun byReceivedWebmention(receivedWebmentionId: UUID): List<SalmentionResponse> =
+        repository.findByReceivedWebmentionId(receivedWebmentionId).map { it.toDomain() }
 
     @Transactional
     fun retireByReceivedWebmention(receivedWebmentionId: UUID): Int = repository.deleteByReceivedWebmentionId(receivedWebmentionId)

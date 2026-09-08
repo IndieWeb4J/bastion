@@ -41,7 +41,7 @@ class WebmentionReceiverService(
             SourceVerdict.GONE -> {
                 logger.info { "Source $sourceUrl is gone, marking webmention deleted" }
                 notificationService.markDeleted(sourceUrl, postId)
-                salmentionReceiver.handleGone(sourceUrl, received.id)
+                salmentionReceiver.handleGone(sourceUrl, received.id, postId)
             }
 
             SourceVerdict.NO_LINK -> {
