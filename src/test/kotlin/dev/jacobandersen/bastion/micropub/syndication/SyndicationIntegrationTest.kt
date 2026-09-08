@@ -349,6 +349,48 @@ class SyndicationIntegrationTest {
     }
 
     @Test
+    fun `a queued create job does not transmit content when the post is demoted before it runs`() {
+        `when`(httpClient.sendCreate(any(), any()))
+            .thenReturn(SyndicationSendResult.Success(201, "https://brid.gy/syndicated"))
+
+        val slug = uniqueSlug("create-race")
+        createService.create(
+            createPayload("""{"name": ["Hello"], "content": ["Body"], "mp-slug": ["$slug"], ${syndicateTo("bridgy")}}"""),
+            null,
+        )
+        val post = postService.findBySlug(slug)!!
+        verify(jobScheduler, times(1)).enqueue<SyndicationService>(any())
+
+        val url = urlService.generatePostUrl(post)
+        updateService.update(updateJson(url, """"post-status": ["draft"]"""))
+
+        syndicationService.runCreateJob(post.id, "bridgy")
+
+        verify(httpClient, never()).sendCreate(any(), any())
+        assertEquals(null, record(post).syndicatedUrl)
+    }
+
+    @Test
+    fun `a queued create job does not transmit content when the post is deleted before it runs`() {
+        `when`(httpClient.sendCreate(any(), any()))
+            .thenReturn(SyndicationSendResult.Success(201, "https://brid.gy/syndicated"))
+
+        val slug = uniqueSlug("create-delete-race")
+        createService.create(
+            createPayload("""{"name": ["Hello"], "content": ["Body"], "mp-slug": ["$slug"], ${syndicateTo("bridgy")}}"""),
+            null,
+        )
+        val post = postService.findBySlug(slug)!!
+        val url = urlService.generatePostUrl(post)
+        deleteService.delete(MicropubPayload.Json(mapper.createObjectNode().put("url", url)))
+
+        syndicationService.runCreateJob(post.id, "bridgy")
+
+        verify(httpClient, never()).sendCreate(any(), any())
+        assertEquals(null, record(post).syndicatedUrl)
+    }
+
+    @Test
     fun `syndication failure does not fail the create and is logged without retry`() {
         `when`(httpClient.sendCreate(any(), any()))
             .thenThrow(RuntimeException("downstream exploded"))

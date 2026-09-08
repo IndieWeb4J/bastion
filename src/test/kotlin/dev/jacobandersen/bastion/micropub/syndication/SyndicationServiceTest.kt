@@ -271,6 +271,42 @@ class SyndicationServiceTest {
     }
 
     @Test
+    fun `runCreateJob does not send the content when the post was demoted before the job ran`() {
+        `when`(postService.findById(postId)).thenReturn(post.copy(status = PostStatus.DRAFT))
+        `when`(config.targetByUid("bridgy")).thenReturn(createTarget)
+
+        service.runCreateJob(postId, "bridgy")
+
+        verify(httpClient, never()).sendCreate(org.mockito.kotlin.any(), org.mockito.kotlin.any())
+        verify(postSyndicationService, never()).recordOutcome(org.mockito.kotlin.any(), org.mockito.kotlin.any(), org.mockito.kotlin.any())
+    }
+
+    @Test
+    fun `runCreateJob does not send the content when the post was deleted before the job ran`() {
+        `when`(postService.findById(postId)).thenReturn(post.copy(deleted = true))
+        `when`(config.targetByUid("bridgy")).thenReturn(createTarget)
+
+        service.runCreateJob(postId, "bridgy")
+
+        verify(httpClient, never()).sendCreate(org.mockito.kotlin.any(), org.mockito.kotlin.any())
+        verify(postSyndicationService, never()).recordOutcome(org.mockito.kotlin.any(), org.mockito.kotlin.any(), org.mockito.kotlin.any())
+    }
+
+    @Test
+    fun `runRebaseJob retracts the old copy but does not re-create when the post is no longer public`() {
+        `when`(postService.findById(postId)).thenReturn(post.copy(status = PostStatus.DRAFT))
+        `when`(config.targetByUid("bridgy")).thenReturn(createTarget)
+        `when`(httpClient.sendDelete(createTarget, "https://bastion.test/2026/01/01/old-slug"))
+            .thenReturn(SyndicationSendResult.Success(204, null))
+
+        service.runRebaseJob(postId, "bridgy", "https://bastion.test/2026/01/01/old-slug")
+
+        verify(httpClient, times(1)).sendDelete(createTarget, "https://bastion.test/2026/01/01/old-slug")
+        verify(httpClient, never()).sendCreate(org.mockito.kotlin.any(), org.mockito.kotlin.any())
+        verify(postSyndicationService, never()).recordOutcome(org.mockito.kotlin.any(), org.mockito.kotlin.any(), org.mockito.kotlin.any())
+    }
+
+    @Test
     fun `runCreateJob records the syndicated url on success`() {
         `when`(postService.findById(postId)).thenReturn(post)
         `when`(config.targetByUid("bridgy")).thenReturn(createTarget)

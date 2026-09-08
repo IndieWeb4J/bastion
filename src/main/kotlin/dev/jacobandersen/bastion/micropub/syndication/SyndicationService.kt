@@ -150,6 +150,10 @@ class SyndicationService(
                 logger.warn { "Skipping syndication create: post $postId no longer exists" }
                 return
             }
+            if (!post.publiclyReachable) {
+                logger.warn { "Skipping syndication create for post $postId: post is no longer publicly reachable" }
+                return
+            }
             val target = config.targetByUid(targetUid)
             if (target == null) {
                 logger.warn { "Skipping syndication create: unknown target \"$targetUid\"" }
@@ -250,6 +254,11 @@ class SyndicationService(
                         "Syndication rebase could not remove old copy at target \"$targetUid\" for post $postId: ${deleteResult.message}"
                     }
                 }
+            }
+
+            if (!post.publiclyReachable) {
+                logger.warn { "Skipping syndication rebase re-create for post $postId: post is no longer publicly reachable" }
+                return
             }
 
             when (val createResult = httpClient.sendCreate(target, post.post)) {
