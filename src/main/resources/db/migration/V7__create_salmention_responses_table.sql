@@ -15,3 +15,5 @@ create table salmention_responses (
 );
 
 create unique index uq_salmention_received_response on salmention_responses (received_webmention_id, response_url);
+
+alter table received_webmentions add column was_verified boolean not null default false;

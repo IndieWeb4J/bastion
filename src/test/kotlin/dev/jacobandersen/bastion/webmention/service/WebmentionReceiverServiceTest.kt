@@ -15,6 +15,7 @@ import dev.jacobandersen.bastion.webmention.salmention.service.SalmentionReceive
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers.anyString
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 import org.mockito.kotlin.any
@@ -41,6 +42,7 @@ class WebmentionReceiverServiceTest {
     private fun givenPending(
         interaction: WebmentionInteraction? = null,
         contentText: String? = null,
+        wasVerified: Boolean = interaction != null,
     ) {
         val now = Instant.now()
         `when`(notificationService.ensurePending(anyString(), anyString(), any()))
@@ -62,6 +64,7 @@ class WebmentionReceiverServiceTest {
                     firstSeenAt = now,
                     verifiedAt = null,
                     updatedAtUtc = now,
+                    wasVerified = wasVerified,
                 ),
             )
     }
@@ -117,6 +120,27 @@ class WebmentionReceiverServiceTest {
         receiver.verify(sourceUrl, targetUrl, postId)
 
         verify(notificationService).markDeleted(sourceUrl, postId)
+        verify(salmentionReceiver).handleResponseRemoved(
+            org.mockito.kotlin.eq(sourceUrl),
+            org.mockito.kotlin.any(),
+            org.mockito.kotlin.eq(postId),
+            org.mockito.kotlin.eq(false),
+        )
+    }
+
+    @Test
+    fun `propagates removal when a previously displayed source is gone`() {
+        givenPending(interaction = WebmentionInteraction.REPLY, contentText = "old")
+        `when`(sourceFetcher.fetch(sourceUrl)).thenReturn(fetch(status = 410, body = ""))
+
+        receiver.verify(sourceUrl, targetUrl, postId)
+
+        verify(salmentionReceiver).handleResponseRemoved(
+            org.mockito.kotlin.eq(sourceUrl),
+            org.mockito.kotlin.any(),
+            org.mockito.kotlin.eq(postId),
+            org.mockito.kotlin.eq(true),
+        )
     }
 
     @Test
@@ -127,6 +151,22 @@ class WebmentionReceiverServiceTest {
         receiver.verify(sourceUrl, targetUrl, postId)
 
         verify(notificationService).markRejected(sourceUrl, postId, "source does not link to the target")
+        verify(salmentionReceiver, never()).handleResponseRemoved(any(), any(), any(), any())
+    }
+
+    @Test
+    fun `propagates removal when a previously displayed source stops linking`() {
+        givenPending(interaction = WebmentionInteraction.REPLY, contentText = "old")
+        `when`(sourceFetcher.fetch(sourceUrl)).thenReturn(fetch(body = "<p>no link</p>"))
+
+        receiver.verify(sourceUrl, targetUrl, postId)
+
+        verify(salmentionReceiver).handleResponseRemoved(
+            org.mockito.kotlin.eq(sourceUrl),
+            org.mockito.kotlin.any(),
+            org.mockito.kotlin.eq(postId),
+            org.mockito.kotlin.eq(true),
+        )
     }
 
     @Test
@@ -213,6 +253,24 @@ class WebmentionReceiverServiceTest {
             org.mockito.kotlin.any(),
             org.mockito.kotlin.eq(true),
             org.mockito.kotlin.eq(false),
+        )
+    }
+
+    @Test
+    fun `a source restored after being gone is treated as a re-receipt`() {
+        givenPending(interaction = null, wasVerified = true)
+        `when`(sourceFetcher.fetch(sourceUrl)).thenReturn(fetch())
+        `when`(parser.parse(anyString(), anyString())).thenReturn(replyParse("new"))
+
+        receiver.verify(sourceUrl, targetUrl, postId)
+
+        verify(salmentionReceiver).handleVerified(
+            org.mockito.kotlin.eq(sourceUrl),
+            org.mockito.kotlin.any(),
+            org.mockito.kotlin.eq(postId),
+            org.mockito.kotlin.any(),
+            org.mockito.kotlin.eq(true),
+            org.mockito.kotlin.eq(true),
         )
     }
 }

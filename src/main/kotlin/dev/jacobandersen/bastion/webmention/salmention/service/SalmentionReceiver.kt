@@ -52,14 +52,23 @@ class SalmentionReceiver(
         }
     }
 
-    fun handleGone(
+    /**
+     * Handles a received response leaving the post's displayed set: the whole
+     * source is gone (GONE) or it no longer links the target (NO_LINK). Stored
+     * nested responses are retired so no ghost comments remain, and the
+     * upstream re-send fires whenever the removed response had previously been
+     * displayed (verified) - regardless of whether any nested rows were stored -
+     * so previously-notified targets drop it.
+     */
+    fun handleResponseRemoved(
         sourceUrl: String,
         receivedWebmentionId: UUID,
         postId: UUID,
+        wasPreviouslyDisplayed: Boolean,
     ) {
         if (!config.enabled) return
-        val retired = salmentionResponseService.retireByReceivedWebmention(receivedWebmentionId)
-        if (retired > 0) {
+        salmentionResponseService.retireByReceivedWebmention(receivedWebmentionId)
+        if (wasPreviouslyDisplayed) {
             resolvePostUrl(postId)?.let { salmentionSender.resendToActiveTargets(it) }
         }
     }

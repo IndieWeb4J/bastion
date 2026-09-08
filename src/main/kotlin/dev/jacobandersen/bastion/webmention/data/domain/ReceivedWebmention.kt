@@ -22,6 +22,7 @@ data class ReceivedWebmention(
     val firstSeenAt: Instant,
     val verifiedAt: Instant?,
     val updatedAtUtc: Instant,
+    val wasVerified: Boolean = false,
 ) {
     /**
      * Whether this record already stores [analysis]'s content and interaction,
@@ -53,5 +54,6 @@ data class ReceivedWebmention(
             firstSeenAt = firstSeenAt,
             verifiedAt = verifiedAt,
             updatedAtUtc = updatedAtUtc,
+            wasVerified = wasVerified,
         )
 }

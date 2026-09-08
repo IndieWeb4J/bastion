@@ -308,22 +308,31 @@ class SalmentionReceiverTest {
     }
 
     @Test
-    fun `gone retires the nested responses and resends when rows were retired`() {
+    fun `response removed after having been displayed retires nested rows and resends`() {
         stubPost()
-        `when`(salmentionResponseService.retireByReceivedWebmention(receivedWebmentionId)).thenReturn(2)
+        `when`(salmentionResponseService.retireByReceivedWebmention(receivedWebmentionId)).thenReturn(0)
 
-        receiver().handleGone(sourceUrl, receivedWebmentionId, postId)
+        receiver().handleResponseRemoved(
+            sourceUrl = sourceUrl,
+            receivedWebmentionId = receivedWebmentionId,
+            postId = postId,
+            wasPreviouslyDisplayed = true,
+        )
 
         verify(salmentionResponseService).retireByReceivedWebmention(receivedWebmentionId)
         verify(salmentionSender).resendToActiveTargets(postUrl)
     }
 
     @Test
-    fun `gone does not resend when nothing was stored`() {
+    fun `response removed without ever being displayed does not resend`() {
         stubPost()
-        `when`(salmentionResponseService.retireByReceivedWebmention(receivedWebmentionId)).thenReturn(0)
 
-        receiver().handleGone(sourceUrl, receivedWebmentionId, postId)
+        receiver().handleResponseRemoved(
+            sourceUrl = sourceUrl,
+            receivedWebmentionId = receivedWebmentionId,
+            postId = postId,
+            wasPreviouslyDisplayed = false,
+        )
 
         verify(salmentionResponseService).retireByReceivedWebmention(receivedWebmentionId)
         verify(salmentionSender, never()).resendToActiveTargets(any())
@@ -339,7 +348,12 @@ class SalmentionReceiverTest {
             isReReceipt = false,
             receivedResponseUpdated = false,
         )
-        receiver(enabled = false).handleGone(sourceUrl, receivedWebmentionId, postId)
+        receiver(enabled = false).handleResponseRemoved(
+            sourceUrl = sourceUrl,
+            receivedWebmentionId = receivedWebmentionId,
+            postId = postId,
+            wasPreviouslyDisplayed = true,
+        )
 
         verify(salmentionSender, never()).resendToActiveTargets(any())
         verify(salmentionResponseService, never()).retireByReceivedWebmention(any())

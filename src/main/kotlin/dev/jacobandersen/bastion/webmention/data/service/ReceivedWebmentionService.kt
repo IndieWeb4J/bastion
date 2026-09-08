@@ -84,6 +84,7 @@ class ReceivedWebmentionService(
         entity.rawMf2 = analysis.primary
         entity.lastError = null
         entity.verifiedAt = now
+        entity.wasVerified = true
         entity.updatedAtUtc = now
         return repository.save(entity).toDomain()
     }

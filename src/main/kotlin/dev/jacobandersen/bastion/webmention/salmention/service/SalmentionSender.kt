@@ -24,7 +24,10 @@ class SalmentionSender(
         if (!config.enabled) return
 
         notificationService.activeNotificationsBySource(sourceUrl).forEach { notification ->
-            jobScheduler.enqueue { webmentionService.sendWebmention(sourceUrl, notification.targetUrl) }
+            val targetUrl = notification.targetUrl
+            jobScheduler.enqueue {
+                webmentionService.sendWebmention(sourceUrl, targetUrl, forceRediscovery = false)
+            }
         }
     }
 }

@@ -32,7 +32,8 @@ class WebmentionReceiverService(
     ) {
         logger.info { "Verifying received webmention from $sourceUrl for $targetUrl" }
         val received = notificationService.ensurePending(sourceUrl, targetUrl, postId)
-        val isReReceipt = received.interaction != null
+        val wasPreviouslyDisplayed = received.wasVerified
+        val isReReceipt = wasPreviouslyDisplayed
 
         val fetch = sourceFetcher.fetch(sourceUrl)
         val verification = WebmentionSourceVerifier.verify(fetch, targetUrl, parser)
@@ -41,12 +42,25 @@ class WebmentionReceiverService(
             SourceVerdict.GONE -> {
                 logger.info { "Source $sourceUrl is gone, marking webmention deleted" }
                 notificationService.markDeleted(sourceUrl, postId)
-                salmentionReceiver.handleGone(sourceUrl, received.id, postId)
+                salmentionReceiver.handleResponseRemoved(
+                    sourceUrl = sourceUrl,
+                    receivedWebmentionId = received.id,
+                    postId = postId,
+                    wasPreviouslyDisplayed = wasPreviouslyDisplayed,
+                )
             }
 
             SourceVerdict.NO_LINK -> {
                 logger.warn { "Source $sourceUrl does not link to target $targetUrl" }
                 notificationService.markRejected(sourceUrl, postId, "source does not link to the target")
+                if (wasPreviouslyDisplayed) {
+                    salmentionReceiver.handleResponseRemoved(
+                        sourceUrl = sourceUrl,
+                        receivedWebmentionId = received.id,
+                        postId = postId,
+                        wasPreviouslyDisplayed = true,
+                    )
+                }
             }
 
             SourceVerdict.UNREACHABLE -> {

@@ -270,4 +270,67 @@ class SalmentionIntegrationTest {
         assertEquals(listOf(carolUrl), responses.map { it.responseUrl })
         verify(salmentionSender, times(2)).resendToActiveTargets(postUrl)
     }
+
+    @Test
+    fun `re-receipt after a gone source re-ingests the nested responses it displays again`() {
+        `when`(sourceFetcher.fetch(sourceUrl))
+            .thenReturn(fetch(sourceHtml()))
+            .thenReturn(fetch(sourceHtml(listOf(carolUrl))))
+            .thenReturn(fetch(sourceHtml(listOf(carolUrl))))
+            .thenReturn(SourceFetch(410, sourceUrl, null, ""))
+            .thenReturn(fetch(sourceHtml(listOf(carolUrl))))
+            .thenReturn(fetch(sourceHtml(listOf(carolUrl))))
+
+        receiverService.verify(sourceUrl, postUrl, postId)
+        receiverService.verify(sourceUrl, postUrl, postId)
+        receiverService.verify(sourceUrl, postUrl, postId)
+
+        assertEquals(
+            listOf(carolUrl),
+            salmentionResponseRepository.findByReceivedWebmentionId(receivedWebmentionId()).map { it.responseUrl },
+        )
+
+        receiverService.verify(sourceUrl, postUrl, postId)
+
+        assertEquals(0, salmentionResponseRepository.findByReceivedWebmentionId(receivedWebmentionId()).size)
+
+        receiverService.verify(sourceUrl, postUrl, postId)
+        receiverService.verify(sourceUrl, postUrl, postId)
+
+        assertEquals(
+            listOf(carolUrl),
+            salmentionResponseRepository.findByReceivedWebmentionId(receivedWebmentionId()).map { it.responseUrl },
+        )
+        verify(salmentionSender, times(4)).resendToActiveTargets(postUrl)
+    }
+
+    @Test
+    fun `removing a displayed source without stored nested rows still resends upstream`() {
+        `when`(sourceFetcher.fetch(sourceUrl))
+            .thenReturn(fetch(sourceHtml()))
+            .thenReturn(fetch(sourceHtml()))
+            .thenReturn(SourceFetch(410, sourceUrl, null, ""))
+
+        receiverService.verify(sourceUrl, postUrl, postId)
+        receiverService.verify(sourceUrl, postUrl, postId)
+        receiverService.verify(sourceUrl, postUrl, postId)
+
+        assertEquals(0, salmentionResponseRepository.findByReceivedWebmentionId(receivedWebmentionId()).size)
+        verify(salmentionSender, times(2)).resendToActiveTargets(postUrl)
+    }
+
+    @Test
+    fun `a displayed source that stops linking the target resends upstream`() {
+        `when`(sourceFetcher.fetch(sourceUrl))
+            .thenReturn(fetch(sourceHtml()))
+            .thenReturn(fetch(sourceHtml()))
+            .thenReturn(fetch(body = "<p>no link</p>"))
+
+        receiverService.verify(sourceUrl, postUrl, postId)
+        receiverService.verify(sourceUrl, postUrl, postId)
+        receiverService.verify(sourceUrl, postUrl, postId)
+
+        assertEquals(0, salmentionResponseRepository.findByReceivedWebmentionId(receivedWebmentionId()).size)
+        verify(salmentionSender, times(2)).resendToActiveTargets(postUrl)
+    }
 }

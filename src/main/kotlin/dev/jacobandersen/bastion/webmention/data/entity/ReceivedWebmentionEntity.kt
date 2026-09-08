@@ -58,6 +58,8 @@ class ReceivedWebmentionEntity(
     var verifiedAt: Instant?,
     @Column(nullable = false)
     var updatedAtUtc: Instant,
+    @Column(nullable = false)
+    var wasVerified: Boolean = false,
 ) {
     fun toDomain(): ReceivedWebmention =
         ReceivedWebmention(
@@ -77,5 +79,6 @@ class ReceivedWebmentionEntity(
             firstSeenAt = firstSeenAt,
             verifiedAt = verifiedAt,
             updatedAtUtc = updatedAtUtc,
+            wasVerified = wasVerified,
         )
 }

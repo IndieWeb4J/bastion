@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentCaptor
 import org.mockito.Mockito.mock
@@ -39,6 +40,7 @@ class ReceivedWebmentionServiceTest {
         state: ReceivedWebmentionState = ReceivedWebmentionState.PENDING,
         interaction: WebmentionInteraction? = null,
         contentText: String? = null,
+        wasVerified: Boolean = false,
     ) = ReceivedWebmentionEntity(
         postId = postId,
         sourceUrl = sourceUrl,
@@ -55,6 +57,7 @@ class ReceivedWebmentionServiceTest {
         firstSeenAt = Instant.now(),
         verifiedAt = null,
         updatedAtUtc = Instant.now(),
+        wasVerified = wasVerified,
     )
 
     @Test
@@ -122,6 +125,7 @@ class ReceivedWebmentionServiceTest {
         assertEquals("<p>Nice post</p>", existing.contentHtml)
         assertNotNull(existing.verifiedAt)
         assertNull(existing.lastError)
+        assertTrue(existing.wasVerified)
     }
 
     @Test
@@ -145,12 +149,13 @@ class ReceivedWebmentionServiceTest {
     }
 
     @Test
-    fun `markDeleted clears extracted content`() {
+    fun `markDeleted clears extracted content but keeps the was-verified marker`() {
         val existing =
             entity(
                 state = ReceivedWebmentionState.VERIFIED,
                 interaction = WebmentionInteraction.REPLY,
                 contentText = "Nice post",
+                wasVerified = true,
             )
         existing.authorName = "Jane"
         existing.rawMf2 =
@@ -174,6 +179,24 @@ class ReceivedWebmentionServiceTest {
         assertNull(existing.authorName)
         assertNull(existing.contentText)
         assertNull(existing.rawMf2)
+        assertTrue(existing.wasVerified)
+    }
+
+    @Test
+    fun `ensurePending reopens a deleted record without losing the was-verified marker`() {
+        val existing =
+            entity(
+                state = ReceivedWebmentionState.DELETED,
+                interaction = null,
+                contentText = null,
+                wasVerified = true,
+            )
+        `when`(repository.findBySourceUrlAndPostId(sourceUrl, postId)).thenReturn(existing)
+
+        val reopened = service.ensurePending(sourceUrl, targetUrl, postId)
+
+        assertEquals(ReceivedWebmentionState.PENDING, reopened.state)
+        assertTrue(reopened.wasVerified)
     }
 
     @Test
