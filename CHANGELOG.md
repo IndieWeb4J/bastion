@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.3.3](https://github.com/jacobsandersen/bastion/compare/v1.3.2...v1.3.3) (2026-09-09)
+
+
+### Features
+
+* **indieauth:** make Bastion its own IndieAuth provider ([#16](https://github.com/jacobsandersen/bastion/issues/16)) ([2bc8936](https://github.com/jacobsandersen/bastion/commit/2bc89369ff90175d89846a376de16025f3f8a6bb))
+* **micropub:** syndicate posts to downstream micropub targets ([#18](https://github.com/jacobsandersen/bastion/issues/18)) ([c54a2da](https://github.com/jacobsandersen/bastion/commit/c54a2da93d12cfae66d6379d1eb7683ecddfc3e5))
+* **websub:** publish posts over WebSub (PubSubHubbub) ([c48058d](https://github.com/jacobsandersen/bastion/commit/c48058d1cf6fb47914973abfd6d3edc1d747b3a5))
+* **websub:** publish posts over WebSub (PubSubHubbub) ([2b41fa8](https://github.com/jacobsandersen/bastion/commit/2b41fa8bcf00204a10b9f02f8cc5a758a86bdb26))
+
+
+### Bug Fixes
+
+* **indieauth:** require PKCE, harden error handling, purge dead auth rows ([#17](https://github.com/jacobsandersen/bastion/issues/17)) ([36d1a4a](https://github.com/jacobsandersen/bastion/commit/36d1a4a453df63c0878c9089012eb3b8a8b0dd77))
+
 ## [1.3.2](https://github.com/jacobsandersen/bastion/compare/v1.3.1...v1.3.2) (2026-09-07)
 
 
