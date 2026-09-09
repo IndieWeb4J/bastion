@@ -4,10 +4,12 @@ import com.github.slugify.Slugify
 import dev.jacobandersen.bastion.microformats2.Mf2Object
 import dev.jacobandersen.bastion.microformats2.Mf2Value
 import dev.jacobandersen.bastion.microformats2.firstText
+import dev.jacobandersen.bastion.microformats2.texts
 import dev.jacobandersen.bastion.micropub.data.service.PostService
 import dev.jacobandersen.bastion.micropub.media.FileUploadResult
 import dev.jacobandersen.bastion.micropub.media.FileUploadService
 import dev.jacobandersen.bastion.micropub.service.MicropubCommandResolver
+import dev.jacobandersen.bastion.micropub.syndication.SyndicationService
 import dev.jacobandersen.bastion.micropub.type.MicropubCommand
 import dev.jacobandersen.bastion.micropub.type.PostStatus
 import dev.jacobandersen.bastion.micropub.type.PostVisibility
@@ -35,6 +37,7 @@ class CreateService(
     private val commandResolver: MicropubCommandResolver,
     private val webmentionService: WebmentionService,
     private val websubPublisher: WebsubPublisher,
+    private val syndicationService: SyndicationService,
 ) {
     @PreAuthorize("hasAuthority('CREATE')")
     fun create(
@@ -49,6 +52,7 @@ class CreateService(
             commandResolver.resolve { key -> obj.properties[key] }
                 ?: return ApiResponse.Error.InvalidRequest(errorDescription = "Invalid command parameters in create")
 
+        val requestedSyndicationUids = obj.texts(MicropubCommand.MP_SYNDICATE_TO)
         obj = obj.copy(properties = obj.properties.filterKeys { !MicropubCommand.isCommandProperty(it) })
 
         logger.info { "Determining post slug..." }
@@ -83,6 +87,15 @@ class CreateService(
         if (post.publiclyReachable) {
             webmentionService.processWebmentions(url, post.post)
             websubPublisher.publish()
+        }
+
+        if (requestedSyndicationUids.isNotEmpty()) {
+            logger.info { "Dispatching syndication processing..." }
+            if (post.publiclyReachable) {
+                syndicationService.syndicateCreated(post, requestedSyndicationUids)
+            } else {
+                syndicationService.retainSyndicationTargets(post, requestedSyndicationUids)
+            }
         }
 
         logger.info { "Post created: $url" }
