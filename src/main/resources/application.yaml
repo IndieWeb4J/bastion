@@ -34,6 +34,9 @@ bastion:
     topic-url: ${BASTION_WEBSUB_TOPIC_URL:}
     connect-timeout-seconds: ${BASTION_WEBSUB_CONNECT_TIMEOUT_SECONDS:10}
     read-timeout-seconds: ${BASTION_WEBSUB_READ_TIMEOUT_SECONDS:10}
+  micropub:
+    syndication:
+      targets: []
 
 
 logging:

@@ -3,6 +3,7 @@ package dev.jacobandersen.bastion.micropub.service.post
 import dev.jacobandersen.bastion.microformats2.Mf2Object
 import dev.jacobandersen.bastion.micropub.data.service.PostService
 import dev.jacobandersen.bastion.micropub.service.MicropubCommandResolver
+import dev.jacobandersen.bastion.micropub.syndication.SyndicationService
 import dev.jacobandersen.bastion.micropub.type.MicropubCommand
 import dev.jacobandersen.bastion.micropub.type.req.MicropubPayload
 import dev.jacobandersen.bastion.micropub.type.req.MicropubUpdatePayload
@@ -20,6 +21,7 @@ class UpdateService(
     private val commandResolver: MicropubCommandResolver,
     private val webmentionService: WebmentionService,
     private val websubPublisher: WebsubPublisher,
+    private val syndicationService: SyndicationService,
 ) {
     @PreAuthorize("hasAuthority('UPDATE')")
     fun update(payload: MicropubPayload): ApiResponse<*> {
@@ -95,14 +97,24 @@ class UpdateService(
         when {
             wasPublic && !isPublic -> {
                 webmentionService.deactivateWebmentions(previousUrl)
+                syndicationService.syndicateDeleted(updated, previousUrl)
+            }
+
+            isPublic && !wasPublic -> {
+                webmentionService.processWebmentions(updatedUrl, postObj)
+                syndicationService.syndicatePublished(updated)
+                websubPublisher.publish()
+            }
+
+            isPublic && updatedUrl != previousUrl -> {
+                webmentionService.processWebmentions(updatedUrl, postObj)
+                syndicationService.syndicateRebased(updated, previousUrl)
+                websubPublisher.publish()
             }
 
             isPublic -> {
-                if (updatedUrl != previousUrl || !wasPublic) {
-                    webmentionService.processWebmentions(updatedUrl, postObj)
-                } else {
-                    webmentionService.processUpdatedWebmentions(updatedUrl, previousTargetUrls, postObj)
-                }
+                webmentionService.processUpdatedWebmentions(updatedUrl, previousTargetUrls, postObj)
+                syndicationService.syndicateUpdated(updated, update)
                 websubPublisher.publish()
             }
         }

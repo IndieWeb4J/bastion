@@ -24,3 +24,9 @@ When updating this file, preserve this bar for all agents and keep entries conci
 - Micropub token validation (`MicropubTokenValidator`) resolves against Bastion-issued access tokens, not an external token endpoint.
 - Raw `state`/`code`/`access_token` values are never persisted - only their SHA-256 digests (`indieauth/security/Tokens.kt`). PKCE is required and S256-only: every authorization request must carry an S256 `code_challenge`.
 - Adding a provider = one new `IdentityProvider` implementation plus config.
+
+## Micropub syndication
+
+- Syndication targets are downstream micropub servers (e.g. Bridgy) configured under `bastion.micropub.syndication.targets` (`application.yaml`): each has `uid`, `name`, `endpoint`, optional bearer `token`, and supported `actions` (default CREATE + DELETE). `mp-syndicate-to` values must match a target `uid`, and the configured targets back the `q=syndicate-to` and `q=config` `syndicate-to` responses.
+- Non-public posts are never sent to targets. Requested targets are recorded at create time even for a draft/private post, then dispatched on the later publish transition; the async create/rebase jobs re-check `Post.publiclyReachable` at job time because a post can be demoted or deleted between dispatch and send. A target only holds a copy once `post_syndications.syndicated_url` is recorded.
+- Dispatch and the best-effort `@Job(retries = 0)` jobs live in `micropub/syndication/SyndicationService.kt`. Syndication is fire-and-forget: failures are logged and must never fail the originating create/update/delete request.
