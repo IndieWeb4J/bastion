@@ -55,7 +55,7 @@ class AuthorizationController(
             redirect(authorizationService.begin(request))
         } catch (e: IndieAuthException) {
             if (canRedirect) {
-                redirect(Redirects.error(redirectUri!!, state, e.code.value, e.message))
+                redirect(Redirects.error(redirectUri, state, e.code.value, e.message))
             } else {
                 errorResponse(e)
             }
