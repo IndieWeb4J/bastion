@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.4](https://github.com/jacobsandersen/bastion/compare/v1.3.3...v1.3.4) (2026-09-18)
+
+
+### Miscellaneous Chores
+
+* externalize micropub syndication target config and clean up prod properties ([d737090](https://github.com/jacobsandersen/bastion/commit/d7370903b01ab80cd7dedfc2cb0173174e1bd63e))
+* unnecessary non-null assertion ([ef8dfa3](https://github.com/jacobsandersen/bastion/commit/ef8dfa332afb07a97bd20fd2c41457572e1aadfc))
+
 ## [1.3.3](https://github.com/jacobsandersen/bastion/compare/v1.3.2...v1.3.3) (2026-09-09)
 
 
