@@ -14,7 +14,9 @@ import dev.jacobandersen.bastion.webmention.service.WebmentionSubmissionLimiter
 import org.jobrunr.scheduling.JobScheduler
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito.*
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.verify
+import org.mockito.Mockito.`when`
 import org.springframework.http.MediaType
 import org.springframework.mock.web.MockMultipartFile
 import org.springframework.test.web.servlet.MockMvc
@@ -24,7 +26,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPat
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import java.time.Instant
-import java.util.*
+import java.util.UUID
 
 class WebmentionControllerTest {
     private lateinit var notificationService: ReceivedWebmentionService

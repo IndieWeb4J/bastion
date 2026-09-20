@@ -104,7 +104,7 @@ class AccessTokenService(
         if (authorizationCode.redirectUri != redirectUri) {
             throw IndieAuthException(
                 IndieAuthError.Code.INVALID_GRANT,
-                "The redirect_uri does not match the issued code"
+                "The redirect_uri does not match the issued code",
             )
         }
     }
@@ -117,7 +117,7 @@ class AccessTokenService(
         if (codeVerifier == null || !Pkce.verify(challenge, codeVerifier)) {
             throw IndieAuthException(
                 IndieAuthError.Code.INVALID_GRANT,
-                "The code_verifier does not match the code challenge"
+                "The code_verifier does not match the code challenge",
             )
         }
     }

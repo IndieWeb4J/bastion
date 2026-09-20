@@ -2,9 +2,14 @@ package dev.jacobandersen.bastion.indieauth.data.entity
 
 import dev.jacobandersen.bastion.indieauth.data.domain.IssuedAccessToken
 import dev.jacobandersen.bastion.indieauth.type.Scopes
-import jakarta.persistence.*
+import jakarta.persistence.Column
+import jakarta.persistence.Entity
+import jakarta.persistence.GeneratedValue
+import jakarta.persistence.GenerationType
+import jakarta.persistence.Id
+import jakarta.persistence.Table
 import java.time.Instant
-import java.util.*
+import java.util.UUID
 
 /**
  * An access token Bastion issued, keyed by the token hash. Only the hash is

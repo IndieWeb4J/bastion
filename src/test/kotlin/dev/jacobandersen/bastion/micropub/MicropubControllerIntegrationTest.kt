@@ -6,7 +6,9 @@ import dev.jacobandersen.bastion.micropub.security.MicropubToken
 import dev.jacobandersen.bastion.micropub.security.MicropubTokenScope
 import dev.jacobandersen.bastion.micropub.security.MicropubTokenValidator
 import org.hamcrest.Matchers.containsString
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.`when`
@@ -19,7 +21,9 @@ import org.springframework.mock.web.MockMultipartFile
 import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.servlet.MockMvc
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
@@ -105,7 +109,9 @@ class MicropubControllerIntegrationTest {
         val body =
             mockMvc
                 .perform(
-                    get("/micropub").param("q", "source").param("url", location!!)
+                    get("/micropub")
+                        .param("q", "source")
+                        .param("url", location!!)
                         .header(HttpHeaders.AUTHORIZATION, bearer),
                 ).andExpect(status().isOk)
                 .andExpect(jsonPath("$.type[0]").value("h-entry"))
@@ -174,7 +180,9 @@ class MicropubControllerIntegrationTest {
 
         mockMvc
             .perform(
-                get("/micropub").param("q", "source").param("url", location!!)
+                get("/micropub")
+                    .param("q", "source")
+                    .param("url", location!!)
                     .header(HttpHeaders.AUTHORIZATION, bearer),
             ).andExpect(status().isGone)
             .andExpect(jsonPath("$.error").value("gone"))
@@ -186,7 +194,9 @@ class MicropubControllerIntegrationTest {
 
         mockMvc
             .perform(
-                get("/micropub").param("q", "source").param("url", location!!)
+                get("/micropub")
+                    .param("q", "source")
+                    .param("url", location!!)
                     .header(HttpHeaders.AUTHORIZATION, bearer),
             ).andExpect(status().isOk)
             .andExpect(jsonPath("$.properties.name[0]").value("Draft"))
@@ -246,9 +256,8 @@ class MicropubControllerIntegrationTest {
     fun listRejectsInvalidLimit() {
         mockMvc
             .perform(
-                get("/micropub").param("q", "source").param("limit", "0").header(HttpHeaders.AUTHORIZATION, bearer)
-            )
-            .andExpect(status().isBadRequest)
+                get("/micropub").param("q", "source").param("limit", "0").header(HttpHeaders.AUTHORIZATION, bearer),
+            ).andExpect(status().isBadRequest)
             .andExpect(jsonPath("$.error").value("invalid_request"))
     }
 
@@ -256,9 +265,8 @@ class MicropubControllerIntegrationTest {
     fun listRejectsNegativeOffset() {
         mockMvc
             .perform(
-                get("/micropub").param("q", "source").param("offset", "-1").header(HttpHeaders.AUTHORIZATION, bearer)
-            )
-            .andExpect(status().isBadRequest)
+                get("/micropub").param("q", "source").param("offset", "-1").header(HttpHeaders.AUTHORIZATION, bearer),
+            ).andExpect(status().isBadRequest)
             .andExpect(jsonPath("$.error").value("invalid_request"))
     }
 
@@ -333,7 +341,9 @@ class MicropubControllerIntegrationTest {
 
         mockMvc
             .perform(
-                get("/micropub").param("q", "source").param("url", location!!)
+                get("/micropub")
+                    .param("q", "source")
+                    .param("url", location!!)
                     .header(HttpHeaders.AUTHORIZATION, bearer),
             ).andExpect(status().isOk)
             .andExpect(jsonPath("$.properties.content[0]").value("hello from form"))
@@ -358,7 +368,9 @@ class MicropubControllerIntegrationTest {
         val body =
             mockMvc
                 .perform(
-                    get("/micropub").param("q", "source").param("url", location!!)
+                    get("/micropub")
+                        .param("q", "source")
+                        .param("url", location!!)
                         .header(HttpHeaders.AUTHORIZATION, bearer),
                 ).andExpect(status().isOk)
                 .andReturn()
@@ -420,7 +432,9 @@ class MicropubControllerIntegrationTest {
         val body =
             mockMvc
                 .perform(
-                    get("/micropub").param("q", "source").param("url", location!!)
+                    get("/micropub")
+                        .param("q", "source")
+                        .param("url", location!!)
                         .header(HttpHeaders.AUTHORIZATION, bearer),
                 ).andExpect(status().isOk)
                 .andReturn()

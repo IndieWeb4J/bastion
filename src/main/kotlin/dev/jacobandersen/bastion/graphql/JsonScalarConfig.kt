@@ -8,7 +8,7 @@ import graphql.schema.GraphQLScalarType
 import graphql.schema.idl.RuntimeWiring
 import org.springframework.context.annotation.Configuration
 import org.springframework.graphql.execution.RuntimeWiringConfigurer
-import java.util.*
+import java.util.Locale
 
 /**
  * A pass-through JSON scalar. Resolver values are normalized to plain

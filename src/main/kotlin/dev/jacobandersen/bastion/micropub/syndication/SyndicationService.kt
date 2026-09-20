@@ -10,7 +10,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jobrunr.jobs.annotations.Job
 import org.jobrunr.scheduling.JobScheduler
 import org.springframework.stereotype.Service
-import java.util.*
+import java.util.UUID
 
 private val logger = KotlinLogging.logger {}
 
@@ -91,8 +91,7 @@ class SyndicationService(
             .filter { it.syndicatedUrl != null }
             .mapNotNull { record ->
                 config.targetByUid(record.targetUid)?.takeIf { it.supports(SyndicationAction.DELETE) }
-            }
-            .forEach { target ->
+            }.forEach { target ->
                 jobScheduler.enqueue<SyndicationService> { it.runDeleteJob(post.id, target.uid, sourceUrl) }
             }
     }
@@ -172,7 +171,7 @@ class SyndicationService(
                     postSyndicationService.recordOutcome(
                         postId,
                         targetUid,
-                        result.location ?: urlService.generatePostUrl(post)
+                        result.location ?: urlService.generatePostUrl(post),
                     )
                 }
 
@@ -273,7 +272,7 @@ class SyndicationService(
                     postSyndicationService.recordOutcome(
                         postId,
                         targetUid,
-                        createResult.location ?: urlService.generatePostUrl(post)
+                        createResult.location ?: urlService.generatePostUrl(post),
                     )
                 }
 

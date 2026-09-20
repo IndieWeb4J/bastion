@@ -42,7 +42,7 @@ class SyndicationHttpClientTest {
 
         assertTrue(
             capturedContentType!!.startsWith("application/json"),
-            "expected json content type, got $capturedContentType"
+            "expected json content type, got $capturedContentType",
         )
         val body = mapper.readTree(capturedBody!!)
         assertEquals("update", body.get("action").asString())

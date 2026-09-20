@@ -21,6 +21,5 @@ internal object Mf2UrlResolver {
         return runCatching { parsed.resolve(trimmed).toString() }.getOrNull()
     }
 
-    private fun isAbsolute(raw: String): Boolean =
-        raw.contains(":") && runCatching { URI(raw).isAbsolute }.getOrDefault(false)
+    private fun isAbsolute(raw: String): Boolean = raw.contains(":") && runCatching { URI(raw).isAbsolute }.getOrDefault(false)
 }

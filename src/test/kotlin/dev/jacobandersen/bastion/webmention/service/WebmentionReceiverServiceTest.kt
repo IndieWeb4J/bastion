@@ -10,8 +10,10 @@ import dev.jacobandersen.bastion.webmention.http.SourceFetch
 import dev.jacobandersen.bastion.webmention.http.WebmentionSourceFetcher
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers.anyString
-import org.mockito.Mockito.*
-import java.util.*
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.verify
+import org.mockito.Mockito.`when`
+import java.util.UUID
 
 class WebmentionReceiverServiceTest {
     private val notificationService = mock(ReceivedWebmentionService::class.java)

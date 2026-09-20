@@ -58,8 +58,7 @@ private fun ObjectNode.requiredString(key: String): String {
     return node.asString()
 }
 
-private fun ObjectNode.optionalMf2Values(key: String): Map<String, List<Mf2Value>>? =
-    (this[key] as? ObjectNode)?.asMf2ValuesMap()
+private fun ObjectNode.optionalMf2Values(key: String): Map<String, List<Mf2Value>>? = (this[key] as? ObjectNode)?.asMf2ValuesMap()
 
 private fun ObjectNode.asMf2ValuesMap(): Map<String, List<Mf2Value>> {
     val properties = mutableMapOf<String, List<Mf2Value>>()

@@ -90,14 +90,14 @@ class PostGraphQlIntegrationTest {
             "https://reply.example/1",
             WebmentionInteraction.REPLY,
             ReceivedWebmentionState.VERIFIED,
-            "Reply author"
+            "Reply author",
         )
         saveWebmention(
             noteId,
             "https://rsvp.example/1",
             WebmentionInteraction.RSVP,
             ReceivedWebmentionState.VERIFIED,
-            "RSVP author"
+            "RSVP author",
         )
         saveWebmention(
             noteId,

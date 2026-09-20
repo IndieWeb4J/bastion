@@ -3,12 +3,20 @@ package dev.jacobandersen.bastion.webmention.data.service
 import dev.jacobandersen.bastion.webmention.data.domain.WebmentionState
 import dev.jacobandersen.bastion.webmention.data.entity.WebmentionNotificationEntity
 import dev.jacobandersen.bastion.webmention.data.repository.WebmentionNotificationRepository
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentCaptor
-import org.mockito.Mockito.*
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.never
+import org.mockito.Mockito.times
+import org.mockito.Mockito.verify
+import org.mockito.Mockito.`when`
 import java.time.Instant
-import java.util.*
+import java.util.UUID
 
 class WebmentionNotificationServiceTest {
     private val repository = mock(WebmentionNotificationRepository::class.java)

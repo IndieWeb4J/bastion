@@ -3,13 +3,17 @@ package dev.jacobandersen.bastion.webmention.data.service
 import dev.jacobandersen.bastion.webmention.data.domain.ReceivedWebmention
 import dev.jacobandersen.bastion.webmention.data.domain.ReceivedWebmentionAnalysis
 import dev.jacobandersen.bastion.webmention.data.domain.ReceivedWebmentionState
-import dev.jacobandersen.bastion.webmention.data.domain.ReceivedWebmentionState.*
+import dev.jacobandersen.bastion.webmention.data.domain.ReceivedWebmentionState.DELETED
+import dev.jacobandersen.bastion.webmention.data.domain.ReceivedWebmentionState.ERROR
+import dev.jacobandersen.bastion.webmention.data.domain.ReceivedWebmentionState.PENDING
+import dev.jacobandersen.bastion.webmention.data.domain.ReceivedWebmentionState.REJECTED
+import dev.jacobandersen.bastion.webmention.data.domain.ReceivedWebmentionState.VERIFIED
 import dev.jacobandersen.bastion.webmention.data.entity.ReceivedWebmentionEntity
 import dev.jacobandersen.bastion.webmention.data.repository.ReceivedWebmentionRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
-import java.util.*
+import java.util.UUID
 
 @Service
 class ReceivedWebmentionService(
@@ -114,8 +118,7 @@ class ReceivedWebmentionService(
     fun byPost(postId: UUID): List<ReceivedWebmention> = repository.findByPostId(postId).map { it.toDomain() }
 
     @Transactional(readOnly = true)
-    fun verifiedByPost(postId: UUID): List<ReceivedWebmention> =
-        repository.findByPostIdAndState(postId, VERIFIED).map { it.toDomain() }
+    fun verifiedByPost(postId: UUID): List<ReceivedWebmention> = repository.findByPostIdAndState(postId, VERIFIED).map { it.toDomain() }
 
     @Transactional(readOnly = true)
     fun verifiedByPostIds(postIds: Collection<UUID>): List<ReceivedWebmention> =

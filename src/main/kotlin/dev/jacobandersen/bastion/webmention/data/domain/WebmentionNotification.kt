@@ -1,7 +1,7 @@
 package dev.jacobandersen.bastion.webmention.data.domain
 
 import java.time.Instant
-import java.util.*
+import java.util.UUID
 
 data class WebmentionNotification(
     val id: UUID,

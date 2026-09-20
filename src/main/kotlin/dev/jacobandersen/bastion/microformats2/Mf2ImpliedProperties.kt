@@ -112,8 +112,7 @@ internal object Mf2ImpliedProperties {
         return null
     }
 
-    private fun onlyChild(children: org.jsoup.select.Elements): Element? =
-        if (children.size == 1) children.first() else null
+    private fun onlyChild(children: org.jsoup.select.Elements): Element? = if (children.size == 1) children.first() else null
 
     /** The single element of the given tag among children, or null if not unique. */
     private fun soleTag(

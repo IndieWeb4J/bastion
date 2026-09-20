@@ -17,7 +17,10 @@ import dev.jacobandersen.bastion.indieauth.service.OwnerVerifier
 import dev.jacobandersen.bastion.micropub.security.MicropubToken
 import dev.jacobandersen.bastion.micropub.security.MicropubTokenScope
 import dev.jacobandersen.bastion.micropub.security.MicropubTokenValidator
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers.anyString
@@ -31,7 +34,9 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.header
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import org.springframework.web.context.WebApplicationContext
 import org.springframework.web.util.UriComponentsBuilder
@@ -168,8 +173,8 @@ class IndieAuthIntegrationTest {
             .andExpect(
                 header().string(
                     HttpHeaders.LOCATION,
-                    org.hamcrest.Matchers.containsString("error=invalid_request")
-                )
+                    org.hamcrest.Matchers.containsString("error=invalid_request"),
+                ),
             )
     }
 
@@ -256,8 +261,8 @@ class IndieAuthIntegrationTest {
             .andExpect(
                 header().string(
                     HttpHeaders.LOCATION,
-                    org.hamcrest.Matchers.containsString("error=invalid_scope")
-                )
+                    org.hamcrest.Matchers.containsString("error=invalid_scope"),
+                ),
             )
     }
 

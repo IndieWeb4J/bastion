@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
 import java.time.Instant
-import java.util.*
+import java.util.UUID
 
 @Repository
 interface AuthorizationCodeRepository : JpaRepository<AuthorizationCodeEntity, UUID> {
@@ -37,7 +37,7 @@ interface AuthorizationCodeRepository : JpaRepository<AuthorizationCodeEntity, U
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(
         "delete from AuthorizationCodeEntity c where " +
-                "(c.usedAt is not null and c.usedAt < :cutoff) or (c.usedAt is null and c.expiresAt < :cutoff)",
+            "(c.usedAt is not null and c.usedAt < :cutoff) or (c.usedAt is null and c.expiresAt < :cutoff)",
     )
     fun deleteDead(
         @Param("cutoff") cutoff: Instant,

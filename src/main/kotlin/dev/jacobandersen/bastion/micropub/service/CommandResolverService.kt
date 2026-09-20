@@ -42,10 +42,18 @@ class MicropubCommandResolver(
     fun resolve(lookup: (String) -> List<Mf2Value>?): PostCommands? {
         val slug =
             when (val command = value(lookup(MicropubCommand.MP_SLUG))) {
-                is MicropubCommandValue.Absent -> null
-                is MicropubCommandValue.Invalid -> return null
-                is MicropubCommandValue.Present -> slugify.slugify(command.value).takeIf { it.isNotBlank() }
-                    ?: return null
+                is MicropubCommandValue.Absent -> {
+                    null
+                }
+
+                is MicropubCommandValue.Invalid -> {
+                    return null
+                }
+
+                is MicropubCommandValue.Present -> {
+                    slugify.slugify(command.value).takeIf { it.isNotBlank() }
+                        ?: return null
+                }
             }
 
         val status =

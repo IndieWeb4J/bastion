@@ -1,10 +1,15 @@
 package dev.jacobandersen.bastion.micropub.security
 
 import jakarta.servlet.FilterChain
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito.*
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.never
+import org.mockito.Mockito.verify
+import org.mockito.Mockito.`when`
 import org.springframework.mock.web.MockHttpServletRequest
 import org.springframework.mock.web.MockHttpServletResponse
 import org.springframework.security.core.context.SecurityContextHolder
@@ -61,7 +66,7 @@ class MicropubAuthenticationFilterTest {
         filter.doFilter(
             request(bodyToken = "test-token", contentType = "application/x-www-form-urlencoded"),
             response,
-            chain
+            chain,
         )
 
         assertEquals(200, response.status)

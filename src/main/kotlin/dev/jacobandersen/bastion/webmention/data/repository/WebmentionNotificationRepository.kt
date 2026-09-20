@@ -5,7 +5,7 @@ import dev.jacobandersen.bastion.webmention.data.entity.WebmentionNotificationEn
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
 import java.time.Instant
-import java.util.*
+import java.util.UUID
 
 @Repository
 interface WebmentionNotificationRepository : JpaRepository<WebmentionNotificationEntity, UUID> {

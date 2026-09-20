@@ -80,8 +80,7 @@ class AuthorizationController(
             }
         }
 
-    private fun redirect(url: String): ResponseEntity<Void> =
-        ResponseEntity.status(HttpStatus.FOUND).location(URI.create(url)).build()
+    private fun redirect(url: String): ResponseEntity<Void> = ResponseEntity.status(HttpStatus.FOUND).location(URI.create(url)).build()
 
     private fun errorResponse(e: IndieAuthException): ResponseEntity<IndieAuthError> =
         ResponseEntity.status(e.code.status).body(e.toError())
