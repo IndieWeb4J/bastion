@@ -3,7 +3,6 @@ package dev.jacobandersen.bastion.micropub.security
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.annotation.Order
-import org.springframework.http.HttpMethod
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.web.SecurityFilterChain
@@ -30,9 +29,7 @@ class SecurityConfig(
             .httpBasic { it.disable() }
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .addFilterBefore(authFilter, UsernamePasswordAuthenticationFilter::class.java)
-            .authorizeHttpRequests {
-                it.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                it.anyRequest().authenticated()
-            }.exceptionHandling { it.accessDeniedHandler(accessDeniedHandler) }
+            .authorizeHttpRequests { it.anyRequest().authenticated() }
+            .exceptionHandling { it.accessDeniedHandler(accessDeniedHandler) }
             .build()
 }
