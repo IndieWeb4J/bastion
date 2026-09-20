@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.6](https://github.com/jacobsandersen/bastion/compare/v1.3.5...v1.3.6) (2026-09-20)
+
+
+### Miscellaneous Chores
+
+* fix formatting according to ktlint ([2e60b23](https://github.com/jacobsandersen/bastion/commit/2e60b23f2b81c4131fd1f748fe29689ce9034bbe))
+
 ## [1.3.5](https://github.com/jacobsandersen/bastion/compare/v1.3.4...v1.3.5) (2026-09-20)
 
 
