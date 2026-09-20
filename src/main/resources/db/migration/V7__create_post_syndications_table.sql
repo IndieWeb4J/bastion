@@ -1,8 +1,7 @@
-create table post_syndications
-(
-    id             uuid primary key,
-    post_id        uuid        not null references posts (id),
-    target_uid     text        not null,
+create table post_syndications (
+    id uuid primary key,
+    post_id uuid not null references posts(id),
+    target_uid text not null,
     syndicated_url text,
     created_at_utc timestamptz not null default now()
 );
