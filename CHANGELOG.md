@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.5](https://github.com/jacobsandersen/bastion/compare/v1.3.4...v1.3.5) (2026-09-20)
+
+
+### Miscellaneous Chores
+
+* cleanup ([1b98bf7](https://github.com/jacobsandersen/bastion/commit/1b98bf7bf2d3f9628df6508971c4ac22e52f903a))
+
 ## [1.3.4](https://github.com/jacobsandersen/bastion/compare/v1.3.3...v1.3.4) (2026-09-18)
 
 
