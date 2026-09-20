@@ -36,6 +36,13 @@ bastion:
     topic-url: ${BASTION_WEBSUB_TOPIC_URL:}
     connect-timeout-seconds: ${BASTION_WEBSUB_CONNECT_TIMEOUT_SECONDS:10}
     read-timeout-seconds: ${BASTION_WEBSUB_READ_TIMEOUT_SECONDS:10}
+  cors:
+    allowed-origins: ${BASTION_CORS_ALLOWED_ORIGINS:}
+    allowed-methods: ${BASTION_CORS_ALLOWED_METHODS:GET,POST,PUT,PATCH,DELETE,OPTIONS}
+    allowed-headers: ${BASTION_CORS_ALLOWED_HEADERS:*}
+    exposed-headers: ${BASTION_CORS_EXPOSED_HEADERS:}
+    allow-credentials: ${BASTION_CORS_ALLOW_CREDENTIALS:false}
+    max-age: ${BASTION_CORS_MAX_AGE:3600}
   micropub:
     syndication:
       targets: []
