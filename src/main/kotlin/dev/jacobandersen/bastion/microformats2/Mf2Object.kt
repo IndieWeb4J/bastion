@@ -53,10 +53,13 @@ data class Mf2Object(
 }
 
 /** The first non-blank plain-text value of the property, or null. */
-fun Mf2Object.firstText(key: String): String? = getProperty(key).firstNotNullOfOrNull { it.plainTextOrNull }?.takeIf { it.isNotBlank() }
+fun Mf2Object.firstText(key: String): String? =
+    getProperty(key).firstNotNullOfOrNull { it.plainTextOrNull }?.takeIf { it.isNotBlank() }
 
 /** The first non-blank `html` value of the property, or null. */
-fun Mf2Object.firstHtml(key: String): String? = getProperty(key).firstNotNullOfOrNull { it.htmlOrNull }?.takeIf { it.isNotBlank() }
+fun Mf2Object.firstHtml(key: String): String? =
+    getProperty(key).firstNotNullOfOrNull { it.htmlOrNull }?.takeIf { it.isNotBlank() }
 
 /** All non-blank plain-text values of the property. */
-fun Mf2Object.texts(key: String): List<String> = getProperty(key).mapNotNull { it.plainTextOrNull }.filter { it.isNotBlank() }
+fun Mf2Object.texts(key: String): List<String> =
+    getProperty(key).mapNotNull { it.plainTextOrNull }.filter { it.isNotBlank() }

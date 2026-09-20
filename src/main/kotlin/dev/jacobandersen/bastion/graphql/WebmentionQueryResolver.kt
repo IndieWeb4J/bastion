@@ -18,7 +18,8 @@ class WebmentionQueryResolver(
     private val webmentionService: ReceivedWebmentionService,
 ) {
     @SchemaMapping(typeName = "Post", field = "webmentions")
-    fun webmentions(post: Post): List<ReceivedWebmention> = webmentionService.verifiedByPost(post.id).sortedBy { it.firstSeenAt }
+    fun webmentions(post: Post): List<ReceivedWebmention> =
+        webmentionService.verifiedByPost(post.id).sortedBy { it.firstSeenAt }
 
     @BatchMapping(typeName = "Post", field = "webmentionCounts")
     fun webmentionCounts(posts: List<Post>): Map<Post, WebmentionCounts> {

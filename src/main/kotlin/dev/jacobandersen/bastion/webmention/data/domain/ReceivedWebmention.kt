@@ -3,7 +3,7 @@ package dev.jacobandersen.bastion.webmention.data.domain
 import dev.jacobandersen.bastion.microformats2.Mf2Object
 import dev.jacobandersen.bastion.webmention.data.entity.ReceivedWebmentionEntity
 import java.time.Instant
-import java.util.UUID
+import java.util.*
 
 data class ReceivedWebmention(
     val id: UUID,

@@ -7,7 +7,7 @@ import dev.jacobandersen.bastion.webmention.data.service.ReceivedWebmentionServi
 import dev.jacobandersen.bastion.webmention.http.WebmentionSourceFetcher
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Service
-import java.util.UUID
+import java.util.*
 
 private val logger = KotlinLogging.logger {}
 

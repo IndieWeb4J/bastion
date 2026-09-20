@@ -22,7 +22,8 @@ class WebmentionUtilTest {
 
     @Test
     fun matchesRelAmongOtherTokens() {
-        val endpoint = WebmentionUtil.findEndpointInLinkHeaders(listOf("<https://example.com/wm>; rel=\"webmention nofollow\""))
+        val endpoint =
+            WebmentionUtil.findEndpointInLinkHeaders(listOf("<https://example.com/wm>; rel=\"webmention nofollow\""))
 
         assertEquals("https://example.com/wm", endpoint)
     }
@@ -36,7 +37,8 @@ class WebmentionUtilTest {
 
     @Test
     fun matchesRelRegardlessOfParamOrder() {
-        val endpoint = WebmentionUtil.findEndpointInLinkHeaders(listOf("<https://example.com/wm>; type=\"text/html\"; rel=\"webmention\""))
+        val endpoint =
+            WebmentionUtil.findEndpointInLinkHeaders(listOf("<https://example.com/wm>; type=\"text/html\"; rel=\"webmention\""))
 
         assertEquals("https://example.com/wm", endpoint)
     }
@@ -86,19 +88,30 @@ class WebmentionUtilTest {
 
     @Test
     fun returnsNullWhenNoWebmentionRel() {
-        val endpoint = WebmentionUtil.findEndpointInLinkHeaders(listOf("<https://example.com/a>; rel=\"next\"", "<https://example.com/b>"))
+        val endpoint = WebmentionUtil.findEndpointInLinkHeaders(
+            listOf(
+                "<https://example.com/a>; rel=\"next\"",
+                "<https://example.com/b>"
+            )
+        )
 
         assertNull(endpoint)
     }
 
     @Test
     fun resolvesRelativeEndpoint() {
-        assertEquals("https://example.com/webmention", WebmentionUtil.resolveEndpoint("/webmention", "https://example.com/post"))
+        assertEquals(
+            "https://example.com/webmention",
+            WebmentionUtil.resolveEndpoint("/webmention", "https://example.com/post")
+        )
     }
 
     @Test
     fun resolvesEndpointAgainstBasePath() {
-        assertEquals("https://example.com/a/webmention", WebmentionUtil.resolveEndpoint("webmention", "https://example.com/a/b"))
+        assertEquals(
+            "https://example.com/a/webmention",
+            WebmentionUtil.resolveEndpoint("webmention", "https://example.com/a/b")
+        )
     }
 
     @Test

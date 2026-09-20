@@ -33,7 +33,8 @@ class PostController(
                 PostAction.CREATE
             } else {
                 if (!actionNode.isString) {
-                    return ApiResponse.Error.InvalidRequest(errorDescription = "Invalid action parameter").toResponseEntity()
+                    return ApiResponse.Error.InvalidRequest(errorDescription = "Invalid action parameter")
+                        .toResponseEntity()
                 }
                 PostAction.fromString(actionNode.asString())
                     ?: return ApiResponse.Error.InvalidRequest(errorDescription = "Unknown action").toResponseEntity()
@@ -47,7 +48,8 @@ class PostController(
     fun onUrlEncoded(request: HttpServletRequest): ResponseEntity<*> = onFormDataLike(request.parameterMap, null)
 
     @PostMapping(consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
-    fun onMultipart(request: MultipartHttpServletRequest): ResponseEntity<*> = onFormDataLike(request.parameterMap, request.multiFileMap)
+    fun onMultipart(request: MultipartHttpServletRequest): ResponseEntity<*> =
+        onFormDataLike(request.parameterMap, request.multiFileMap)
 
     private fun onFormDataLike(
         data: Map<String, Array<String>>,

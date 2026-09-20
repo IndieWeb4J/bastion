@@ -33,13 +33,17 @@ class SyndicationHttpClientTest {
         }
         server.start()
         try {
-            val result = client.sendUpdate(target(server.address.port), "https://bastion.test/post/1", serializedUpdate())
+            val result =
+                client.sendUpdate(target(server.address.port), "https://bastion.test/post/1", serializedUpdate())
             assertTrue(result is SyndicationSendResult.Success)
         } finally {
             server.stop(0)
         }
 
-        assertTrue(capturedContentType!!.startsWith("application/json"), "expected json content type, got $capturedContentType")
+        assertTrue(
+            capturedContentType!!.startsWith("application/json"),
+            "expected json content type, got $capturedContentType"
+        )
         val body = mapper.readTree(capturedBody!!)
         assertEquals("update", body.get("action").asString())
         assertEquals("https://bastion.test/post/1", body.get("url").asString())

@@ -4,17 +4,14 @@ import dev.jacobandersen.bastion.microformats2.Mf2Object
 import dev.jacobandersen.bastion.microformats2.Mf2ParseResult
 import dev.jacobandersen.bastion.microformats2.Mf2Parser
 import dev.jacobandersen.bastion.microformats2.Mf2Value
-import dev.jacobandersen.bastion.webmention.data.domain.ReceivedWebmentionAnalysis
 import dev.jacobandersen.bastion.webmention.data.domain.WebmentionInteraction
 import dev.jacobandersen.bastion.webmention.data.service.ReceivedWebmentionService
 import dev.jacobandersen.bastion.webmention.http.SourceFetch
 import dev.jacobandersen.bastion.webmention.http.WebmentionSourceFetcher
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers.anyString
-import org.mockito.Mockito.mock
-import org.mockito.Mockito.verify
-import org.mockito.Mockito.`when`
-import java.util.UUID
+import org.mockito.Mockito.*
+import java.util.*
 
 class WebmentionReceiverServiceTest {
     private val notificationService = mock(ReceivedWebmentionService::class.java)

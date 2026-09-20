@@ -8,8 +8,8 @@ import java.net.URI
 internal object HttpUtil {
     internal fun isHtmlContentType(contentType: String?): Boolean =
         contentType == null ||
-            contentType.startsWith("text/html", ignoreCase = true) ||
-            contentType.startsWith("application/xhtml+xml", ignoreCase = true)
+                contentType.startsWith("text/html", ignoreCase = true) ||
+                contentType.startsWith("application/xhtml+xml", ignoreCase = true)
 
     internal fun isTransientStatus(statusCode: Int): Boolean =
         statusCode == 408 || statusCode == 425 || statusCode == 429 || statusCode in 500..599

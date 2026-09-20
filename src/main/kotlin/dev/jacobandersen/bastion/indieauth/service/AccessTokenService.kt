@@ -102,7 +102,10 @@ class AccessTokenService(
             throw IndieAuthException(IndieAuthError.Code.INVALID_GRANT, "The client_id does not match the issued code")
         }
         if (authorizationCode.redirectUri != redirectUri) {
-            throw IndieAuthException(IndieAuthError.Code.INVALID_GRANT, "The redirect_uri does not match the issued code")
+            throw IndieAuthException(
+                IndieAuthError.Code.INVALID_GRANT,
+                "The redirect_uri does not match the issued code"
+            )
         }
     }
 
@@ -112,7 +115,10 @@ class AccessTokenService(
     ) {
         val challenge = authorizationCode.codeChallenge ?: return
         if (codeVerifier == null || !Pkce.verify(challenge, codeVerifier)) {
-            throw IndieAuthException(IndieAuthError.Code.INVALID_GRANT, "The code_verifier does not match the code challenge")
+            throw IndieAuthException(
+                IndieAuthError.Code.INVALID_GRANT,
+                "The code_verifier does not match the code challenge"
+            )
         }
     }
 }

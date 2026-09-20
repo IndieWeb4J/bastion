@@ -81,10 +81,22 @@ class WebmentionSourceFetcher(
             if (status in REDIRECT_STATUSES) {
                 val location = response.header("Location")?.trim().orEmpty()
                 if (location.isEmpty()) {
-                    return SourceFetch(status, current, response.contentType(), "", "redirect without a Location header")
+                    return SourceFetch(
+                        status,
+                        current,
+                        response.contentType(),
+                        "",
+                        "redirect without a Location header"
+                    )
                 }
                 current = runCatching { URI(current).resolve(location).toString() }.getOrNull()
-                    ?: return SourceFetch(status, current, response.contentType(), "", "redirect Location is not a valid URL")
+                    ?: return SourceFetch(
+                        status,
+                        current,
+                        response.contentType(),
+                        "",
+                        "redirect Location is not a valid URL"
+                    )
                 return@repeat
             }
 

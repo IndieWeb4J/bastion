@@ -11,16 +11,11 @@ import dev.jacobandersen.bastion.indieauth.identity.ProviderIdentity
 import dev.jacobandersen.bastion.indieauth.security.Pkce
 import dev.jacobandersen.bastion.indieauth.security.Tokens
 import dev.jacobandersen.bastion.indieauth.type.IndieAuthError
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertThrows
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.anyString
-import org.mockito.Mockito.mock
-import org.mockito.Mockito.never
-import org.mockito.Mockito.verify
-import org.mockito.Mockito.`when`
+import org.mockito.Mockito.*
 import org.mockito.kotlin.any
 import org.mockito.kotlin.eq
 import org.springframework.web.util.UriComponentsBuilder
@@ -112,7 +107,14 @@ class AuthorizationServiceTest {
 
     @Test
     fun `begin requires a code challenge`() {
-        assertCode(IndieAuthError.Code.INVALID_REQUEST) { service.begin(request(codeChallenge = null, codeChallengeMethod = null)) }
+        assertCode(IndieAuthError.Code.INVALID_REQUEST) {
+            service.begin(
+                request(
+                    codeChallenge = null,
+                    codeChallengeMethod = null
+                )
+            )
+        }
     }
 
     @Test

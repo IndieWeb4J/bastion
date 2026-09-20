@@ -5,9 +5,7 @@ import dev.jacobandersen.bastion.webmention.data.repository.WebmentionEndpointCa
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito.mock
-import org.mockito.Mockito.verify
-import org.mockito.Mockito.`when`
+import org.mockito.Mockito.*
 import java.time.Instant
 
 class WebmentionEndpointCacheServiceTest {

@@ -65,7 +65,8 @@ fun JsonNode.toMf2ValueOrNull(): Mf2Value? =
     }
 
 /** Whether the JSON node is a nested microformat object rather than a plain object value. */
-fun JsonNode.isMf2Object(): Boolean = (this["type"] as? ArrayNode)?.takeIf { it.size() > 0 } != null && this["properties"] is ObjectNode
+fun JsonNode.isMf2Object(): Boolean =
+    (this["type"] as? ArrayNode)?.takeIf { it.size() > 0 } != null && this["properties"] is ObjectNode
 
 private fun parseProperties(node: JsonNode?): Map<String, List<Mf2Value>> {
     val objectNode = node as? ObjectNode ?: return emptyMap()

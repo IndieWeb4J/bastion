@@ -8,7 +8,7 @@ import org.springframework.web.multipart.MultipartFile
 import software.amazon.awssdk.core.sync.RequestBody
 import software.amazon.awssdk.services.s3.S3Client
 import software.amazon.awssdk.services.s3.model.PutObjectRequest
-import java.util.UUID
+import java.util.*
 
 private val logger = KotlinLogging.logger {}
 

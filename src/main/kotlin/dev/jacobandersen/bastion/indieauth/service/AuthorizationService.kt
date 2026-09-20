@@ -128,14 +128,22 @@ class AuthorizationService(
 
         if (authRequest.expiresAt.isBefore(Instant.now())) {
             return CompleteResult.Redirect(
-                errorRedirect(authRequest, IndieAuthError.Code.ACCESS_DENIED.value, "The authorization request has expired"),
+                errorRedirect(
+                    authRequest,
+                    IndieAuthError.Code.ACCESS_DENIED.value,
+                    "The authorization request has expired"
+                ),
             )
         }
 
         val providerCode =
             code?.takeIf { it.isNotBlank() }
                 ?: return CompleteResult.Redirect(
-                    errorRedirect(authRequest, IndieAuthError.Code.INVALID_REQUEST.value, "The authorization code is missing"),
+                    errorRedirect(
+                        authRequest,
+                        IndieAuthError.Code.INVALID_REQUEST.value,
+                        "The authorization code is missing"
+                    ),
                 )
 
         val identity =
@@ -234,7 +242,10 @@ class AuthorizationService(
 
     private fun validateResponseType(responseType: String?) {
         if (responseType != null && responseType != "code") {
-            throw IndieAuthException(IndieAuthError.Code.UNSUPPORTED_RESPONSE_TYPE, "Only the 'code' response type is supported")
+            throw IndieAuthException(
+                IndieAuthError.Code.UNSUPPORTED_RESPONSE_TYPE,
+                "Only the 'code' response type is supported"
+            )
         }
     }
 
@@ -265,7 +276,10 @@ class AuthorizationService(
         val requested = Scopes.parse(scope)
         val invalid = requested.filterNot { it in config.allowedScopes }
         if (invalid.isNotEmpty()) {
-            throw IndieAuthException(IndieAuthError.Code.INVALID_SCOPE, "Unsupported scope requested: ${invalid.joinToString(" ")}")
+            throw IndieAuthException(
+                IndieAuthError.Code.INVALID_SCOPE,
+                "Unsupported scope requested: ${invalid.joinToString(" ")}"
+            )
         }
         return requested
     }
@@ -275,10 +289,16 @@ class AuthorizationService(
         codeChallengeMethod: String?,
     ) {
         if (codeChallenge.isNullOrBlank()) {
-            throw IndieAuthException(IndieAuthError.Code.INVALID_REQUEST, "PKCE is required: a 'code_challenge' must be supplied")
+            throw IndieAuthException(
+                IndieAuthError.Code.INVALID_REQUEST,
+                "PKCE is required: a 'code_challenge' must be supplied"
+            )
         }
         if (codeChallengeMethod != null && !codeChallengeMethod.equals(Pkce.METHOD_S256, ignoreCase = true)) {
-            throw IndieAuthException(IndieAuthError.Code.INVALID_REQUEST, "Only the 'S256' code challenge method is supported")
+            throw IndieAuthException(
+                IndieAuthError.Code.INVALID_REQUEST,
+                "Only the 'S256' code challenge method is supported"
+            )
         }
     }
 }

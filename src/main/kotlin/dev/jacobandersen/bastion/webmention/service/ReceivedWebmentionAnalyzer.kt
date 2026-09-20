@@ -1,19 +1,9 @@
 package dev.jacobandersen.bastion.webmention.service
 
-import dev.jacobandersen.bastion.microformats2.Mf2Object
-import dev.jacobandersen.bastion.microformats2.Mf2ParseResult
-import dev.jacobandersen.bastion.microformats2.Mf2Value
-import dev.jacobandersen.bastion.microformats2.firstText
-import dev.jacobandersen.bastion.microformats2.htmlOrNull
-import dev.jacobandersen.bastion.microformats2.plainTextOrNull
+import dev.jacobandersen.bastion.microformats2.*
 import dev.jacobandersen.bastion.webmention.data.domain.ReceivedWebmentionAnalysis
 import dev.jacobandersen.bastion.webmention.data.domain.WebmentionInteraction
-import dev.jacobandersen.bastion.webmention.data.domain.WebmentionInteraction.BOOKMARK
-import dev.jacobandersen.bastion.webmention.data.domain.WebmentionInteraction.LIKE
-import dev.jacobandersen.bastion.webmention.data.domain.WebmentionInteraction.MENTION
-import dev.jacobandersen.bastion.webmention.data.domain.WebmentionInteraction.REPLY
-import dev.jacobandersen.bastion.webmention.data.domain.WebmentionInteraction.REPOST
-import dev.jacobandersen.bastion.webmention.data.domain.WebmentionInteraction.RSVP
+import dev.jacobandersen.bastion.webmention.data.domain.WebmentionInteraction.*
 
 /**
  * Analyzes a parsed source document for webmention purposes: picks the primary

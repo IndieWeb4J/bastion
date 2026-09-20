@@ -3,20 +3,12 @@ package dev.jacobandersen.bastion.webmention.data.service
 import dev.jacobandersen.bastion.webmention.data.domain.WebmentionState
 import dev.jacobandersen.bastion.webmention.data.entity.WebmentionNotificationEntity
 import dev.jacobandersen.bastion.webmention.data.repository.WebmentionNotificationRepository
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertNull
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentCaptor
-import org.mockito.Mockito.mock
-import org.mockito.Mockito.never
-import org.mockito.Mockito.times
-import org.mockito.Mockito.verify
-import org.mockito.Mockito.`when`
+import org.mockito.Mockito.*
 import java.time.Instant
-import java.util.UUID
+import java.util.*
 
 class WebmentionNotificationServiceTest {
     private val repository = mock(WebmentionNotificationRepository::class.java)
@@ -157,7 +149,8 @@ class WebmentionNotificationServiceTest {
     @Test
     fun `dueForRetry delegates to the repository with the due date`() {
         val now = Instant.now()
-        val due = entity(state = WebmentionState.ACTIVE, nextAttemptAt = now.minusSeconds(1)).apply { id = UUID.randomUUID() }
+        val due =
+            entity(state = WebmentionState.ACTIVE, nextAttemptAt = now.minusSeconds(1)).apply { id = UUID.randomUUID() }
         `when`(
             repository.findByStateInAndDeliveredFalseAndNextAttemptAtNotNullAndNextAttemptAtLessThanEqual(
                 org.mockito.kotlin.eq(listOf(WebmentionState.ACTIVE, WebmentionState.INACTIVE)),

@@ -52,7 +52,10 @@ class TokenController(
         redirectUri: String?,
     ) {
         if (grantType != "authorization_code") {
-            throw IndieAuthException(IndieAuthError.Code.UNSUPPORTED_GRANT_TYPE, "Only the 'authorization_code' grant is supported")
+            throw IndieAuthException(
+                IndieAuthError.Code.UNSUPPORTED_GRANT_TYPE,
+                "Only the 'authorization_code' grant is supported"
+            )
         }
         if (code.isNullOrBlank()) {
             throw IndieAuthException(IndieAuthError.Code.INVALID_REQUEST, "The 'code' parameter is required")

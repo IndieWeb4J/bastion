@@ -1,7 +1,7 @@
 package dev.jacobandersen.bastion.indieauth.security
 
 import java.security.MessageDigest
-import java.util.Base64
+import java.util.*
 
 /**
  * PKCE (RFC 7636) helpers for the authorization-code flow. Bastion supports only

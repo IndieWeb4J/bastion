@@ -8,15 +8,10 @@ import dev.jacobandersen.bastion.micropub.type.PostStatus
 import dev.jacobandersen.bastion.micropub.type.PostType
 import dev.jacobandersen.bastion.micropub.type.PostVisibility
 import dev.jacobandersen.bastion.url.UrlService
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNull
-import org.junit.jupiter.api.Assertions.assertThrows
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito.mock
-import org.mockito.Mockito.verify
-import org.mockito.Mockito.`when`
-import java.util.UUID
+import org.mockito.Mockito.*
+import java.util.*
 
 class PostQueryServiceTest {
     private val postService = mock(PostService::class.java)
@@ -77,9 +72,22 @@ class PostQueryServiceTest {
 
     @Test
     fun `deleted public post surfaces as gone while draft and private stay hidden`() {
-        `when`(postService.findBySlug("deleted")).thenReturn(post("deleted", PostStatus.PUBLISHED, PostVisibility.PUBLIC, deleted = true))
+        `when`(postService.findBySlug("deleted")).thenReturn(
+            post(
+                "deleted",
+                PostStatus.PUBLISHED,
+                PostVisibility.PUBLIC,
+                deleted = true
+            )
+        )
         `when`(postService.findBySlug("draft")).thenReturn(post("draft", PostStatus.DRAFT, PostVisibility.PUBLIC))
-        `when`(postService.findBySlug("private")).thenReturn(post("private", PostStatus.PUBLISHED, PostVisibility.PRIVATE))
+        `when`(postService.findBySlug("private")).thenReturn(
+            post(
+                "private",
+                PostStatus.PUBLISHED,
+                PostVisibility.PRIVATE
+            )
+        )
 
         val gone = service.post("deleted", null)
         assertTrue(gone is PostLookupResult.Gone)
@@ -91,7 +99,13 @@ class PostQueryServiceTest {
     @Test
     fun `post allows public and unlisted published posts`() {
         `when`(postService.findBySlug("public")).thenReturn(publicPost("public"))
-        `when`(postService.findBySlug("unlisted")).thenReturn(post("unlisted", PostStatus.PUBLISHED, PostVisibility.UNLISTED))
+        `when`(postService.findBySlug("unlisted")).thenReturn(
+            post(
+                "unlisted",
+                PostStatus.PUBLISHED,
+                PostVisibility.UNLISTED
+            )
+        )
 
         assertEquals("public", slugOf(service.post("public", null)))
         assertEquals("unlisted", slugOf(service.post("unlisted", null)))

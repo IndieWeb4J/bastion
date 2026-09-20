@@ -1,7 +1,8 @@
-create table tokens (
-    id uuid primary key,
-    token text not null,
-    decoded jsonb not null,
+create table tokens
+(
+    id         uuid primary key,
+    token      text        not null,
+    decoded    jsonb       not null,
     expires_at timestamptz not null
 );
 

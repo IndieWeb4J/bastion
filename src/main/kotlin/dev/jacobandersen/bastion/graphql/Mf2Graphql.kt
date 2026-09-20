@@ -1,10 +1,6 @@
 package dev.jacobandersen.bastion.graphql
 
-import dev.jacobandersen.bastion.microformats2.Mf2Object
-import dev.jacobandersen.bastion.microformats2.Mf2Value
-import dev.jacobandersen.bastion.microformats2.firstHtml
-import dev.jacobandersen.bastion.microformats2.firstText
-import dev.jacobandersen.bastion.microformats2.texts
+import dev.jacobandersen.bastion.microformats2.*
 import tools.jackson.databind.JsonNode
 import tools.jackson.databind.node.ArrayNode
 import tools.jackson.databind.node.ObjectNode

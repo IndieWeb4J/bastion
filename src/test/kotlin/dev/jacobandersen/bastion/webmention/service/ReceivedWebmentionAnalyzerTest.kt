@@ -135,7 +135,8 @@ class ReceivedWebmentionAnalyzerTest {
 
     @Test
     fun `no microformats at all is still a mention`() {
-        val analysis = analyze("""<html><body><p>just prose <a href="https://blog.example/1">link</a></p></body></html>""")
+        val analysis =
+            analyze("""<html><body><p>just prose <a href="https://blog.example/1">link</a></p></body></html>""")
         assertEquals(WebmentionInteraction.MENTION, analysis.interaction)
         assertEquals(null, analysis.primary)
     }

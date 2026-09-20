@@ -6,9 +6,7 @@ import dev.jacobandersen.bastion.micropub.type.resp.ApiResponse
 import dev.jacobandersen.bastion.websub.service.WebsubPublisher
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito.never
-import org.mockito.Mockito.times
-import org.mockito.Mockito.verify
+import org.mockito.Mockito.*
 import org.mockito.kotlin.clearInvocations
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -118,7 +116,8 @@ class WebsubDispatchIntegrationTest {
         val deleteResponse = deleteService.delete(MicropubPayload.Json(mapper.createObjectNode().put("url", location)))
         assertInstanceOf(ApiResponse.Success.NoContent::class.java, deleteResponse)
 
-        val undeleteResponse = deleteService.undelete(MicropubPayload.Json(mapper.createObjectNode().put("url", location)))
+        val undeleteResponse =
+            deleteService.undelete(MicropubPayload.Json(mapper.createObjectNode().put("url", location)))
         assertInstanceOf(ApiResponse.Success.NoContent::class.java, undeleteResponse)
 
         verify(websubPublisher, times(2)).publish()

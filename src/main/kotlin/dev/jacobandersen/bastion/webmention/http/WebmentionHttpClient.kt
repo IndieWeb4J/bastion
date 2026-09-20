@@ -18,7 +18,6 @@ import org.springframework.web.client.RestClientException
 import org.springframework.web.client.RestClientResponseException
 import java.net.http.HttpClient
 import java.time.Duration
-import kotlin.collections.firstOrNull
 
 private val logger = KotlinLogging.logger {}
 

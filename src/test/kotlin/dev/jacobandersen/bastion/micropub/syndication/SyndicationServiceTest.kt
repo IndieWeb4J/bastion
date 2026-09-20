@@ -13,12 +13,8 @@ import dev.jacobandersen.bastion.url.UrlService
 import org.jobrunr.scheduling.JobScheduler
 import org.junit.jupiter.api.Assertions.assertDoesNotThrow
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito.mock
-import org.mockito.Mockito.never
-import org.mockito.Mockito.times
-import org.mockito.Mockito.verify
-import org.mockito.Mockito.`when`
-import java.util.UUID
+import org.mockito.Mockito.*
+import java.util.*
 
 class SyndicationServiceTest {
     private val jobScheduler = mock(JobScheduler::class.java)
@@ -28,7 +24,8 @@ class SyndicationServiceTest {
     private val postService = mock(PostService::class.java)
     private val urlService = mock(UrlService::class.java)
 
-    private val service = SyndicationService(jobScheduler, config, httpClient, postSyndicationService, postService, urlService)
+    private val service =
+        SyndicationService(jobScheduler, config, httpClient, postSyndicationService, postService, urlService)
 
     private val postId = UUID.randomUUID()
 
@@ -131,9 +128,15 @@ class SyndicationServiceTest {
         `when`(postSyndicationService.findByPostId(postId))
             .thenReturn(
                 listOf(
-                    PostSyndicationEntity(postId = postId, targetUid = "bridgy").apply { syndicatedUrl = "https://brid.gy/syndicated" },
-                    PostSyndicationEntity(postId = postId, targetUid = "delete-only").apply { syndicatedUrl = "https://example.com/copy" },
-                    PostSyndicationEntity(postId = postId, targetUid = "missing").apply { syndicatedUrl = "https://example.com/missing" },
+                    PostSyndicationEntity(postId = postId, targetUid = "bridgy").apply {
+                        syndicatedUrl = "https://brid.gy/syndicated"
+                    },
+                    PostSyndicationEntity(postId = postId, targetUid = "delete-only").apply {
+                        syndicatedUrl = "https://example.com/copy"
+                    },
+                    PostSyndicationEntity(postId = postId, targetUid = "missing").apply {
+                        syndicatedUrl = "https://example.com/missing"
+                    },
                 ),
             )
         `when`(config.targetByUid("bridgy")).thenReturn(createTarget)
@@ -267,7 +270,11 @@ class SyndicationServiceTest {
 
         assertDoesNotThrow { service.runCreateJob(postId, "bridgy") }
 
-        verify(postSyndicationService, never()).recordOutcome(org.mockito.kotlin.any(), org.mockito.kotlin.any(), org.mockito.kotlin.any())
+        verify(postSyndicationService, never()).recordOutcome(
+            org.mockito.kotlin.any(),
+            org.mockito.kotlin.any(),
+            org.mockito.kotlin.any()
+        )
     }
 
     @Test
@@ -278,7 +285,11 @@ class SyndicationServiceTest {
         service.runCreateJob(postId, "bridgy")
 
         verify(httpClient, never()).sendCreate(org.mockito.kotlin.any(), org.mockito.kotlin.any())
-        verify(postSyndicationService, never()).recordOutcome(org.mockito.kotlin.any(), org.mockito.kotlin.any(), org.mockito.kotlin.any())
+        verify(postSyndicationService, never()).recordOutcome(
+            org.mockito.kotlin.any(),
+            org.mockito.kotlin.any(),
+            org.mockito.kotlin.any()
+        )
     }
 
     @Test
@@ -289,7 +300,11 @@ class SyndicationServiceTest {
         service.runCreateJob(postId, "bridgy")
 
         verify(httpClient, never()).sendCreate(org.mockito.kotlin.any(), org.mockito.kotlin.any())
-        verify(postSyndicationService, never()).recordOutcome(org.mockito.kotlin.any(), org.mockito.kotlin.any(), org.mockito.kotlin.any())
+        verify(postSyndicationService, never()).recordOutcome(
+            org.mockito.kotlin.any(),
+            org.mockito.kotlin.any(),
+            org.mockito.kotlin.any()
+        )
     }
 
     @Test
@@ -303,7 +318,11 @@ class SyndicationServiceTest {
 
         verify(httpClient, times(1)).sendDelete(createTarget, "https://bastion.test/2026/01/01/old-slug")
         verify(httpClient, never()).sendCreate(org.mockito.kotlin.any(), org.mockito.kotlin.any())
-        verify(postSyndicationService, never()).recordOutcome(org.mockito.kotlin.any(), org.mockito.kotlin.any(), org.mockito.kotlin.any())
+        verify(postSyndicationService, never()).recordOutcome(
+            org.mockito.kotlin.any(),
+            org.mockito.kotlin.any(),
+            org.mockito.kotlin.any()
+        )
     }
 
     @Test
@@ -323,7 +342,12 @@ class SyndicationServiceTest {
     fun `runDeleteJob does not throw when the http client fails`() {
         `when`(postService.findById(postId)).thenReturn(post)
         `when`(config.targetByUid("bridgy")).thenReturn(createTarget)
-        `when`(httpClient.sendDelete(createTarget, "https://bastion.test/2026/01/01/slug")).thenThrow(RuntimeException("boom"))
+        `when`(
+            httpClient.sendDelete(
+                createTarget,
+                "https://bastion.test/2026/01/01/slug"
+            )
+        ).thenThrow(RuntimeException("boom"))
 
         assertDoesNotThrow { service.runDeleteJob(postId, "bridgy", "https://bastion.test/2026/01/01/slug") }
     }
@@ -350,11 +374,17 @@ class SyndicationServiceTest {
         `when`(postService.findById(postId)).thenReturn(post)
         `when`(config.targetByUid("bridgy")).thenReturn(createTarget)
         `when`(urlService.generatePostUrl(post)).thenReturn("https://bastion.test/2026/01/01/slug")
-        `when`(httpClient.sendDelete(createTarget, "https://bastion.test/2026/01/01/old-slug")).thenThrow(RuntimeException("boom"))
+        `when`(httpClient.sendDelete(createTarget, "https://bastion.test/2026/01/01/old-slug")).thenThrow(
+            RuntimeException("boom")
+        )
 
         assertDoesNotThrow { service.runRebaseJob(postId, "bridgy", "https://bastion.test/2026/01/01/old-slug") }
 
-        verify(postSyndicationService, never()).recordOutcome(org.mockito.kotlin.any(), org.mockito.kotlin.any(), org.mockito.kotlin.any())
+        verify(postSyndicationService, never()).recordOutcome(
+            org.mockito.kotlin.any(),
+            org.mockito.kotlin.any(),
+            org.mockito.kotlin.any()
+        )
     }
 
     @Test

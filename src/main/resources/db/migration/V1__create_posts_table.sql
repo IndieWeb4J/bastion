@@ -4,7 +4,7 @@ create function iso8601_ts(value text)
     immutable
 as
 $$
-    select value::timestamptz
+select value::timestamptz
 $$;
 
 create function is_valid_url(url text)

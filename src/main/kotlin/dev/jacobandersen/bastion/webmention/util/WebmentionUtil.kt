@@ -26,7 +26,8 @@ internal object WebmentionUtil {
     private fun paramsHasWebmentionRel(params: String): Boolean =
         params.split(';').any { segment ->
             segment.split("=").let { parts ->
-                parts.size == 2 && parts[0].trim().equals("rel", ignoreCase = true) && hasWebmentionRel(parts[1].unquote())
+                parts.size == 2 && parts[0].trim()
+                    .equals("rel", ignoreCase = true) && hasWebmentionRel(parts[1].unquote())
             }
         }
 
@@ -60,7 +61,9 @@ internal object WebmentionUtil {
 
         val expires =
             expiresHeader?.let { header ->
-                runCatching { ZonedDateTime.parse(header.trim(), DateTimeFormatter.RFC_1123_DATE_TIME).toInstant() }.getOrNull()
+                runCatching {
+                    ZonedDateTime.parse(header.trim(), DateTimeFormatter.RFC_1123_DATE_TIME).toInstant()
+                }.getOrNull()
             }
         return expires?.takeIf { it.isAfter(now) }
     }
