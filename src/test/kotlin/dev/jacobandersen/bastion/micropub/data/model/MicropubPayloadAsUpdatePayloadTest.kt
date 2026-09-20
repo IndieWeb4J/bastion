@@ -4,7 +4,9 @@ import dev.jacobandersen.bastion.microformats2.Mf2Object
 import dev.jacobandersen.bastion.microformats2.Mf2Value
 import dev.jacobandersen.bastion.micropub.type.req.MicropubPayload
 import dev.jacobandersen.bastion.micropub.type.req.MicropubUpdatePayload
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import tools.jackson.databind.json.JsonMapper
 import tools.jackson.databind.node.ObjectNode
@@ -105,18 +107,18 @@ class MicropubPayloadAsUpdatePayloadTest {
         assertEquals(
             mapOf<String, List<Mf2Value>>(
                 "author" to
-                        listOf(
-                            Mf2Value.Object(
-                                Mf2Object(
-                                    type = listOf("h-card"),
-                                    properties =
-                                        mapOf(
-                                            "name" to listOf(Mf2Value.String("Jacob")),
-                                        ),
-                                    children = null,
-                                ),
+                    listOf(
+                        Mf2Value.Object(
+                            Mf2Object(
+                                type = listOf("h-card"),
+                                properties =
+                                    mapOf(
+                                        "name" to listOf(Mf2Value.String("Jacob")),
+                                    ),
+                                children = null,
                             ),
                         ),
+                    ),
             ),
             payload.replacements,
         )
@@ -138,12 +140,13 @@ class MicropubPayloadAsUpdatePayloadTest {
 
         assertEquals(
             mapOf<String, List<Mf2Value>>(
-                "count" to listOf(
-                    Mf2Value.Number(1),
-                    Mf2Value.Double(2.5),
-                    Mf2Value.Boolean(true),
-                    Mf2Value.String("three")
-                ),
+                "count" to
+                    listOf(
+                        Mf2Value.Number(1),
+                        Mf2Value.Double(2.5),
+                        Mf2Value.Boolean(true),
+                        Mf2Value.String("three"),
+                    ),
             ),
             payload.replacements,
         )
@@ -207,12 +210,13 @@ class MicropubPayloadAsUpdatePayloadTest {
         assertEquals(
             MicropubUpdatePayload.Removals.Many(
                 mapOf(
-                    "count" to listOf(
-                        Mf2Value.Number(1),
-                        Mf2Value.Double(2.5),
-                        Mf2Value.Boolean(true),
-                        Mf2Value.String("three")
-                    ),
+                    "count" to
+                        listOf(
+                            Mf2Value.Number(1),
+                            Mf2Value.Double(2.5),
+                            Mf2Value.Boolean(true),
+                            Mf2Value.String("three"),
+                        ),
                 ),
             ),
             payload.removals,

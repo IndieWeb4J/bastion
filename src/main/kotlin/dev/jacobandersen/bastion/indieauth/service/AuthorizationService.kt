@@ -131,7 +131,7 @@ class AuthorizationService(
                 errorRedirect(
                     authRequest,
                     IndieAuthError.Code.ACCESS_DENIED.value,
-                    "The authorization request has expired"
+                    "The authorization request has expired",
                 ),
             )
         }
@@ -142,7 +142,7 @@ class AuthorizationService(
                     errorRedirect(
                         authRequest,
                         IndieAuthError.Code.INVALID_REQUEST.value,
-                        "The authorization code is missing"
+                        "The authorization code is missing",
                     ),
                 )
 
@@ -244,7 +244,7 @@ class AuthorizationService(
         if (responseType != null && responseType != "code") {
             throw IndieAuthException(
                 IndieAuthError.Code.UNSUPPORTED_RESPONSE_TYPE,
-                "Only the 'code' response type is supported"
+                "Only the 'code' response type is supported",
             )
         }
     }
@@ -278,7 +278,7 @@ class AuthorizationService(
         if (invalid.isNotEmpty()) {
             throw IndieAuthException(
                 IndieAuthError.Code.INVALID_SCOPE,
-                "Unsupported scope requested: ${invalid.joinToString(" ")}"
+                "Unsupported scope requested: ${invalid.joinToString(" ")}",
             )
         }
         return requested
@@ -291,13 +291,13 @@ class AuthorizationService(
         if (codeChallenge.isNullOrBlank()) {
             throw IndieAuthException(
                 IndieAuthError.Code.INVALID_REQUEST,
-                "PKCE is required: a 'code_challenge' must be supplied"
+                "PKCE is required: a 'code_challenge' must be supplied",
             )
         }
         if (codeChallengeMethod != null && !codeChallengeMethod.equals(Pkce.METHOD_S256, ignoreCase = true)) {
             throw IndieAuthException(
                 IndieAuthError.Code.INVALID_REQUEST,
-                "Only the 'S256' code challenge method is supported"
+                "Only the 'S256' code challenge method is supported",
             )
         }
     }

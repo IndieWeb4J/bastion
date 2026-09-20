@@ -13,8 +13,12 @@ import dev.jacobandersen.bastion.url.UrlService
 import org.jobrunr.scheduling.JobScheduler
 import org.junit.jupiter.api.Assertions.assertDoesNotThrow
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito.*
-import java.util.*
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.never
+import org.mockito.Mockito.times
+import org.mockito.Mockito.verify
+import org.mockito.Mockito.`when`
+import java.util.UUID
 
 class SyndicationServiceTest {
     private val jobScheduler = mock(JobScheduler::class.java)
@@ -273,7 +277,7 @@ class SyndicationServiceTest {
         verify(postSyndicationService, never()).recordOutcome(
             org.mockito.kotlin.any(),
             org.mockito.kotlin.any(),
-            org.mockito.kotlin.any()
+            org.mockito.kotlin.any(),
         )
     }
 
@@ -288,7 +292,7 @@ class SyndicationServiceTest {
         verify(postSyndicationService, never()).recordOutcome(
             org.mockito.kotlin.any(),
             org.mockito.kotlin.any(),
-            org.mockito.kotlin.any()
+            org.mockito.kotlin.any(),
         )
     }
 
@@ -303,7 +307,7 @@ class SyndicationServiceTest {
         verify(postSyndicationService, never()).recordOutcome(
             org.mockito.kotlin.any(),
             org.mockito.kotlin.any(),
-            org.mockito.kotlin.any()
+            org.mockito.kotlin.any(),
         )
     }
 
@@ -321,7 +325,7 @@ class SyndicationServiceTest {
         verify(postSyndicationService, never()).recordOutcome(
             org.mockito.kotlin.any(),
             org.mockito.kotlin.any(),
-            org.mockito.kotlin.any()
+            org.mockito.kotlin.any(),
         )
     }
 
@@ -345,8 +349,8 @@ class SyndicationServiceTest {
         `when`(
             httpClient.sendDelete(
                 createTarget,
-                "https://bastion.test/2026/01/01/slug"
-            )
+                "https://bastion.test/2026/01/01/slug",
+            ),
         ).thenThrow(RuntimeException("boom"))
 
         assertDoesNotThrow { service.runDeleteJob(postId, "bridgy", "https://bastion.test/2026/01/01/slug") }
@@ -375,7 +379,7 @@ class SyndicationServiceTest {
         `when`(config.targetByUid("bridgy")).thenReturn(createTarget)
         `when`(urlService.generatePostUrl(post)).thenReturn("https://bastion.test/2026/01/01/slug")
         `when`(httpClient.sendDelete(createTarget, "https://bastion.test/2026/01/01/old-slug")).thenThrow(
-            RuntimeException("boom")
+            RuntimeException("boom"),
         )
 
         assertDoesNotThrow { service.runRebaseJob(postId, "bridgy", "https://bastion.test/2026/01/01/old-slug") }
@@ -383,7 +387,7 @@ class SyndicationServiceTest {
         verify(postSyndicationService, never()).recordOutcome(
             org.mockito.kotlin.any(),
             org.mockito.kotlin.any(),
-            org.mockito.kotlin.any()
+            org.mockito.kotlin.any(),
         )
     }
 

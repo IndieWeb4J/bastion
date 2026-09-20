@@ -95,8 +95,8 @@ class WebmentionController(
         runCatching {
             val uri = URI(value)
             uri.isAbsolute &&
-                    (uri.scheme == "http" || uri.scheme == "https") &&
-                    uri.host != null
+                (uri.scheme == "http" || uri.scheme == "https") &&
+                uri.host != null
         }.getOrDefault(false)
 
     private fun invalidRequest(description: String): ResponseEntity<*> =

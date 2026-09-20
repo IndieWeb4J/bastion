@@ -6,7 +6,9 @@ import dev.jacobandersen.bastion.indieauth.data.repository.AuthRequestRepository
 import dev.jacobandersen.bastion.indieauth.data.repository.AuthorizationCodeRepository
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito.*
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.verify
+import org.mockito.Mockito.`when`
 import java.time.Instant
 
 class IndieAuthRowPurgeServiceTest {

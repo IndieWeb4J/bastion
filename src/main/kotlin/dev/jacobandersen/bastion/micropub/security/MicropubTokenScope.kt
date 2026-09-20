@@ -16,7 +16,6 @@ enum class MicropubTokenScope : GrantedAuthority {
         fun fromString(scope: String): MicropubTokenScope =
             fromStringOrNull(scope) ?: throw IllegalArgumentException("Unknown token scope '$scope'")
 
-        fun fromStringOrNull(scope: String): MicropubTokenScope? =
-            entries.find { it.name.equals(scope, ignoreCase = true) }
+        fun fromStringOrNull(scope: String): MicropubTokenScope? = entries.find { it.name.equals(scope, ignoreCase = true) }
     }
 }

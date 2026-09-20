@@ -26,8 +26,10 @@ internal object WebmentionUtil {
     private fun paramsHasWebmentionRel(params: String): Boolean =
         params.split(';').any { segment ->
             segment.split("=").let { parts ->
-                parts.size == 2 && parts[0].trim()
-                    .equals("rel", ignoreCase = true) && hasWebmentionRel(parts[1].unquote())
+                parts.size == 2 &&
+                    parts[0]
+                        .trim()
+                        .equals("rel", ignoreCase = true) && hasWebmentionRel(parts[1].unquote())
             }
         }
 

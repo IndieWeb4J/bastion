@@ -3,7 +3,7 @@ package dev.jacobandersen.bastion.url
 import com.github.slugify.Slugify
 import org.springframework.context.annotation.Bean
 import org.springframework.stereotype.Component
-import java.util.*
+import java.util.Locale
 
 @Component
 class SlugifyProvider {

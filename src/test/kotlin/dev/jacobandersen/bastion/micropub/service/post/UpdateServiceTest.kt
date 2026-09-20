@@ -10,7 +10,12 @@ import dev.jacobandersen.bastion.micropub.type.PostVisibility
 import dev.jacobandersen.bastion.micropub.type.req.MicropubPayload
 import dev.jacobandersen.bastion.micropub.type.resp.ApiResponse
 import dev.jacobandersen.bastion.url.UrlService
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertInstanceOf
+import org.junit.jupiter.api.Assertions.assertNotEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -60,8 +65,7 @@ class UpdateServiceTest {
         return MicropubPayload.Json(root)
     }
 
-    private fun updateWithUrlOnly(url: String): MicropubPayload.Json =
-        MicropubPayload.Json(mapper.createObjectNode().put("url", url))
+    private fun updateWithUrlOnly(url: String): MicropubPayload.Json = MicropubPayload.Json(mapper.createObjectNode().put("url", url))
 
     @Test
     fun replacesProperty() {
@@ -137,7 +141,7 @@ class UpdateServiceTest {
         assertInstanceOf(ApiResponse.Success.Created::class.java, response)
         assertEquals(
             urlService.generatePostUrl(postService.findBySlug(newSlug)!!),
-            (response as ApiResponse.Success.Created).location
+            (response as ApiResponse.Success.Created).location,
         )
         assertNull(postService.findBySlug(post.slug))
         assertEquals(emptyList<Mf2Value>(), postService.findBySlug(newSlug)!!.post.getProperty("mp-slug"))
@@ -157,7 +161,7 @@ class UpdateServiceTest {
         assertInstanceOf(ApiResponse.Success.Created::class.java, response)
         assertEquals(
             urlService.generatePostUrl(postService.findBySlug(expectedSlug)!!),
-            (response as ApiResponse.Success.Created).location
+            (response as ApiResponse.Success.Created).location,
         )
         assertNull(postService.findBySlug(second.slug))
     }

@@ -86,7 +86,7 @@ class WebmentionSourceFetcher(
                         current,
                         response.contentType(),
                         "",
-                        "redirect without a Location header"
+                        "redirect without a Location header",
                     )
                 }
                 current = runCatching { URI(current).resolve(location).toString() }.getOrNull()
@@ -95,7 +95,7 @@ class WebmentionSourceFetcher(
                         current,
                         response.contentType(),
                         "",
-                        "redirect Location is not a valid URL"
+                        "redirect Location is not a valid URL",
                     )
                 return@repeat
             }

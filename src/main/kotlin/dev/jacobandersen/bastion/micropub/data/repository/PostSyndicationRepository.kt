@@ -3,7 +3,7 @@ package dev.jacobandersen.bastion.micropub.data.repository
 import dev.jacobandersen.bastion.micropub.data.entity.PostSyndicationEntity
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
-import java.util.*
+import java.util.UUID
 
 @Repository
 interface PostSyndicationRepository : JpaRepository<PostSyndicationEntity, UUID> {

@@ -4,7 +4,7 @@ import dev.jacobandersen.bastion.micropub.data.entity.PostSyndicationEntity
 import dev.jacobandersen.bastion.micropub.data.repository.PostSyndicationRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.util.*
+import java.util.UUID
 
 @Service
 class PostSyndicationService(

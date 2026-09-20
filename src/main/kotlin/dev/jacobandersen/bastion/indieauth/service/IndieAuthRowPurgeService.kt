@@ -45,7 +45,7 @@ class IndieAuthRowPurgeService(
 
         logger.info {
             "Purged $authRequests expired authorization requests, $codes dead authorization codes and " +
-                    "$tokens expired access tokens"
+                "$tokens expired access tokens"
         }
         return authRequests + codes + tokens
     }

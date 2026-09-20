@@ -5,7 +5,9 @@ import dev.jacobandersen.bastion.micropub.type.req.MicropubPayload
 import dev.jacobandersen.bastion.micropub.type.resp.ApiResponse
 import dev.jacobandersen.bastion.webmention.data.domain.WebmentionState
 import dev.jacobandersen.bastion.webmention.data.repository.WebmentionNotificationRepository
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertInstanceOf
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -86,10 +88,11 @@ class WebmentionDispatchIntegrationTest {
         assertNull(stateOf(draftLocation, "https://example.com/draft"))
 
         val privateSlug = uniqueSlug("dispatch-private")
-        val private = createService.create(
-            createPayload("See https://example.com/private", privateSlug, visibility = "private"),
-            null
-        )
+        val private =
+            createService.create(
+                createPayload("See https://example.com/private", privateSlug, visibility = "private"),
+                null,
+            )
         val privateLocation = (private as ApiResponse.Success.Created).location
         assertNull(stateOf(privateLocation, "https://example.com/private"))
     }

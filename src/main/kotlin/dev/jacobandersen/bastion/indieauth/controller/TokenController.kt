@@ -54,7 +54,7 @@ class TokenController(
         if (grantType != "authorization_code") {
             throw IndieAuthException(
                 IndieAuthError.Code.UNSUPPORTED_GRANT_TYPE,
-                "Only the 'authorization_code' grant is supported"
+                "Only the 'authorization_code' grant is supported",
             )
         }
         if (code.isNullOrBlank()) {

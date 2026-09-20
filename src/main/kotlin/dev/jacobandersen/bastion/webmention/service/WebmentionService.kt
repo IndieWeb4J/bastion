@@ -142,8 +142,7 @@ class WebmentionService(
         }
     }
 
-    internal fun targetUrlsOf(obj: Mf2Object): Set<String> =
-        Mf2TextExtractor.extractText(obj).let(UrlExtractor::distinctUrls).toSet()
+    internal fun targetUrlsOf(obj: Mf2Object): Set<String> = Mf2TextExtractor.extractText(obj).let(UrlExtractor::distinctUrls).toSet()
 
     private fun resolveEndpointForTarget(
         targetUrl: String,

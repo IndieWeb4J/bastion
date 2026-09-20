@@ -3,7 +3,12 @@ package dev.jacobandersen.bastion.micropub.data.service
 import dev.jacobandersen.bastion.microformats2.Mf2Object
 import dev.jacobandersen.bastion.microformats2.Mf2Value
 import org.springframework.stereotype.Service
-import java.time.*
+import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.OffsetDateTime
+import java.time.ZoneId
+import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 
@@ -17,8 +22,7 @@ class PostTimeService(
 
     fun now(): OffsetDateTime = OffsetDateTime.now(zone).truncatedTo(ChronoUnit.SECONDS)
 
-    fun normalizeOrThrow(raw: String): OffsetDateTime =
-        parse(raw) ?: throw IllegalArgumentException("Invalid timestamp: $raw")
+    fun normalizeOrThrow(raw: String): OffsetDateTime = parse(raw) ?: throw IllegalArgumentException("Invalid timestamp: $raw")
 
     /**
      * Normalizes `published` (or supplies it from now) and stamps `updated`,

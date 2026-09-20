@@ -8,10 +8,15 @@ import dev.jacobandersen.bastion.micropub.type.PostStatus
 import dev.jacobandersen.bastion.micropub.type.PostType
 import dev.jacobandersen.bastion.micropub.type.PostVisibility
 import dev.jacobandersen.bastion.url.UrlService
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito.*
-import java.util.*
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.verify
+import org.mockito.Mockito.`when`
+import java.util.UUID
 
 class PostQueryServiceTest {
     private val postService = mock(PostService::class.java)
@@ -77,16 +82,16 @@ class PostQueryServiceTest {
                 "deleted",
                 PostStatus.PUBLISHED,
                 PostVisibility.PUBLIC,
-                deleted = true
-            )
+                deleted = true,
+            ),
         )
         `when`(postService.findBySlug("draft")).thenReturn(post("draft", PostStatus.DRAFT, PostVisibility.PUBLIC))
         `when`(postService.findBySlug("private")).thenReturn(
             post(
                 "private",
                 PostStatus.PUBLISHED,
-                PostVisibility.PRIVATE
-            )
+                PostVisibility.PRIVATE,
+            ),
         )
 
         val gone = service.post("deleted", null)
@@ -103,8 +108,8 @@ class PostQueryServiceTest {
             post(
                 "unlisted",
                 PostStatus.PUBLISHED,
-                PostVisibility.UNLISTED
-            )
+                PostVisibility.UNLISTED,
+            ),
         )
 
         assertEquals("public", slugOf(service.post("public", null)))

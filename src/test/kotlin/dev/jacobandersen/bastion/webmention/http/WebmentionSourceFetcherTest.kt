@@ -59,7 +59,7 @@ class WebmentionSourceFetcherTest {
                 it,
                 200,
                 "<div class=\"h-entry\">hi</div>",
-                mapOf("Content-Type" to "text/html")
+                mapOf("Content-Type" to "text/html"),
             )
         }) { base ->
             val fetch = fetcher().fetch("$base/post")

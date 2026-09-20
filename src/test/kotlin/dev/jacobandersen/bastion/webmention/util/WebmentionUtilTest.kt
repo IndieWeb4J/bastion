@@ -88,12 +88,13 @@ class WebmentionUtilTest {
 
     @Test
     fun returnsNullWhenNoWebmentionRel() {
-        val endpoint = WebmentionUtil.findEndpointInLinkHeaders(
-            listOf(
-                "<https://example.com/a>; rel=\"next\"",
-                "<https://example.com/b>"
+        val endpoint =
+            WebmentionUtil.findEndpointInLinkHeaders(
+                listOf(
+                    "<https://example.com/a>; rel=\"next\"",
+                    "<https://example.com/b>",
+                ),
             )
-        )
 
         assertNull(endpoint)
     }
@@ -102,7 +103,7 @@ class WebmentionUtilTest {
     fun resolvesRelativeEndpoint() {
         assertEquals(
             "https://example.com/webmention",
-            WebmentionUtil.resolveEndpoint("/webmention", "https://example.com/post")
+            WebmentionUtil.resolveEndpoint("/webmention", "https://example.com/post"),
         )
     }
 
@@ -110,7 +111,7 @@ class WebmentionUtilTest {
     fun resolvesEndpointAgainstBasePath() {
         assertEquals(
             "https://example.com/a/webmention",
-            WebmentionUtil.resolveEndpoint("webmention", "https://example.com/a/b")
+            WebmentionUtil.resolveEndpoint("webmention", "https://example.com/a/b"),
         )
     }
 

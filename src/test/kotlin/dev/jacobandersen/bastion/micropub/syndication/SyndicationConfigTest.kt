@@ -76,10 +76,12 @@ class SyndicationConfigTest {
 
         assertEquals(
             listOf("bridgy"),
-            config.targetsSupporting(listOf("bridgy", "bridgy"), SyndicationAction.CREATE).map { it.uid })
+            config.targetsSupporting(listOf("bridgy", "bridgy"), SyndicationAction.CREATE).map { it.uid },
+        )
         assertEquals(
             listOf("delete-only"),
-            config.targetsSupporting(listOf("delete-only"), SyndicationAction.DELETE).map { it.uid })
+            config.targetsSupporting(listOf("delete-only"), SyndicationAction.DELETE).map { it.uid },
+        )
         assertTrue(config.targetsSupporting(listOf("delete-only"), SyndicationAction.CREATE).isEmpty())
         assertTrue(config.targetsSupporting(listOf("unknown"), SyndicationAction.CREATE).isEmpty())
     }

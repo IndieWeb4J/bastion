@@ -5,13 +5,19 @@ import dev.jacobandersen.bastion.webmention.data.domain.ReceivedWebmentionState
 import dev.jacobandersen.bastion.webmention.data.domain.WebmentionInteraction
 import dev.jacobandersen.bastion.webmention.data.entity.ReceivedWebmentionEntity
 import dev.jacobandersen.bastion.webmention.data.repository.ReceivedWebmentionRepository
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentCaptor
-import org.mockito.Mockito.*
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.times
+import org.mockito.Mockito.verify
+import org.mockito.Mockito.`when`
 import org.mockito.kotlin.any
 import java.time.Instant
-import java.util.*
+import java.util.UUID
 
 class ReceivedWebmentionServiceTest {
     private val repository = mock(ReceivedWebmentionRepository::class.java)
@@ -67,11 +73,12 @@ class ReceivedWebmentionServiceTest {
 
     @Test
     fun `ensurePending reopens a previously rejected record`() {
-        val existing = entity(
-            state = ReceivedWebmentionState.REJECTED,
-            interaction = WebmentionInteraction.LIKE,
-            contentText = "old"
-        )
+        val existing =
+            entity(
+                state = ReceivedWebmentionState.REJECTED,
+                interaction = WebmentionInteraction.LIKE,
+                contentText = "old",
+            )
         `when`(repository.findBySourceUrlAndPostId(sourceUrl, postId)).thenReturn(existing)
 
         service.ensurePending(sourceUrl, targetUrl, postId)
@@ -157,10 +164,10 @@ class ReceivedWebmentionServiceTest {
                 properties =
                     mapOf(
                         "content" to
-                                listOf(
-                                    dev.jacobandersen.bastion.microformats2.Mf2Value
-                                        .String("Nice post"),
-                                ),
+                            listOf(
+                                dev.jacobandersen.bastion.microformats2.Mf2Value
+                                    .String("Nice post"),
+                            ),
                     ),
             )
         `when`(repository.findBySourceUrlAndPostId(sourceUrl, postId)).thenReturn(existing)

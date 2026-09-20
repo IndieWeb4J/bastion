@@ -14,25 +14,25 @@ internal object Mf2TextExtractor {
     private val textPropertiesByType: Map<String, List<String>> =
         mapOf(
             "h-entry" to
-                    listOf(
-                        "content",
-                        "summary",
-                        "in-reply-to",
-                        "like-of",
-                        "repost-of",
-                        "bookmark-of",
-                        "listen-of",
-                        "watch-of",
-                        "read-of",
-                        "translation-of",
-                        "checkin",
-                        "review-of",
-                    ),
+                listOf(
+                    "content",
+                    "summary",
+                    "in-reply-to",
+                    "like-of",
+                    "repost-of",
+                    "bookmark-of",
+                    "listen-of",
+                    "watch-of",
+                    "read-of",
+                    "translation-of",
+                    "checkin",
+                    "review-of",
+                ),
             "h-cite" to
-                    listOf(
-                        "url",
-                        "content",
-                    ),
+                listOf(
+                    "url",
+                    "content",
+                ),
         )
 
     fun extractText(obj: Mf2Object): List<String> {
