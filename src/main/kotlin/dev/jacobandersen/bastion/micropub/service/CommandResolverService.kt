@@ -44,7 +44,8 @@ class MicropubCommandResolver(
             when (val command = value(lookup(MicropubCommand.MP_SLUG))) {
                 is MicropubCommandValue.Absent -> null
                 is MicropubCommandValue.Invalid -> return null
-                is MicropubCommandValue.Present -> slugify.slugify(command.value).takeIf { it.isNotBlank() } ?: return null
+                is MicropubCommandValue.Present -> slugify.slugify(command.value).takeIf { it.isNotBlank() }
+                    ?: return null
             }
 
         val status =

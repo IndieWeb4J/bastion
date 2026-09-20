@@ -2,9 +2,7 @@ package dev.jacobandersen.bastion.webmention.service
 
 import dev.jacobandersen.bastion.microformats2.Mf2ParserImpl
 import dev.jacobandersen.bastion.webmention.http.SourceFetch
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 
 class WebmentionSourceVerifierTest {

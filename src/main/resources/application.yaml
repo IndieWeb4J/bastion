@@ -45,7 +45,7 @@ bastion:
     max-age: ${BASTION_CORS_MAX_AGE:3600}
   micropub:
     syndication:
-      targets: []
+      targets: [ ]
 
 logging:
   level:

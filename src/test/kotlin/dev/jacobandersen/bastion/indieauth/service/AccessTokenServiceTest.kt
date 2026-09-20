@@ -7,15 +7,10 @@ import dev.jacobandersen.bastion.indieauth.data.repository.AuthorizationCodeRepo
 import dev.jacobandersen.bastion.indieauth.security.Pkce
 import dev.jacobandersen.bastion.indieauth.security.Tokens
 import dev.jacobandersen.bastion.indieauth.type.IndieAuthError
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNull
-import org.junit.jupiter.api.Assertions.assertThrows
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentCaptor
-import org.mockito.Mockito.mock
-import org.mockito.Mockito.verify
-import org.mockito.Mockito.`when`
+import org.mockito.Mockito.*
 import org.mockito.kotlin.any
 import org.mockito.kotlin.eq
 import java.time.Instant
@@ -57,7 +52,8 @@ class AccessTokenServiceTest {
         assertEquals("https://bastion.test", issued.me)
         assertEquals("create", issued.scope)
         assertTrue(issued.accessToken.isNotBlank())
-        val captor = ArgumentCaptor.forClass(dev.jacobandersen.bastion.indieauth.data.entity.AccessTokenEntity::class.java)
+        val captor =
+            ArgumentCaptor.forClass(dev.jacobandersen.bastion.indieauth.data.entity.AccessTokenEntity::class.java)
         verify(accessTokenRepository).save(captor.capture())
         assertEquals(Tokens.sha256(issued.accessToken), captor.value.tokenHash)
     }
@@ -71,7 +67,11 @@ class AccessTokenServiceTest {
 
     @Test
     fun `exchange rejects an expired code`() {
-        `when`(authorizationCodeRepository.findByCodeHash(codeHash)).thenReturn(code(expiresAt = Instant.now().minusSeconds(1)))
+        `when`(authorizationCodeRepository.findByCodeHash(codeHash)).thenReturn(
+            code(
+                expiresAt = Instant.now().minusSeconds(1)
+            )
+        )
 
         assertInvalidGrant { service.exchange(rawCode, clientId, redirectUri, null) }
     }

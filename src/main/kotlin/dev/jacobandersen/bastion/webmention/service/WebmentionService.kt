@@ -129,7 +129,8 @@ class WebmentionService(
 
             is SendWebmentionResult.Failure -> {
                 logger.warn { "Webmention to $endpointUrl failed: ${result.message}" }
-                val attempts = notificationService.recordFailure(sourceUrl, targetUrl, result.statusCode, result.message)
+                val attempts =
+                    notificationService.recordFailure(sourceUrl, targetUrl, result.statusCode, result.message)
                 val nextAttempt =
                     if (result.retryable && attempts < config.maxAttempts) {
                         nextAttemptAt(attempts)
@@ -141,7 +142,8 @@ class WebmentionService(
         }
     }
 
-    internal fun targetUrlsOf(obj: Mf2Object): Set<String> = Mf2TextExtractor.extractText(obj).let(UrlExtractor::distinctUrls).toSet()
+    internal fun targetUrlsOf(obj: Mf2Object): Set<String> =
+        Mf2TextExtractor.extractText(obj).let(UrlExtractor::distinctUrls).toSet()
 
     private fun resolveEndpointForTarget(
         targetUrl: String,

@@ -2,8 +2,7 @@ package dev.jacobandersen.bastion.indieauth.security
 
 import java.security.MessageDigest
 import java.security.SecureRandom
-import java.util.Base64
-import java.util.HexFormat
+import java.util.*
 
 /**
  * Cryptographically secure token generation and hashing for the IndieAuth

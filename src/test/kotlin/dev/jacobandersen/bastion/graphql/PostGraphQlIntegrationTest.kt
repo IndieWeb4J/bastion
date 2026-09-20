@@ -85,8 +85,20 @@ class PostGraphQlIntegrationTest {
         deleteService.delete(MicropubPayload.Json(mapper.createObjectNode().put("url", deletedLocation)))
 
         val noteId = postRepository.findBySlug(publicNote)!!.id!!
-        saveWebmention(noteId, "https://reply.example/1", WebmentionInteraction.REPLY, ReceivedWebmentionState.VERIFIED, "Reply author")
-        saveWebmention(noteId, "https://rsvp.example/1", WebmentionInteraction.RSVP, ReceivedWebmentionState.VERIFIED, "RSVP author")
+        saveWebmention(
+            noteId,
+            "https://reply.example/1",
+            WebmentionInteraction.REPLY,
+            ReceivedWebmentionState.VERIFIED,
+            "Reply author"
+        )
+        saveWebmention(
+            noteId,
+            "https://rsvp.example/1",
+            WebmentionInteraction.RSVP,
+            ReceivedWebmentionState.VERIFIED,
+            "RSVP author"
+        )
         saveWebmention(
             noteId,
             "https://rejected.example/1",

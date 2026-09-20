@@ -90,5 +90,6 @@ class Mf2GraphqlTest {
         assertTrue(result.containsKey("nested"))
     }
 
-    private fun entry(properties: MutableMap<String, List<Mf2Value>>): Mf2Object = Mf2Object(listOf("h-entry"), properties, null)
+    private fun entry(properties: MutableMap<String, List<Mf2Value>>): Mf2Object =
+        Mf2Object(listOf("h-entry"), properties, null)
 }

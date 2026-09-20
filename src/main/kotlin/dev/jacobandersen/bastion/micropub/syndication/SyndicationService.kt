@@ -10,7 +10,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jobrunr.jobs.annotations.Job
 import org.jobrunr.scheduling.JobScheduler
 import org.springframework.stereotype.Service
-import java.util.UUID
+import java.util.*
 
 private val logger = KotlinLogging.logger {}
 
@@ -89,7 +89,9 @@ class SyndicationService(
         postSyndicationService
             .findByPostId(post.id)
             .filter { it.syndicatedUrl != null }
-            .mapNotNull { record -> config.targetByUid(record.targetUid)?.takeIf { it.supports(SyndicationAction.DELETE) } }
+            .mapNotNull { record ->
+                config.targetByUid(record.targetUid)?.takeIf { it.supports(SyndicationAction.DELETE) }
+            }
             .forEach { target ->
                 jobScheduler.enqueue<SyndicationService> { it.runDeleteJob(post.id, target.uid, sourceUrl) }
             }
@@ -167,7 +169,11 @@ class SyndicationService(
             when (val result = httpClient.sendCreate(target, post.post)) {
                 is SyndicationSendResult.Success -> {
                     logger.info { "Syndicated post $postId to target \"$targetUid\" (HTTP ${result.statusCode})" }
-                    postSyndicationService.recordOutcome(postId, targetUid, result.location ?: urlService.generatePostUrl(post))
+                    postSyndicationService.recordOutcome(
+                        postId,
+                        targetUid,
+                        result.location ?: urlService.generatePostUrl(post)
+                    )
                 }
 
                 is SyndicationSendResult.Failure -> {
@@ -264,7 +270,11 @@ class SyndicationService(
             when (val createResult = httpClient.sendCreate(target, post.post)) {
                 is SyndicationSendResult.Success -> {
                     logger.info { "Syndication rebase re-created post $postId at target \"$targetUid\" (HTTP ${createResult.statusCode})" }
-                    postSyndicationService.recordOutcome(postId, targetUid, createResult.location ?: urlService.generatePostUrl(post))
+                    postSyndicationService.recordOutcome(
+                        postId,
+                        targetUid,
+                        createResult.location ?: urlService.generatePostUrl(post)
+                    )
                 }
 
                 is SyndicationSendResult.Failure -> {

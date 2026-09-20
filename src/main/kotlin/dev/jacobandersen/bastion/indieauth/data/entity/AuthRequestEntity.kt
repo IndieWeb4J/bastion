@@ -1,13 +1,8 @@
 package dev.jacobandersen.bastion.indieauth.data.entity
 
-import jakarta.persistence.Column
-import jakarta.persistence.Entity
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.GenerationType
-import jakarta.persistence.Id
-import jakarta.persistence.Table
+import jakarta.persistence.*
 import java.time.Instant
-import java.util.UUID
+import java.util.*
 
 /**
  * A pending IndieAuth authorization request, keyed by the one-time `state` hash

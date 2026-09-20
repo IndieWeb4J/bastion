@@ -4,20 +4,13 @@ import dev.jacobandersen.bastion.microformats2.Mf2Object
 import dev.jacobandersen.bastion.micropub.data.domain.Post
 import dev.jacobandersen.bastion.micropub.type.PostStatus
 import dev.jacobandersen.bastion.micropub.type.PostVisibility
-import jakarta.persistence.Column
-import jakarta.persistence.Entity
-import jakarta.persistence.EnumType
-import jakarta.persistence.Enumerated
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.GenerationType
-import jakarta.persistence.Id
-import jakarta.persistence.Table
+import jakarta.persistence.*
 import org.hibernate.annotations.Generated
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.generator.EventType
 import org.hibernate.type.SqlTypes
 import java.time.Instant
-import java.util.UUID
+import java.util.*
 
 @Entity
 @Table(name = "posts")
@@ -57,7 +50,13 @@ class PostEntity(
     @Column(name = "updated_at_utc", nullable = false, insertable = false, updatable = false)
     var updatedAtUtc: Instant? = null
 
-    constructor(slug: String, status: PostStatus, visibility: PostVisibility, deleted: Boolean = false, post: Mf2Object) : this(
+    constructor(
+        slug: String,
+        status: PostStatus,
+        visibility: PostVisibility,
+        deleted: Boolean = false,
+        post: Mf2Object
+    ) : this(
         null,
         slug,
         status,

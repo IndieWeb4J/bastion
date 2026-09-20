@@ -6,7 +6,7 @@ import dev.jacobandersen.bastion.micropub.data.entity.PostEntity
 import dev.jacobandersen.bastion.micropub.type.PostStatus
 import dev.jacobandersen.bastion.micropub.type.PostVisibility
 import java.time.OffsetDateTime
-import java.util.UUID
+import java.util.*
 
 data class Post(
     val id: UUID,
@@ -44,5 +44,6 @@ data class Post(
      * refetches them after flush. Updates go through the managed entity
      * instead of building a detached one.
      */
-    fun toEntity(): PostEntity = PostEntity(id = id, slug = slug, status = status, visibility = visibility, deleted = deleted, post = post)
+    fun toEntity(): PostEntity =
+        PostEntity(id = id, slug = slug, status = status, visibility = visibility, deleted = deleted, post = post)
 }

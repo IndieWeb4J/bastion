@@ -1,5 +1,8 @@
 package dev.jacobandersen.bastion.webmention.service
 
+import dev.jacobandersen.bastion.webmention.service.WebmentionSubmissionLimiter.Companion.MAX_SUBMISSIONS_PER_SOURCE
+import dev.jacobandersen.bastion.webmention.service.WebmentionSubmissionLimiter.Companion.PAIR_COOLDOWN
+import dev.jacobandersen.bastion.webmention.service.WebmentionSubmissionLimiter.Companion.SOURCE_WINDOW
 import org.springframework.stereotype.Component
 import java.time.Duration
 import java.time.Instant

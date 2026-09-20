@@ -27,23 +27,23 @@ class Mf2ValueSerializationTest {
                         "count" to listOf(Mf2Value.Number(42)),
                         "rating" to listOf(Mf2Value.Double(4.5)),
                         "author" to
-                            listOf(
-                                Mf2Value.Object(
-                                    Mf2Object(
-                                        type = listOf("h-card"),
-                                        properties =
-                                            mutableMapOf(
-                                                "name" to
-                                                    listOf(
-                                                        Mf2Value.String(
-                                                            "Jacob",
-                                                        ),
-                                                    ),
-                                            ),
-                                        children = null,
+                                listOf(
+                                    Mf2Value.Object(
+                                        Mf2Object(
+                                            type = listOf("h-card"),
+                                            properties =
+                                                mutableMapOf(
+                                                    "name" to
+                                                            listOf(
+                                                                Mf2Value.String(
+                                                                    "Jacob",
+                                                                ),
+                                                            ),
+                                                ),
+                                            children = null,
+                                        ),
                                     ),
                                 ),
-                            ),
                     ),
                 children = null,
             )

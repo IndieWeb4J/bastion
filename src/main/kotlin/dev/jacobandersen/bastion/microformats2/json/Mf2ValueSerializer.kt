@@ -19,7 +19,9 @@ class Mf2ValueSerializer : StdSerializer<Mf2Value>(Mf2Value::class.java) {
             is Mf2Value.Boolean -> gen.writeBoolean(value.value)
             is Mf2Value.Number -> gen.writeNumber(value.value)
             is Mf2Value.Double -> gen.writeNumber(value.value)
-            is Mf2Value.Object -> provider.findValueSerializer(Mf2Object::class.java).serialize(value.value, gen, provider)
+            is Mf2Value.Object -> provider.findValueSerializer(Mf2Object::class.java)
+                .serialize(value.value, gen, provider)
+
             is Mf2Value.Json -> provider.findValueSerializer(JsonNode::class.java).serialize(value.value, gen, provider)
         }
     }

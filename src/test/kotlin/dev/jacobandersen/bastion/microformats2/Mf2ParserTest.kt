@@ -15,7 +15,8 @@ class Mf2ParserTest {
         return result.items.single()
     }
 
-    private fun Mf2Object.firstString(key: String): String? = (getProperty(key).firstOrNull() as? Mf2Value.String)?.value
+    private fun Mf2Object.firstString(key: String): String? =
+        (getProperty(key).firstOrNull() as? Mf2Value.String)?.value
 
     private fun Mf2Object.first(key: String): Mf2Value? = getProperty(key).firstOrNull()
 
@@ -368,5 +369,6 @@ class Mf2ParserTest {
         assertEquals("http://example.com/sub/dir/post", entry.firstString("url"))
     }
 
-    private fun Mf2Object.strings(key: String): List<String> = getProperty(key).mapNotNull { (it as? Mf2Value.String)?.value }
+    private fun Mf2Object.strings(key: String): List<String> =
+        getProperty(key).mapNotNull { (it as? Mf2Value.String)?.value }
 }

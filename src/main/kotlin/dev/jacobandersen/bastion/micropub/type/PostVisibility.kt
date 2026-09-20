@@ -1,6 +1,6 @@
 package dev.jacobandersen.bastion.micropub.type
 
-import java.util.Locale
+import java.util.*
 
 enum class PostVisibility {
     PUBLIC,

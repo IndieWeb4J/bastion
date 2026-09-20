@@ -58,7 +58,11 @@ class IndieAuthRowPurgeRecurringJobTest {
         authRequestRepository.save(row(midRunHash, now.plusSeconds(5)))
 
         // Fires are happening at all.
-        assertPurgedWithin(controlHash, Duration.ofSeconds(20), "control row (expired at insert) was not purged by a recurring fire")
+        assertPurgedWithin(
+            controlHash,
+            Duration.ofSeconds(20),
+            "control row (expired at insert) was not purged by a recurring fire"
+        )
 
         // The row that expired after registration is gone too - the cutoff is fresh per fire.
         assertPurgedWithin(

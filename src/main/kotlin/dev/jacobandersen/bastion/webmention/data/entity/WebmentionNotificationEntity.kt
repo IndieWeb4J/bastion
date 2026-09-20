@@ -2,18 +2,11 @@ package dev.jacobandersen.bastion.webmention.data.entity
 
 import dev.jacobandersen.bastion.webmention.data.domain.WebmentionNotification
 import dev.jacobandersen.bastion.webmention.data.domain.WebmentionState
-import jakarta.persistence.Column
-import jakarta.persistence.Entity
-import jakarta.persistence.EnumType
-import jakarta.persistence.Enumerated
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.GenerationType
-import jakarta.persistence.Id
-import jakarta.persistence.Table
+import jakarta.persistence.*
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 import java.time.Instant
-import java.util.UUID
+import java.util.*
 
 @Entity
 @Table(name = "webmention_notifications")

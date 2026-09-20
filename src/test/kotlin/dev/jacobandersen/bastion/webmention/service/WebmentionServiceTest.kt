@@ -14,14 +14,10 @@ import dev.jacobandersen.bastion.webmention.http.WebmentionHttpClient
 import org.jobrunr.scheduling.JobScheduler
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito.mock
-import org.mockito.Mockito.never
-import org.mockito.Mockito.times
-import org.mockito.Mockito.verify
-import org.mockito.Mockito.`when`
+import org.mockito.Mockito.*
 import org.mockito.kotlin.any
 import java.time.Instant
-import java.util.UUID
+import java.util.*
 
 class WebmentionServiceTest {
     private val jobScheduler = mock(JobScheduler::class.java)
@@ -198,7 +194,11 @@ class WebmentionServiceTest {
             org.mockito.kotlin.eq(source),
             org.mockito.kotlin.eq(target),
             org.mockito.kotlin.check { next ->
-                assertEquals(config.backoffBaseSeconds.toDouble(), (next.epochSecond - Instant.now().epochSecond).toDouble(), 2.0)
+                assertEquals(
+                    config.backoffBaseSeconds.toDouble(),
+                    (next.epochSecond - Instant.now().epochSecond).toDouble(),
+                    2.0
+                )
             },
         )
     }

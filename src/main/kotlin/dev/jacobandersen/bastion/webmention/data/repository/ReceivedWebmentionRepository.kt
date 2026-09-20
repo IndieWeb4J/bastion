@@ -4,7 +4,7 @@ import dev.jacobandersen.bastion.webmention.data.domain.ReceivedWebmentionState
 import dev.jacobandersen.bastion.webmention.data.entity.ReceivedWebmentionEntity
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
-import java.util.UUID
+import java.util.*
 
 @Repository
 interface ReceivedWebmentionRepository : JpaRepository<ReceivedWebmentionEntity, UUID> {
