@@ -2,9 +2,9 @@ package dev.jacobandersen.bastion.config
 
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
-import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.CorsConfigurationSource
@@ -39,14 +39,10 @@ class GlobalSecurityConfig(
     }
 
     @Bean
-    @Order(2)
+    @Order(Ordered.LOWEST_PRECEDENCE)
     fun defaultSecurityFilterChain(http: HttpSecurity): SecurityFilterChain =
         http
-            .cors { }
-            .csrf { it.disable() }
-            .formLogin { it.disable() }
-            .httpBasic { it.disable() }
-            .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
+            .applyBastionDefaults()
             .authorizeHttpRequests { it.anyRequest().permitAll() }
             .build()
 }
