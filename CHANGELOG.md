@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.7](https://github.com/jacobsandersen/bastion/compare/v1.3.6...v1.3.7) (2026-09-20)
+
+
+### Bug Fixes
+
+* **db:** revert formatting of SQL migrations to restore Flyway checksums ([#24](https://github.com/jacobsandersen/bastion/issues/24)) ([115722d](https://github.com/jacobsandersen/bastion/commit/115722dccdd34a7fbd18e3724c9d7d0d4dc69e8d))
+
 ## [1.3.6](https://github.com/jacobsandersen/bastion/compare/v1.3.5...v1.3.6) (2026-09-20)
 
 
