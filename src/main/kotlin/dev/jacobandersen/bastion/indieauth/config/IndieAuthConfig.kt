@@ -68,6 +68,13 @@ data class IndieAuthConfig(
         val tokenUrl: String = "https://github.com/login/oauth/access_token",
         /** GitHub user-info endpoint. */
         val userInfoUrl: String = "https://api.github.com/user",
+        /**
+         * The redirect URI Herald should use when sending the user to GitHub.
+         * This is the URL GitHub will redirect back to with the authorization
+         * code (e.g. `https://herald.example.com/auth/callback/github`). When
+         * blank, Herald can infer it from its own base URL.
+         */
+        val redirectUri: String = "",
     )
 
     companion object {

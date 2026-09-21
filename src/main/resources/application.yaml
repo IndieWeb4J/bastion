@@ -24,6 +24,8 @@ bastion:
     github:
       client-id: ${BASTION_INDIEAUTH_GITHUB_CLIENT_ID:}
       client-secret: ${BASTION_INDIEAUTH_GITHUB_CLIENT_SECRET:}
+      redirect-uri: ${BASTION_INDIEAUTH_GITHUB_REDIRECT_URI:}
+      authorize-url: ${BASTION_INDIEAUTH_GITHUB_AUTHORIZE_URL:https://github.com/login/oauth/authorize}
   webmention:
     retry-interval-minutes: ${BASTION_WEBMENTION_RETRY_INTERVAL_MINUTES:30}
     max-attempts: ${BASTION_WEBMENTION_MAX_ATTEMPTS:5}
