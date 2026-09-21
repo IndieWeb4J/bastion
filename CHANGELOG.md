@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.10](https://github.com/jacobsandersen/bastion/compare/v1.3.9...v1.3.10) (2026-09-21)
+
+
+### Features
+
+* **cors:** share public wildcard CORS source between micropub and indieauth ([#30](https://github.com/jacobsandersen/bastion/issues/30)) ([8b54c7a](https://github.com/jacobsandersen/bastion/commit/8b54c7a2d102f4d83f4dab2ec38e6067421cbf02))
+
 ## [1.3.9](https://github.com/jacobsandersen/bastion/compare/v1.3.8...v1.3.9) (2026-09-21)
 
 
