@@ -96,14 +96,25 @@ class CreateServiceTest {
     }
 
     @Test
-    fun rejectsBlankSlugCommand() {
+    fun treatsBlankSlugAsAbsent() {
         val response =
             createService.create(
                 createPayload("""{"name": ["Hello"], "mp-slug": [""]}"""),
                 null,
             )
 
-        assertInstanceOf(ApiResponse.Error.InvalidRequest::class.java, response)
+        assertInstanceOf(ApiResponse.Success.Created::class.java, response)
+        val slug = urlService.extractPostSlug((response as ApiResponse.Success.Created).location)!!
+        assertTrue(slug.isNotBlank())
+        assertNotNull(postService.findBySlug(slug))
+
+        val whitespaceResponse =
+            createService.create(
+                createPayload("""{"name": ["Hello"], "mp-slug": ["   "]}"""),
+                null,
+            )
+
+        assertInstanceOf(ApiResponse.Success.Created::class.java, whitespaceResponse)
     }
 
     @Test

@@ -186,14 +186,22 @@ class UpdateServiceTest {
     }
 
     @Test
-    fun rejectsBlankSlugCommand() {
+    fun blankSlugIsNoop() {
         val post = createPost(uniqueSlug("blank-slug"))
         val response =
             updateService.update(
                 updateJson(urlService.generatePostUrl(post), """ "replace": {"mp-slug": [""]} """),
             )
 
-        assertInstanceOf(ApiResponse.Error.InvalidRequest::class.java, response)
+        assertEquals(ApiResponse.Success.NoContent, response)
+        assertEquals(post.slug, postService.findBySlug(post.slug)!!.slug)
+
+        val whitespaceResponse =
+            updateService.update(
+                updateJson(urlService.generatePostUrl(post), """ "replace": {"mp-slug": ["   "]} """),
+            )
+
+        assertEquals(ApiResponse.Success.NoContent, whitespaceResponse)
         assertEquals(post.slug, postService.findBySlug(post.slug)!!.slug)
     }
 
