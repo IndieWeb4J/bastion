@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.8](https://github.com/jacobsandersen/bastion/compare/v1.3.7...v1.3.8) (2026-09-21)
+
+
+### Features
+
+* **indieauth:** expose providers for Herald auth page ([#26](https://github.com/jacobsandersen/bastion/issues/26)) ([2c83a93](https://github.com/jacobsandersen/bastion/commit/2c83a939f5c68c60dc6baafe4776b1fdbd4b8145))
+
 ## [1.3.7](https://github.com/jacobsandersen/bastion/compare/v1.3.6...v1.3.7) (2026-09-20)
 
 
