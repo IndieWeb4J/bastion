@@ -107,25 +107,62 @@ class PostService(
         subtypes: Collection<String>?,
         limit: Int,
         offset: Int,
+    ): List<Post> = findFeedPosts(subtypes, limit, offset, null, null)
+
+    @Transactional(readOnly = true)
+    fun findFeedPosts(
+        subtypes: Collection<String>?,
+        limit: Int,
+        offset: Int,
+        from: java.time.Instant?,
+        toExclusive: java.time.Instant?,
     ): List<Post> {
         require(offset % limit == 0) { "offset must be a multiple of limit" }
 
         val pageRequest = PageRequest.of(offset / limit, limit, Sort.by("createdAtUtc").descending())
 
+        val hasRange = from != null && toExclusive != null
+        require((from == null) == (toExclusive == null)) { "both from and toExclusive must be provided together" }
+
         val results =
-            if (subtypes.isNullOrEmpty()) {
-                repository.findByStatusAndVisibilityAndDeletedFalse(
-                    PostStatus.PUBLISHED,
-                    PostVisibility.PUBLIC,
-                    pageRequest,
-                )
-            } else {
-                repository.findByStatusAndVisibilityAndDeletedFalseAndSubtypeIn(
-                    PostStatus.PUBLISHED,
-                    PostVisibility.PUBLIC,
-                    subtypes,
-                    pageRequest,
-                )
+            when {
+                hasRange && subtypes.isNullOrEmpty() -> {
+                    repository.findByStatusAndVisibilityAndDeletedFalseAndCreatedAtUtcGreaterThanEqualAndCreatedAtUtcLessThan(
+                        PostStatus.PUBLISHED,
+                        PostVisibility.PUBLIC,
+                        requireNotNull(from),
+                        requireNotNull(toExclusive),
+                        pageRequest,
+                    )
+                }
+
+                hasRange -> {
+                    repository.findByStatusAndVisibilityAndDeletedFalseAndSubtypeInAndCreatedAtUtcGreaterThanEqualAndCreatedAtUtcLessThan(
+                        PostStatus.PUBLISHED,
+                        PostVisibility.PUBLIC,
+                        requireNotNull(subtypes),
+                        requireNotNull(from),
+                        requireNotNull(toExclusive),
+                        pageRequest,
+                    )
+                }
+
+                subtypes.isNullOrEmpty() -> {
+                    repository.findByStatusAndVisibilityAndDeletedFalse(
+                        PostStatus.PUBLISHED,
+                        PostVisibility.PUBLIC,
+                        pageRequest,
+                    )
+                }
+
+                else -> {
+                    repository.findByStatusAndVisibilityAndDeletedFalseAndSubtypeIn(
+                        PostStatus.PUBLISHED,
+                        PostVisibility.PUBLIC,
+                        subtypes,
+                        pageRequest,
+                    )
+                }
             }
 
         return results.content.map { it.toDomain() }

@@ -16,12 +16,14 @@ import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
+import java.time.ZoneId
 import java.util.UUID
 
 class PostQueryServiceTest {
     private val postService = mock(PostService::class.java)
     private val urlService = mock(UrlService::class.java)
-    private val service = PostQueryService(postService, urlService)
+    private val zone = ZoneId.of("Asia/Manila")
+    private val service = PostQueryService(postService, urlService, zone)
 
     @Test
     fun `feed defaults to limit 10 offset 0 without types`() {
