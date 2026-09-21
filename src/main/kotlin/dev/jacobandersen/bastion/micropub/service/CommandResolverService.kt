@@ -32,7 +32,7 @@ class MicropubCommandResolver(
         if (values.size != 1) return MicropubCommandValue.Invalid
 
         val raw = values.single() as? Mf2Value.String ?: return MicropubCommandValue.Invalid
-        return if (raw.value.isBlank()) MicropubCommandValue.Invalid else MicropubCommandValue.Present(raw.value)
+        return if (raw.value.isBlank()) MicropubCommandValue.Absent else MicropubCommandValue.Present(raw.value)
     }
 
     fun status(raw: String): PostStatus = PostStatus.fromString(raw)
