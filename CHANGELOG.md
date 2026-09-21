@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.9](https://github.com/jacobsandersen/bastion/compare/v1.3.8...v1.3.9) (2026-09-21)
+
+
+### Features
+
+* **indieauth:** allow any origin for token and discovery via dedicated CORS chain ([#28](https://github.com/jacobsandersen/bastion/issues/28)) ([c806fa5](https://github.com/jacobsandersen/bastion/commit/c806fa5573aedf0f712f1ae9d222397c58c76c62))
+
 ## [1.3.8](https://github.com/jacobsandersen/bastion/compare/v1.3.7...v1.3.8) (2026-09-21)
 
 
