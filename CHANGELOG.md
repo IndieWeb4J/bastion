@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.11](https://github.com/jacobsandersen/bastion/compare/v1.3.10...v1.3.11) (2026-09-21)
+
+
+### Bug Fixes
+
+* **micropub:** treat blank command values as absent ([#32](https://github.com/jacobsandersen/bastion/issues/32)) ([482d5ca](https://github.com/jacobsandersen/bastion/commit/482d5caf9fb9f82768d50d281895caaf15dbf055))
+
 ## [1.3.10](https://github.com/jacobsandersen/bastion/compare/v1.3.9...v1.3.10) (2026-09-21)
 
 
