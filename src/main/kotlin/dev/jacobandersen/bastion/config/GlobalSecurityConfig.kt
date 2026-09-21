@@ -2,6 +2,7 @@ package dev.jacobandersen.bastion.config
 
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.Primary
 import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
@@ -15,6 +16,7 @@ class GlobalSecurityConfig(
     private val corsProperties: CorsProperties,
 ) {
     @Bean
+    @Primary
     fun corsConfigurationSource(): CorsConfigurationSource {
         val config =
             CorsConfiguration().apply {
@@ -36,6 +38,19 @@ class GlobalSecurityConfig(
                 registerCorsConfiguration("/**", config)
             }
         }
+    }
+
+    @Bean("publicCorsConfigurationSource")
+    fun publicCorsConfigurationSource(): CorsConfigurationSource {
+        val config =
+            CorsConfiguration().apply {
+                allowedOriginPatterns = listOf("*")
+                allowedMethods = listOf("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
+                allowedHeaders = listOf("*")
+                allowCredentials = false
+                maxAge = 3600L
+            }
+        return CorsConfigurationSource { _ -> config }
     }
 
     @Bean
