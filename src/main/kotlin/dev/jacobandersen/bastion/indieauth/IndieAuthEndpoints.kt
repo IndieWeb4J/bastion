@@ -9,4 +9,5 @@ object IndieAuthEndpoints {
     const val AUTHORIZATION = "/indieauth/auth"
     const val CALLBACK = "/indieauth/auth/callback"
     const val TOKEN = "/indieauth/token"
+    const val PROVIDERS = "/indieauth/providers"
 }
