@@ -6,6 +6,9 @@ import dev.jacobandersen.bastion.micropub.type.PostType
 import dev.jacobandersen.bastion.micropub.type.subtype
 import dev.jacobandersen.bastion.url.UrlService
 import org.springframework.stereotype.Service
+import java.time.YearMonth
+import java.time.ZoneId
+import java.time.ZonedDateTime
 
 /**
  * Read queries over published posts for public (unauthenticated) GraphQL use.
@@ -18,11 +21,15 @@ import org.springframework.stereotype.Service
 class PostQueryService(
     private val postService: PostService,
     private val urlService: UrlService,
+    private val zone: ZoneId,
 ) {
     fun feed(
         types: List<PostType>?,
         limitArg: Int?,
         offsetArg: Int?,
+        year: Int? = null,
+        month: Int? = null,
+        day: Int? = null,
     ): List<Post> {
         val limit = limitArg ?: 10
         val offset = offsetArg ?: 0
@@ -31,7 +38,52 @@ class PostQueryService(
         require(offset >= 0) { "offset must be a non-negative integer" }
         require(offset % limit == 0) { "offset must be a multiple of limit ($offset % $limit != 0)" }
 
-        return postService.findFeedPosts(types?.map { it.subtype() }, limit, offset)
+        val range = resolveDateRange(year, month, day)
+
+        return if (range == null) {
+            postService.findFeedPosts(types?.map { it.subtype() }, limit, offset)
+        } else {
+            postService.findFeedPosts(types?.map { it.subtype() }, limit, offset, range.first, range.second)
+        }
+    }
+
+    private fun resolveDateRange(
+        year: Int?,
+        month: Int?,
+        day: Int?,
+    ): Pair<java.time.Instant, java.time.Instant>? {
+        if (year == null && month == null && day == null) return null
+
+        require(year != null) { "year is required when month or day is provided" }
+        require(year in 1..9999) { "year must be between 1 and 9999" }
+
+        if (day != null) {
+            require(month != null) { "month is required when day is provided" }
+        }
+
+        if (month != null) {
+            require(month in 1..12) { "month must be between 1 and 12" }
+        }
+
+        if (day != null) {
+            val maxDay = YearMonth.of(year, month!!).lengthOfMonth()
+            require(day in 1..maxDay) { "day must be between 1 and $maxDay for $year-${month.toString().padStart(2, '0')}" }
+        }
+
+        val start =
+            when {
+                day != null -> ZonedDateTime.of(year, month!!, day, 0, 0, 0, 0, zone)
+                month != null -> ZonedDateTime.of(year, month, 1, 0, 0, 0, 0, zone)
+                else -> ZonedDateTime.of(year, 1, 1, 0, 0, 0, 0, zone)
+            }
+        val end =
+            when {
+                day != null -> start.plusDays(1)
+                month != null -> start.plusMonths(1)
+                else -> start.plusYears(1)
+            }
+
+        return start.toInstant() to end.toInstant()
     }
 
     /**

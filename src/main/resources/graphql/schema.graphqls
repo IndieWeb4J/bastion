@@ -10,7 +10,7 @@ enum PostType {
 }
 
 type Query {
-    posts(types: [PostType!], limit: Int = 10, offset: Int = 0): [Post!]!
+    posts(types: [PostType!], limit: Int = 10, offset: Int = 0, year: Int, month: Int, day: Int): [Post!]!
     post(slug: String, url: String): PostLookup
 }
 
