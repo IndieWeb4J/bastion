@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.13](https://github.com/jacobsandersen/bastion/compare/v1.3.12...v1.3.13) (2026-09-22)
+
+
+### Features
+
+* **graphql:** type Post.properties as mf2 union ([#36](https://github.com/jacobsandersen/bastion/issues/36)) ([dec9bd7](https://github.com/jacobsandersen/bastion/commit/dec9bd75f0da1a3cbbba13e9fa828de0f77721f2))
+
 ## [1.3.12](https://github.com/jacobsandersen/bastion/compare/v1.3.11...v1.3.12) (2026-09-22)
 
 
