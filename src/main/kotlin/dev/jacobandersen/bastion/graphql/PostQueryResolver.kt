@@ -67,9 +67,10 @@ class PostQueryResolver(
     fun properties(
         post: Post,
         @Argument names: List<String>?,
-    ): Map<String, List<Any?>> {
+    ): List<Mf2PropertyGraphql> {
         val requested = postService.filterPostFields(post, names?.toTypedArray()).post
-        return Mf2Graphql.normalizeProperties(requested)
+        val allowed = names?.toSet()
+        return Mf2Graphql.toProperties(requested, allowed)
     }
 
     private fun text(

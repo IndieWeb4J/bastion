@@ -45,7 +45,7 @@ class Mf2GraphqlTest {
     }
 
     @Test
-    fun `normalizeProperties converts values to plain structures`() {
+    fun `toProperties converts values to typed structures`() {
         val cite =
             Mf2Object(
                 type = listOf("h-cite"),
@@ -64,17 +64,32 @@ class Mf2GraphqlTest {
                 ),
             )
 
-        val normalized = Mf2Graphql.normalizeProperties(obj)
-        val content = normalized.getValue("content").single() as Map<*, *>
-        assertEquals("Hi", content["value"])
-        val likeOf = normalized.getValue("like-of").single() as Map<*, *>
-        assertEquals(listOf("h-cite"), likeOf["type"])
-        val props = likeOf["properties"] as Map<*, *>
-        assertEquals(listOf("https://example.com/a"), props["url"])
+        val properties = Mf2Graphql.toProperties(obj).associateBy { it.name }
+        val content = properties.getValue("content").values.single() as Mf2JsonObject
+        val contentFields = content.fields.associate { it.name to it.value }
+        assertEquals("Hi", (contentFields["value"] as Mf2JsonString).value)
+        assertEquals("<p>Hi</p>", (contentFields["html"] as Mf2JsonString).value)
+
+        val likeOf = properties.getValue("like-of").values.single() as Mf2ObjectGraphql
+        assertEquals(listOf("h-cite"), likeOf.type)
+        val likeProps = likeOf.properties.associateBy { it.name }
+        assertEquals("https://example.com/a", (likeProps.getValue("url").values.single() as Mf2String).value)
     }
 
     @Test
-    fun `normalizeValue converts json nodes recursively`() {
+    fun `toMf2Value handles number collapsing`() {
+        val longVal = Mf2Value.Number(42L)
+        val doubleVal = Mf2Value.Double(3.14)
+
+        val longResult = Mf2Graphql.toMf2Value(longVal) as Mf2Number
+        val doubleResult = Mf2Graphql.toMf2Value(doubleVal) as Mf2Number
+
+        assertEquals(42.0, longResult.value)
+        assertEquals(3.14, doubleResult.value)
+    }
+
+    @Test
+    fun `toJsonValue converts json nodes recursively`() {
         val node = JsonNodeFactory.instance.objectNode()
         node.put("value", "x")
         node.set(
@@ -84,10 +99,23 @@ class Mf2GraphqlTest {
                 .add(1)
                 .add(true),
         )
-        val result = Mf2Graphql.normalizeValue(Mf2Value.Json(node)) as Map<*, *>
-        assertEquals("x", result["value"])
-        assertEquals(listOf(1L, true), result["nested"])
-        assertTrue(result.containsKey("nested"))
+        val result = Mf2Graphql.toJsonValue(node) as Mf2JsonObject
+        val fields = result.fields.associate { it.name to it.value }
+        assertEquals("x", (fields["value"] as Mf2JsonString).value)
+        val nested = fields["nested"] as Mf2JsonArray
+        assertEquals(2, nested.values.size)
+        assertEquals(1.0, (nested.values[0] as Mf2JsonNumber).value)
+        assertEquals(true, (nested.values[1] as Mf2JsonBoolean).value)
+        assertTrue(fields.containsKey("nested"))
+    }
+
+    @Test
+    fun `toJsonValue handles null`() {
+        val node = JsonNodeFactory.instance.objectNode()
+        node.set("maybe", JsonNodeFactory.instance.nullNode())
+        val result = Mf2Graphql.toJsonValue(node) as Mf2JsonObject
+        val field = result.fields.single { it.name == "maybe" }
+        assertEquals(null, field.value)
     }
 
     private fun entry(properties: MutableMap<String, List<Mf2Value>>): Mf2Object = Mf2Object(listOf("h-entry"), properties, null)

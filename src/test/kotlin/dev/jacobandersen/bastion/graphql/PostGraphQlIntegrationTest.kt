@@ -187,13 +187,35 @@ class PostGraphQlIntegrationTest {
 
     @Test
     fun propertiesReturnsOnlyRequestedNames() {
-        graphQlTester
-            .document(
-                """query { post(slug: "$publicNote") { __typename ... on Post { properties(names: ["name"]) } } }""",
-            ).execute()
-            .path("post.properties")
-            .entity<Map<*, *>>(mapClass)
-            .satisfies { props -> assertEquals(setOf("name"), props.keys) }
+        val properties =
+            graphQlTester
+                .document(
+                    """query { post(slug: "$publicNote") { __typename ... on Post { properties(names: ["name"]) { name values { __typename ... on Mf2String { value } } } } } }""",
+                ).execute()
+                .path("post.properties")
+                .entityList<Map<*, *>>(mapClass)
+                .get()
+
+        assertEquals(1, properties.size)
+        assertEquals("name", properties.single()["name"])
+    }
+
+    @Test
+    fun propertiesReturnsTypedMf2Values() {
+        val properties =
+            graphQlTester
+                .document(
+                    """query { post(slug: "$publicNote") { __typename ... on Post { properties(names: ["name", "content"]) { name values { __typename ... on Mf2String { value } ... on Mf2JsonObject { fields { name value { __typename ... on Mf2JsonString { value } } } } } } } } }""",
+                ).execute()
+                .path("post.properties")
+                .entityList<Map<*, *>>(mapClass)
+                .get()
+
+        val byName = properties.associate { it["name"] as String to it["values"] as List<*> }
+        assertTrue(byName.containsKey("name"))
+        assertTrue(byName.containsKey("content"))
+        val nameValues = byName.getValue("name") as List<Map<*, *>>
+        assertEquals("Mf2String", nameValues.single()["__typename"])
     }
 
     @Test
