@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
+import java.time.Instant
 import java.util.UUID
 
 @Repository
@@ -25,6 +26,23 @@ interface PostRepository : JpaRepository<PostEntity, UUID> {
         status: PostStatus,
         visibility: PostVisibility,
         subtypes: Collection<String>,
+        page: Pageable,
+    ): Page<PostEntity>
+
+    fun findByStatusAndVisibilityAndDeletedFalseAndCreatedAtUtcGreaterThanEqualAndCreatedAtUtcLessThan(
+        status: PostStatus,
+        visibility: PostVisibility,
+        from: Instant,
+        to: Instant,
+        page: Pageable,
+    ): Page<PostEntity>
+
+    fun findByStatusAndVisibilityAndDeletedFalseAndSubtypeInAndCreatedAtUtcGreaterThanEqualAndCreatedAtUtcLessThan(
+        status: PostStatus,
+        visibility: PostVisibility,
+        subtypes: Collection<String>,
+        from: Instant,
+        to: Instant,
         page: Pageable,
     ): Page<PostEntity>
 }

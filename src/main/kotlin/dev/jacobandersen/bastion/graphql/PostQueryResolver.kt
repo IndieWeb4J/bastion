@@ -20,7 +20,10 @@ class PostQueryResolver(
         @Argument types: List<PostType>?,
         @Argument limit: Int?,
         @Argument offset: Int?,
-    ): List<Post> = queryService.feed(types, limit, offset)
+        @Argument year: Int?,
+        @Argument month: Int?,
+        @Argument day: Int?,
+    ): List<Post> = queryService.feed(types, limit, offset, year, month, day)
 
     @QueryMapping
     fun post(
