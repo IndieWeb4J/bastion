@@ -35,9 +35,61 @@ type Post {
     content: String
     contentHtml: String
     category: [String!]
-    properties(names: [String!]): JSON
+    properties(names: [String!]): [Mf2Property!]!
     webmentions: [Webmention!]!
     webmentionCounts: WebmentionCounts!
+}
+
+type Mf2Property {
+    name: String!
+    values: [Mf2Value!]!
+}
+
+union Mf2Value = Mf2String | Mf2Boolean | Mf2Number | Mf2Object | Mf2JsonObject | Mf2JsonArray
+
+type Mf2String {
+    value: String!
+}
+
+type Mf2Boolean {
+    value: Boolean!
+}
+
+type Mf2Number {
+    value: Float!
+}
+
+type Mf2Object {
+    type: [String!]!
+    properties: [Mf2Property!]!
+    children: [Mf2Object!]!
+}
+
+type Mf2JsonObject {
+    fields: [Mf2JsonField!]!
+}
+
+type Mf2JsonField {
+    name: String!
+    value: Mf2JsonValue
+}
+
+type Mf2JsonArray {
+    values: [Mf2JsonValue]!
+}
+
+union Mf2JsonValue = Mf2JsonString | Mf2JsonNumber | Mf2JsonBoolean | Mf2JsonObject | Mf2JsonArray
+
+type Mf2JsonString {
+    value: String!
+}
+
+type Mf2JsonNumber {
+    value: Float!
+}
+
+type Mf2JsonBoolean {
+    value: Boolean!
 }
 
 enum WebmentionInteraction {
@@ -71,5 +123,3 @@ type WebmentionCounts {
     rsvp: Int!
     mention: Int!
 }
-
-scalar JSON
