@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.15](https://github.com/jacobsandersen/bastion/compare/v1.3.14...v1.3.15) (2026-09-23)
+
+
+### Features
+
+* add tertiary type support ([#41](https://github.com/jacobsandersen/bastion/issues/41)) ([38cec13](https://github.com/jacobsandersen/bastion/commit/38cec1394e253717ade74cf33d3acb25850de337))
+* enable lowercase post-type in feed query ([958f15e](https://github.com/jacobsandersen/bastion/commit/958f15e3f5a5efbdd8ac28a6d9b44b299584f23b))
+
 ## [1.3.14](https://github.com/jacobsandersen/bastion/compare/v1.3.13...v1.3.14) (2026-09-23)
 
 
