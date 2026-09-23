@@ -6,8 +6,8 @@ import dev.jacobandersen.bastion.api.dto.PostGoneResponse
 import dev.jacobandersen.bastion.api.dto.PostResponse
 import dev.jacobandersen.bastion.api.dto.WebmentionCounts
 import dev.jacobandersen.bastion.api.dto.WebmentionDto
-import dev.jacobandersen.bastion.microformats2.firstHtml
 import dev.jacobandersen.bastion.microformats2.firstText
+import dev.jacobandersen.bastion.microformats2.htmls
 import dev.jacobandersen.bastion.microformats2.texts
 import dev.jacobandersen.bastion.micropub.data.domain.Post
 import dev.jacobandersen.bastion.micropub.type.PostType
@@ -105,9 +105,9 @@ class PublicPostController(
             published = post.post.firstText("published"),
             updated = post.post.firstText("updated"),
             name = post.post.firstText("name"),
-            summary = post.post.firstText("summary"),
-            content = post.post.firstText("content"),
-            contentHtml = post.post.firstHtml("content"),
+            summary = post.post.texts("summary"),
+            content = post.post.texts("content"),
+            contentHtml = post.post.htmls("content"),
             category = post.post.texts("category"),
             properties = post.post.properties,
             webmentionCounts = counts,
