@@ -60,3 +60,6 @@ fun Mf2Object.firstHtml(key: String): String? = getProperty(key).firstNotNullOfO
 
 /** All non-blank plain-text values of the property. */
 fun Mf2Object.texts(key: String): List<String> = getProperty(key).mapNotNull { it.plainTextOrNull }.filter { it.isNotBlank() }
+
+/** All non-blank `html` values of the property. */
+fun Mf2Object.htmls(key: String): List<String> = getProperty(key).mapNotNull { it.htmlOrNull }.filter { it.isNotBlank() }
