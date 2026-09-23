@@ -110,8 +110,8 @@ class PostQueryService(
             found.deleted && found.isPublicContent -> {
                 PostLookupResult.Gone(
                     slug = found.slug,
-                    url = runCatching { urlService.generatePostUrl(found) }.getOrNull(),
-                    published = found.post.firstText("published"),
+                    url = requireNotNull(runCatching { urlService.generatePostUrl(found) }.getOrNull()) { "post ${found.id} missing url" },
+                    published = requireNotNull(found.post.firstText("published")) { "post ${found.id} missing published" },
                 )
             }
 
@@ -132,7 +132,7 @@ sealed interface PostLookupResult {
 
     data class Gone(
         val slug: String,
-        val url: String?,
-        val published: String?,
+        val url: String,
+        val published: String,
     ) : PostLookupResult
 }
