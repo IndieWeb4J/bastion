@@ -38,7 +38,7 @@ class ReceivedWebmentionServiceTest {
     private fun entity(
         state: ReceivedWebmentionState = ReceivedWebmentionState.PENDING,
         interaction: WebmentionInteraction? = null,
-        contentText: String? = null,
+        contentText: List<String>? = null,
     ) = ReceivedWebmentionEntity(
         postId = postId,
         sourceUrl = sourceUrl,
@@ -77,7 +77,7 @@ class ReceivedWebmentionServiceTest {
             entity(
                 state = ReceivedWebmentionState.REJECTED,
                 interaction = WebmentionInteraction.LIKE,
-                contentText = "old",
+                contentText = listOf("old"),
             )
         `when`(repository.findBySourceUrlAndPostId(sourceUrl, postId)).thenReturn(existing)
 
@@ -114,8 +114,8 @@ class ReceivedWebmentionServiceTest {
                 primary = null,
                 authorName = "Jane",
                 authorUrl = "https://jane.example",
-                contentText = "Nice post",
-                contentHtml = "<p>Nice post</p>",
+                contentText = listOf("Nice post"),
+                contentHtml = listOf("<p>Nice post</p>"),
             ),
         )
 
@@ -123,8 +123,8 @@ class ReceivedWebmentionServiceTest {
         assertEquals(WebmentionInteraction.REPLY, existing.interaction)
         assertEquals("Jane", existing.authorName)
         assertEquals("https://jane.example", existing.authorUrl)
-        assertEquals("Nice post", existing.contentText)
-        assertEquals("<p>Nice post</p>", existing.contentHtml)
+        assertEquals(listOf("Nice post"), existing.contentText)
+        assertEquals(listOf("<p>Nice post</p>"), existing.contentHtml)
         assertNotNull(existing.verifiedAt)
         assertNull(existing.lastError)
     }
@@ -155,7 +155,7 @@ class ReceivedWebmentionServiceTest {
             entity(
                 state = ReceivedWebmentionState.VERIFIED,
                 interaction = WebmentionInteraction.REPLY,
-                contentText = "Nice post",
+                contentText = listOf("Nice post"),
             )
         existing.authorName = "Jane"
         existing.rawMf2 =
