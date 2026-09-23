@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.18](https://github.com/jacobsandersen/bastion/compare/v1.3.17...v1.3.18) (2026-09-23)
+
+
+### Features
+
+* **api:** require non-null for generated post and webmention fields ([#46](https://github.com/jacobsandersen/bastion/issues/46)) ([1155ad1](https://github.com/jacobsandersen/bastion/commit/1155ad1dd5d1dfbf0eb2656be91fd1094109de0d))
+
 ## [1.3.17](https://github.com/jacobsandersen/bastion/compare/v1.3.16...v1.3.17) (2026-09-23)
 
 
