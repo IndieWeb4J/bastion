@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.16](https://github.com/jacobsandersen/bastion/compare/v1.3.15...v1.3.16) (2026-09-23)
+
+
+### Features
+
+* **api:** return all content entries as arrays in PostResponse ([#42](https://github.com/jacobsandersen/bastion/issues/42)) ([d5de37e](https://github.com/jacobsandersen/bastion/commit/d5de37e67a58a6106aac34385de514f76ca8c9c2))
+
 ## [1.3.15](https://github.com/jacobsandersen/bastion/compare/v1.3.14...v1.3.15) (2026-09-23)
 
 
