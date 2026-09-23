@@ -1,5 +1,6 @@
-package dev.jacobandersen.bastion.graphql
+package dev.jacobandersen.bastion.api
 
+import dev.jacobandersen.bastion.microformats2.firstText
 import dev.jacobandersen.bastion.micropub.data.domain.Post
 import dev.jacobandersen.bastion.micropub.data.service.PostService
 import dev.jacobandersen.bastion.micropub.type.PostType
@@ -11,11 +12,11 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 
 /**
- * Read queries over published posts for public (unauthenticated) GraphQL use.
+ * Read queries over published posts for public (unauthenticated) REST use.
  * Lists return only PUBLIC posts; direct lookups additionally allow UNLISTED.
  * PRIVATE and DRAFT posts are never returned here (private is only reachable
  * through the authenticated Micropub source query). A post that was publicly
- * reachable and is now soft-deleted surfaces as [PostGone].
+ * reachable and is now soft-deleted surfaces as [PostLookupResult.Gone].
  */
 @Service
 class PostQueryService(
@@ -91,37 +92,26 @@ class PostQueryService(
      * or was never publicly reachable (draft/private); [PostLookupResult.Gone]
      * when the post existed publicly and has since been deleted.
      */
-    fun post(
-        slug: String?,
-        url: String?,
-    ): PostLookupResult? {
-        val slugToFind =
-            when {
-                slug != null && url != null -> {
-                    throw IllegalArgumentException("provide exactly one of slug or url, not both")
-                }
+    fun postBySlug(slug: String): PostLookupResult? {
+        val found = postService.findBySlug(slug) ?: return null
+        return toLookupResult(found)
+    }
 
-                slug != null -> {
-                    slug
-                }
+    fun postByUrl(url: String): PostLookupResult? {
+        val slug =
+            urlService.extractPostSlug(url)
+                ?: throw IllegalArgumentException("url is not a URL on this Bastion instance")
+        val found = postService.findBySlug(slug) ?: return null
+        return toLookupResult(found)
+    }
 
-                url != null -> {
-                    urlService.extractPostSlug(url)
-                        ?: throw IllegalArgumentException("url is not a URL on this Bastion instance")
-                }
-
-                else -> {
-                    throw IllegalArgumentException("provide either a slug or a url")
-                }
-            }
-
-        val found = postService.findBySlug(slugToFind) ?: return null
-        return when {
+    private fun toLookupResult(found: Post): PostLookupResult? =
+        when {
             found.deleted && found.isPublicContent -> {
                 PostLookupResult.Gone(
                     slug = found.slug,
                     url = runCatching { urlService.generatePostUrl(found) }.getOrNull(),
-                    published = Mf2Graphql.firstText(found.post, "published"),
+                    published = found.post.firstText("published"),
                 )
             }
 
@@ -133,7 +123,6 @@ class PostQueryService(
                 null
             }
         }
-    }
 }
 
 sealed interface PostLookupResult {

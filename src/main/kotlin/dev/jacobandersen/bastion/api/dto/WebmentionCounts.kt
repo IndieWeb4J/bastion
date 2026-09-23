@@ -1,4 +1,4 @@
-package dev.jacobandersen.bastion.graphql
+package dev.jacobandersen.bastion.api.dto
 
 import dev.jacobandersen.bastion.webmention.data.domain.WebmentionInteraction
 

@@ -37,12 +37,6 @@ spring:
     name: bastion
   jackson:
     default-property-inclusion: non_null
-  graphql:
-    schema:
-      inspection:
-        enabled: true
-      introspection:
-        enabled: true
   jpa:
     hibernate:
       ddl-auto: validate
