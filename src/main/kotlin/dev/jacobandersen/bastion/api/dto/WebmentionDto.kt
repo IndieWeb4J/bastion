@@ -13,7 +13,7 @@ data class WebmentionDto(
     val contentText: List<String>,
     val contentHtml: List<String>,
     val firstSeenAt: String,
-    val verifiedAt: String?,
+    val verifiedAt: String,
 ) {
     companion object {
         fun from(entity: ReceivedWebmention): WebmentionDto =
@@ -27,7 +27,7 @@ data class WebmentionDto(
                 contentText = entity.contentText,
                 contentHtml = entity.contentHtml,
                 firstSeenAt = entity.firstSeenAt.toString(),
-                verifiedAt = entity.verifiedAt?.toString(),
+                verifiedAt = requireNotNull(entity.verifiedAt) { "verified webmention ${entity.id} missing verifiedAt" }.toString(),
             )
     }
 }
