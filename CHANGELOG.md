@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.14](https://github.com/jacobsandersen/bastion/compare/v1.3.13...v1.3.14) (2026-09-23)
+
+
+### Features
+
+* **api:** replace graphql with rest post feed and lookup ([#38](https://github.com/jacobsandersen/bastion/issues/38)) ([9fbb243](https://github.com/jacobsandersen/bastion/commit/9fbb243db5e2b596d7a6aeaaa0c822666cdfa97d))
+
 ## [1.3.13](https://github.com/jacobsandersen/bastion/compare/v1.3.12...v1.3.13) (2026-09-22)
 
 
