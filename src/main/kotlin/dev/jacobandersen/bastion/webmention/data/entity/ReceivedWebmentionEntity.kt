@@ -43,10 +43,12 @@ class ReceivedWebmentionEntity(
     var authorUrl: String?,
     @Column(nullable = true)
     var authorPhoto: String?,
-    @Column(nullable = true)
-    var contentText: String?,
-    @Column(nullable = true)
-    var contentHtml: String?,
+    @Column(nullable = true, columnDefinition = "text[]")
+    @JdbcTypeCode(SqlTypes.ARRAY)
+    var contentText: List<String>? = null,
+    @Column(nullable = true, columnDefinition = "text[]")
+    @JdbcTypeCode(SqlTypes.ARRAY)
+    var contentHtml: List<String>? = null,
     @Column(nullable = true)
     @JdbcTypeCode(SqlTypes.JSON)
     var rawMf2: Mf2Object?,
@@ -70,8 +72,8 @@ class ReceivedWebmentionEntity(
             authorName = authorName,
             authorUrl = authorUrl,
             authorPhoto = authorPhoto,
-            contentText = contentText,
-            contentHtml = contentHtml,
+            contentText = contentText ?: emptyList(),
+            contentHtml = contentHtml ?: emptyList(),
             rawMf2 = rawMf2,
             lastError = lastError,
             firstSeenAt = firstSeenAt,

@@ -29,7 +29,7 @@ class ReceivedWebmentionAnalyzerTest {
         assertEquals(WebmentionInteraction.REPLY, analysis.interaction)
         assertEquals("Alice", analysis.authorName)
         assertEquals("https://alice.example/", analysis.authorUrl)
-        assertEquals("Great point!", analysis.contentText)
+        assertEquals(listOf("Great point!"), analysis.contentText)
     }
 
     @Test
@@ -114,7 +114,7 @@ class ReceivedWebmentionAnalyzerTest {
             )
 
         assertEquals(WebmentionInteraction.MENTION, analysis.interaction)
-        assertEquals("Here is a post.", analysis.contentText)
+        assertEquals(listOf("Here is a post."), analysis.contentText)
     }
 
     @Test
@@ -129,8 +129,8 @@ class ReceivedWebmentionAnalyzerTest {
             )
 
         assertEquals(WebmentionInteraction.MENTION, analysis.interaction)
-        assertEquals("<b>Hello</b> world", analysis.contentHtml)
-        assertEquals("Hello world", analysis.contentText)
+        assertEquals(listOf("<b>Hello</b> world"), analysis.contentHtml)
+        assertEquals(listOf("Hello world"), analysis.contentText)
     }
 
     @Test

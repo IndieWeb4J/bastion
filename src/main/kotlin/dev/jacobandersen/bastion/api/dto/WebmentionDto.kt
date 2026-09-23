@@ -10,8 +10,8 @@ data class WebmentionDto(
     val authorName: String?,
     val authorUrl: String?,
     val authorPhoto: String?,
-    val contentText: String?,
-    val contentHtml: String?,
+    val contentText: List<String>,
+    val contentHtml: List<String>,
     val firstSeenAt: String,
     val verifiedAt: String?,
 ) {
