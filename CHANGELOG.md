@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.17](https://github.com/jacobsandersen/bastion/compare/v1.3.16...v1.3.17) (2026-09-23)
+
+
+### Features
+
+* **webmention:** return all content entries as arrays ([#44](https://github.com/jacobsandersen/bastion/issues/44)) ([6a55b49](https://github.com/jacobsandersen/bastion/commit/6a55b49c58dab1ef2666d782c3871fe677c40a42))
+
 ## [1.3.16](https://github.com/jacobsandersen/bastion/compare/v1.3.15...v1.3.16) (2026-09-23)
 
 
