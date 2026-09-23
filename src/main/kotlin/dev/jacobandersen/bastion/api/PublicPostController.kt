@@ -101,6 +101,7 @@ class PublicPostController(
             url = runCatching { urlService.generatePostUrl(post) }.getOrNull(),
             type = post.type,
             subtype = post.subtype,
+            tertiaryType = post.tertiaryType,
             published = post.post.firstText("published"),
             updated = post.post.firstText("updated"),
             name = post.post.firstText("name"),
