@@ -4,8 +4,8 @@ import dev.jacobandersen.bastion.microformats2.Mf2Object
 import dev.jacobandersen.bastion.microformats2.Mf2ParseResult
 import dev.jacobandersen.bastion.microformats2.Mf2Value
 import dev.jacobandersen.bastion.microformats2.firstText
-import dev.jacobandersen.bastion.microformats2.htmlOrNull
-import dev.jacobandersen.bastion.microformats2.plainTextOrNull
+import dev.jacobandersen.bastion.microformats2.htmls
+import dev.jacobandersen.bastion.microformats2.texts
 import dev.jacobandersen.bastion.webmention.data.domain.ReceivedWebmentionAnalysis
 import dev.jacobandersen.bastion.webmention.data.domain.WebmentionInteraction
 import dev.jacobandersen.bastion.webmention.data.domain.WebmentionInteraction.BOOKMARK
@@ -60,8 +60,8 @@ object ReceivedWebmentionAnalyzer {
             authorName = author?.first,
             authorUrl = author?.second,
             authorPhoto = author?.third,
-            contentText = content?.first,
-            contentHtml = content?.second,
+            contentText = content.first,
+            contentHtml = content.second,
         )
     }
 
@@ -126,16 +126,13 @@ object ReceivedWebmentionAnalyzer {
         }
     }
 
-    private fun extractContent(entry: Mf2Object): Pair<String?, String?>? {
-        val contentValue = entry.getProperty("content").firstOrNull()
-        if (contentValue != null) {
-            return when (contentValue) {
-                is Mf2Value.String -> Pair(contentValue.value, null)
-                is Mf2Value.Json -> Pair(contentValue.plainTextOrNull, contentValue.htmlOrNull)
-                else -> null
-            }
+    private fun extractContent(entry: Mf2Object): Pair<List<String>, List<String>> {
+        val contentTexts = entry.texts("content")
+        val contentHtmls = entry.htmls("content")
+        if (contentTexts.isNotEmpty() || contentHtmls.isNotEmpty()) {
+            return Pair(contentTexts, contentHtmls)
         }
-        val summary = entry.firstText("summary")
-        return summary?.let { Pair(it, null) }
+        val summaryTexts = entry.texts("summary")
+        return Pair(summaryTexts, emptyList())
     }
 }

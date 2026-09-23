@@ -13,6 +13,6 @@ data class ReceivedWebmentionAnalysis(
     val authorName: String? = null,
     val authorUrl: String? = null,
     val authorPhoto: String? = null,
-    val contentText: String? = null,
-    val contentHtml: String? = null,
+    val contentText: List<String> = emptyList(),
+    val contentHtml: List<String> = emptyList(),
 )
