@@ -6,9 +6,6 @@ import dev.jacobandersen.bastion.micropub.data.service.PostService
 import dev.jacobandersen.bastion.micropub.type.PostMf2Type
 import dev.jacobandersen.bastion.micropub.type.PostTertiaryTypeFilter
 import dev.jacobandersen.bastion.micropub.type.PostType
-import dev.jacobandersen.bastion.micropub.type.mf2Type
-import dev.jacobandersen.bastion.micropub.type.subtype
-import dev.jacobandersen.bastion.micropub.type.tertiaryType
 import dev.jacobandersen.bastion.url.UrlService
 import org.springframework.stereotype.Service
 import java.time.YearMonth
@@ -47,19 +44,13 @@ class PostQueryService(
 
         val range = resolveDateRange(year, month, day)
 
-        val mf2Types = type?.map { it.mf2Type() }
-        val subtypes = subtype?.map { it.subtype() }
-        val includeTertiaryNone = tertiaryType?.any { it == PostTertiaryTypeFilter.NONE } == true
-        val tertiaryTypes = tertiaryType?.filterNot { it == PostTertiaryTypeFilter.NONE }?.mapNotNull { it.tertiaryType() }
-
         return if (range == null) {
-            postService.findFeedPosts(mf2Types, subtypes, tertiaryTypes, includeTertiaryNone, limit, offset)
+            postService.findFeedPosts(type, subtype, tertiaryType, limit, offset)
         } else {
             postService.findFeedPosts(
-                mf2Types,
-                subtypes,
-                tertiaryTypes,
-                includeTertiaryNone,
+                type,
+                subtype,
+                tertiaryType,
                 limit,
                 offset,
                 range.first,

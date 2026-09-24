@@ -4,8 +4,14 @@ import dev.jacobandersen.bastion.microformats2.Mf2Object
 import dev.jacobandersen.bastion.micropub.data.domain.Post
 import dev.jacobandersen.bastion.micropub.data.entity.PostEntity
 import dev.jacobandersen.bastion.micropub.data.repository.PostRepository
+import dev.jacobandersen.bastion.micropub.type.PostMf2Type
 import dev.jacobandersen.bastion.micropub.type.PostStatus
+import dev.jacobandersen.bastion.micropub.type.PostTertiaryTypeFilter
+import dev.jacobandersen.bastion.micropub.type.PostType
 import dev.jacobandersen.bastion.micropub.type.PostVisibility
+import dev.jacobandersen.bastion.micropub.type.mf2Type
+import dev.jacobandersen.bastion.micropub.type.subtype
+import dev.jacobandersen.bastion.micropub.type.tertiaryType
 import jakarta.persistence.criteria.Predicate
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
@@ -105,24 +111,22 @@ class PostService(
      * Published, public, non-deleted posts for the public feed, optionally
      * restricted by mf2 `type` (h-entry, h-card, ...), `subtype` and
      * `tertiary_type`. Filters within each list are OR, across lists are AND.
-     * For `tertiary_type`, the sentinel is handled via [includeTertiaryNone].
+     * For `tertiary_type`, the `NONE` sentinel means `tertiary_type IS NULL`.
      */
     @Transactional(readOnly = true)
     fun findFeedPosts(
-        mf2Types: Collection<String>?,
-        subtypes: Collection<String>?,
-        tertiaryTypes: Collection<String>?,
-        includeTertiaryNone: Boolean,
+        mf2Types: Collection<PostMf2Type>?,
+        subtypes: Collection<PostType>?,
+        tertiaryFilters: Collection<PostTertiaryTypeFilter>?,
         limit: Int,
         offset: Int,
-    ): List<Post> = findFeedPosts(mf2Types, subtypes, tertiaryTypes, includeTertiaryNone, limit, offset, null, null)
+    ): List<Post> = findFeedPosts(mf2Types, subtypes, tertiaryFilters, limit, offset, null, null)
 
     @Transactional(readOnly = true)
     fun findFeedPosts(
-        mf2Types: Collection<String>?,
-        subtypes: Collection<String>?,
-        tertiaryTypes: Collection<String>?,
-        includeTertiaryNone: Boolean,
+        mf2Types: Collection<PostMf2Type>?,
+        subtypes: Collection<PostType>?,
+        tertiaryFilters: Collection<PostTertiaryTypeFilter>?,
         limit: Int,
         offset: Int,
         from: Instant?,
@@ -133,7 +137,12 @@ class PostService(
 
         val pageRequest = PageRequest.of(offset / limit, limit, Sort.by("createdAtUtc").descending())
 
-        val spec = buildFeedSpecification(mf2Types, subtypes, tertiaryTypes, includeTertiaryNone, from, toExclusive)
+        val mf2TypeStrings = mf2Types?.map { it.mf2Type() }
+        val subtypeStrings = subtypes?.map { it.subtype() }
+        val includeTertiaryNone = tertiaryFilters?.any { it == PostTertiaryTypeFilter.NONE } == true
+        val tertiaryTypeStrings = tertiaryFilters?.filterNot { it == PostTertiaryTypeFilter.NONE }?.mapNotNull { it.tertiaryType() }
+
+        val spec = buildFeedSpecification(mf2TypeStrings, subtypeStrings, tertiaryTypeStrings, includeTertiaryNone, from, toExclusive)
         return repository.findAll(spec, pageRequest).content.map { it.toDomain() }
     }
 
