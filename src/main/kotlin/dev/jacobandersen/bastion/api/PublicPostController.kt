@@ -143,44 +143,43 @@ class PublicPostController(
         }
     }
 
-    private fun parseMf2Types(raw: List<String>?): List<PostMf2Type>? =
+    private fun <T> parseCsv(
+        raw: List<String>?,
+        convert: (String) -> T,
+    ): List<T>? =
         raw
             ?.flatMap { it.split(",") }
             ?.map { it.trim() }
             ?.filter { it.isNotEmpty() }
-            ?.map {
-                try {
-                    PostMf2Type.valueOf(it.uppercase().replace('-', '_'))
-                } catch (_: IllegalArgumentException) {
-                    throw RuntimeException("unknown mf2 type: $it")
-                }
-            }?.takeIf { it.isNotEmpty() }
+            ?.map(convert)
+            ?.takeIf { it.isNotEmpty() }
+
+    private fun parseMf2Types(raw: List<String>?): List<PostMf2Type>? =
+        parseCsv(raw) {
+            try {
+                PostMf2Type.valueOf(it.uppercase().replace('-', '_'))
+            } catch (_: IllegalArgumentException) {
+                throw RuntimeException("unknown mf2 type: $it")
+            }
+        }
 
     private fun parseSubtypes(raw: List<String>?): List<PostType>? =
-        raw
-            ?.flatMap { it.split(",") }
-            ?.map { it.trim() }
-            ?.filter { it.isNotEmpty() }
-            ?.map {
-                try {
-                    PostType.valueOf(it.uppercase())
-                } catch (_: IllegalArgumentException) {
-                    throw RuntimeException("unknown post type: $it")
-                }
-            }?.takeIf { it.isNotEmpty() }
+        parseCsv(raw) {
+            try {
+                PostType.valueOf(it.uppercase())
+            } catch (_: IllegalArgumentException) {
+                throw RuntimeException("unknown post type: $it")
+            }
+        }
 
     private fun parseTertiaryTypes(raw: List<String>?): List<PostTertiaryTypeFilter>? =
-        raw
-            ?.flatMap { it.split(",") }
-            ?.map { it.trim() }
-            ?.filter { it.isNotEmpty() }
-            ?.map {
-                try {
-                    PostTertiaryTypeFilter.valueOf(it.uppercase())
-                } catch (_: IllegalArgumentException) {
-                    throw RuntimeException("unknown tertiary type: $it")
-                }
-            }?.takeIf { it.isNotEmpty() }
+        parseCsv(raw) {
+            try {
+                PostTertiaryTypeFilter.valueOf(it.uppercase())
+            } catch (_: IllegalArgumentException) {
+                throw RuntimeException("unknown tertiary type: $it")
+            }
+        }
 
     @ExceptionHandler(IllegalArgumentException::class)
     fun handleBadRequest(ex: IllegalArgumentException): ResponseEntity<Map<String, String>> =
