@@ -10,6 +10,8 @@ import dev.jacobandersen.bastion.microformats2.firstText
 import dev.jacobandersen.bastion.microformats2.htmls
 import dev.jacobandersen.bastion.microformats2.texts
 import dev.jacobandersen.bastion.micropub.data.domain.Post
+import dev.jacobandersen.bastion.micropub.type.PostMf2Type
+import dev.jacobandersen.bastion.micropub.type.PostTertiaryTypeFilter
 import dev.jacobandersen.bastion.micropub.type.PostType
 import dev.jacobandersen.bastion.url.UrlService
 import dev.jacobandersen.bastion.webmention.data.domain.WebmentionInteraction.MENTION
@@ -32,14 +34,16 @@ class PublicPostController(
 ) {
     @GetMapping
     fun feed(
-        @RequestParam(required = false) types: List<PostType>?,
+        @RequestParam(required = false) type: List<PostMf2Type>?,
+        @RequestParam(required = false) subtype: List<PostType>?,
+        @RequestParam(required = false) tertiaryType: List<PostTertiaryTypeFilter>?,
         @RequestParam(required = false) limit: Int?,
         @RequestParam(required = false) offset: Int?,
         @RequestParam(required = false) year: Int?,
         @RequestParam(required = false) month: Int?,
         @RequestParam(required = false) day: Int?,
     ): FeedResponse {
-        val posts = queryService.feed(types, limit, offset, year, month, day)
+        val posts = queryService.feed(type, subtype, tertiaryType, limit, offset, year, month, day)
         val webmentionCounts = countsByPost(posts)
         val items = posts.map { post -> toResponse(post, webmentionCounts[post.id] ?: WebmentionCounts.EMPTY, webmentions = null) }
         val effectiveLimit = limit ?: 10

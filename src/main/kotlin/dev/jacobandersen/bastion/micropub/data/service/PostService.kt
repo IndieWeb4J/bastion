@@ -6,10 +6,13 @@ import dev.jacobandersen.bastion.micropub.data.entity.PostEntity
 import dev.jacobandersen.bastion.micropub.data.repository.PostRepository
 import dev.jacobandersen.bastion.micropub.type.PostStatus
 import dev.jacobandersen.bastion.micropub.type.PostVisibility
+import jakarta.persistence.criteria.Predicate
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
+import org.springframework.data.jpa.domain.Specification
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.Instant
 import java.util.UUID
 
 @Service
@@ -100,73 +103,89 @@ class PostService(
 
     /**
      * Published, public, non-deleted posts for the public feed, optionally
-     * restricted to the given discovered post types (subtypes).
+     * restricted by mf2 `type` (h-entry, h-card, ...), `subtype` and
+     * `tertiary_type`. Filters within each list are OR, across lists are AND.
+     * For `tertiary_type`, the sentinel is handled via [includeTertiaryNone].
      */
     @Transactional(readOnly = true)
     fun findFeedPosts(
+        mf2Types: Collection<String>?,
         subtypes: Collection<String>?,
+        tertiaryTypes: Collection<String>?,
+        includeTertiaryNone: Boolean,
         limit: Int,
         offset: Int,
-    ): List<Post> = findFeedPosts(subtypes, limit, offset, null, null)
+    ): List<Post> = findFeedPosts(mf2Types, subtypes, tertiaryTypes, includeTertiaryNone, limit, offset, null, null)
 
     @Transactional(readOnly = true)
     fun findFeedPosts(
+        mf2Types: Collection<String>?,
         subtypes: Collection<String>?,
+        tertiaryTypes: Collection<String>?,
+        includeTertiaryNone: Boolean,
         limit: Int,
         offset: Int,
-        from: java.time.Instant?,
-        toExclusive: java.time.Instant?,
+        from: Instant?,
+        toExclusive: Instant?,
     ): List<Post> {
         require(offset % limit == 0) { "offset must be a multiple of limit" }
+        require((from == null) == (toExclusive == null)) { "both from and toExclusive must be provided together" }
 
         val pageRequest = PageRequest.of(offset / limit, limit, Sort.by("createdAtUtc").descending())
 
-        val hasRange = from != null && toExclusive != null
-        require((from == null) == (toExclusive == null)) { "both from and toExclusive must be provided together" }
+        val spec = buildFeedSpecification(mf2Types, subtypes, tertiaryTypes, includeTertiaryNone, from, toExclusive)
+        return repository.findAll(spec, pageRequest).content.map { it.toDomain() }
+    }
 
-        val results =
-            when {
-                hasRange && subtypes.isNullOrEmpty() -> {
-                    repository.findByStatusAndVisibilityAndDeletedFalseAndCreatedAtUtcGreaterThanEqualAndCreatedAtUtcLessThan(
-                        PostStatus.PUBLISHED,
-                        PostVisibility.PUBLIC,
-                        requireNotNull(from),
-                        requireNotNull(toExclusive),
-                        pageRequest,
-                    )
-                }
+    private fun buildFeedSpecification(
+        mf2Types: Collection<String>?,
+        subtypes: Collection<String>?,
+        tertiaryTypes: Collection<String>?,
+        includeTertiaryNone: Boolean,
+        from: Instant?,
+        toExclusive: Instant?,
+    ): Specification<PostEntity> =
+        Specification { root, _, cb ->
+            val predicates = mutableListOf<Predicate>()
 
-                hasRange -> {
-                    repository.findByStatusAndVisibilityAndDeletedFalseAndSubtypeInAndCreatedAtUtcGreaterThanEqualAndCreatedAtUtcLessThan(
-                        PostStatus.PUBLISHED,
-                        PostVisibility.PUBLIC,
-                        requireNotNull(subtypes),
-                        requireNotNull(from),
-                        requireNotNull(toExclusive),
-                        pageRequest,
-                    )
-                }
+            predicates += cb.equal(root.get<PostStatus>("status"), PostStatus.PUBLISHED)
+            predicates += cb.equal(root.get<PostVisibility>("visibility"), PostVisibility.PUBLIC)
+            predicates += cb.isFalse(root.get<Boolean>("deleted"))
 
-                subtypes.isNullOrEmpty() -> {
-                    repository.findByStatusAndVisibilityAndDeletedFalse(
-                        PostStatus.PUBLISHED,
-                        PostVisibility.PUBLIC,
-                        pageRequest,
-                    )
-                }
-
-                else -> {
-                    repository.findByStatusAndVisibilityAndDeletedFalseAndSubtypeIn(
-                        PostStatus.PUBLISHED,
-                        PostVisibility.PUBLIC,
-                        subtypes,
-                        pageRequest,
-                    )
-                }
+            if (!mf2Types.isNullOrEmpty()) {
+                predicates += root.get<String>("type").`in`(mf2Types)
+            }
+            if (!subtypes.isNullOrEmpty()) {
+                predicates += root.get<String>("subtype").`in`(subtypes)
             }
 
-        return results.content.map { it.toDomain() }
-    }
+            val hasTertiaryValues = !tertiaryTypes.isNullOrEmpty()
+            if (hasTertiaryValues || includeTertiaryNone) {
+                val tertiaryPath = root.get<String>("tertiaryType")
+                val clause =
+                    when {
+                        hasTertiaryValues && includeTertiaryNone -> {
+                            cb.or(tertiaryPath.isNull, tertiaryPath.`in`(tertiaryTypes))
+                        }
+
+                        hasTertiaryValues -> {
+                            tertiaryPath.`in`(tertiaryTypes)
+                        }
+
+                        else -> {
+                            tertiaryPath.isNull
+                        }
+                    }
+                predicates += clause
+            }
+
+            if (from != null && toExclusive != null) {
+                predicates += cb.greaterThanOrEqualTo(root.get<Instant>("createdAtUtc"), from)
+                predicates += cb.lessThan(root.get<Instant>("createdAtUtc"), toExclusive)
+            }
+
+            cb.and(*predicates.toTypedArray())
+        }
 
     fun filterPostFields(
         post: Post,

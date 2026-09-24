@@ -3,8 +3,12 @@ package dev.jacobandersen.bastion.api
 import dev.jacobandersen.bastion.microformats2.firstText
 import dev.jacobandersen.bastion.micropub.data.domain.Post
 import dev.jacobandersen.bastion.micropub.data.service.PostService
+import dev.jacobandersen.bastion.micropub.type.PostMf2Type
+import dev.jacobandersen.bastion.micropub.type.PostTertiaryTypeFilter
 import dev.jacobandersen.bastion.micropub.type.PostType
+import dev.jacobandersen.bastion.micropub.type.mf2Type
 import dev.jacobandersen.bastion.micropub.type.subtype
+import dev.jacobandersen.bastion.micropub.type.tertiaryType
 import dev.jacobandersen.bastion.url.UrlService
 import org.springframework.stereotype.Service
 import java.time.YearMonth
@@ -25,7 +29,9 @@ class PostQueryService(
     private val zone: ZoneId,
 ) {
     fun feed(
-        types: List<PostType>?,
+        type: List<PostMf2Type>?,
+        subtype: List<PostType>?,
+        tertiaryType: List<PostTertiaryTypeFilter>?,
         limitArg: Int?,
         offsetArg: Int?,
         year: Int? = null,
@@ -41,10 +47,24 @@ class PostQueryService(
 
         val range = resolveDateRange(year, month, day)
 
+        val mf2Types = type?.map { it.mf2Type() }
+        val subtypes = subtype?.map { it.subtype() }
+        val includeTertiaryNone = tertiaryType?.any { it == PostTertiaryTypeFilter.NONE } == true
+        val tertiaryTypes = tertiaryType?.filterNot { it == PostTertiaryTypeFilter.NONE }?.mapNotNull { it.tertiaryType() }
+
         return if (range == null) {
-            postService.findFeedPosts(types?.map { it.subtype() }, limit, offset)
+            postService.findFeedPosts(mf2Types, subtypes, tertiaryTypes, includeTertiaryNone, limit, offset)
         } else {
-            postService.findFeedPosts(types?.map { it.subtype() }, limit, offset, range.first, range.second)
+            postService.findFeedPosts(
+                mf2Types,
+                subtypes,
+                tertiaryTypes,
+                includeTertiaryNone,
+                limit,
+                offset,
+                range.first,
+                range.second,
+            )
         }
     }
 

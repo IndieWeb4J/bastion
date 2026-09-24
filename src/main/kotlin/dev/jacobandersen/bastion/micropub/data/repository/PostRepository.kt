@@ -6,12 +6,15 @@ import dev.jacobandersen.bastion.micropub.type.PostVisibility
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor
 import org.springframework.stereotype.Repository
 import java.time.Instant
 import java.util.UUID
 
 @Repository
-interface PostRepository : JpaRepository<PostEntity, UUID> {
+interface PostRepository :
+    JpaRepository<PostEntity, UUID>,
+    JpaSpecificationExecutor<PostEntity> {
     fun existsBySlug(slug: String): Boolean
 
     fun findBySlug(slug: String): PostEntity?
