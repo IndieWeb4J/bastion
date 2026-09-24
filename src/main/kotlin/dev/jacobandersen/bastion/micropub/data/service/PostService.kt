@@ -159,7 +159,7 @@ class PostService(
 
             predicates += cb.equal(root.get<PostStatus>("status"), PostStatus.PUBLISHED)
             predicates += cb.equal(root.get<PostVisibility>("visibility"), PostVisibility.PUBLIC)
-            predicates += cb.isFalse(root.get<Boolean>("deleted"))
+            predicates += cb.isFalse(root.get("deleted"))
 
             if (!mf2Types.isNullOrEmpty()) {
                 predicates += root.get<String>("type").`in`(mf2Types)
@@ -189,8 +189,8 @@ class PostService(
             }
 
             if (from != null && toExclusive != null) {
-                predicates += cb.greaterThanOrEqualTo(root.get<Instant>("createdAtUtc"), from)
-                predicates += cb.lessThan(root.get<Instant>("createdAtUtc"), toExclusive)
+                predicates += cb.greaterThanOrEqualTo(root.get("createdAtUtc"), from)
+                predicates += cb.lessThan(root.get("createdAtUtc"), toExclusive)
             }
 
             cb.and(*predicates.toTypedArray())

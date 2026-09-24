@@ -109,10 +109,19 @@ class PostQueryService(
     }
 
     fun postByUrl(url: String): PostLookupResult? {
-        val slug =
-            urlService.extractPostSlug(url)
+        val ref =
+            urlService.extractPostRef(url)
                 ?: throw IllegalArgumentException("url is not a URL on this Bastion instance")
-        val found = postService.findBySlug(slug) ?: return null
+        val found = postService.findBySlug(ref.slug) ?: return null
+
+        // Strict date validation: if the path pattern contains date placeholders,
+        // the URL must match the post's published date, otherwise 404.
+        val pattern = urlService.config.pathPattern
+        val publishedAt = found.publishedAt
+        if (pattern.contains("{year}") && ref.year != publishedAt?.year) return null
+        if (pattern.contains("{month}") && ref.month != publishedAt?.monthValue) return null
+        if (pattern.contains("{day}") && ref.day != publishedAt?.dayOfMonth) return null
+
         return toLookupResult(found)
     }
 
