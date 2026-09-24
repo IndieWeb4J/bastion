@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.19](https://github.com/jacobsandersen/bastion/compare/v1.3.18...v1.3.19) (2026-09-24)
+
+
+### Features
+
+* add more filters for feed lookup, tighten post lookup, improve post response ([c1e6d45](https://github.com/jacobsandersen/bastion/commit/c1e6d45a76ae3547026fedf5254eeb4a3117db81))
+
 ## [1.3.18](https://github.com/jacobsandersen/bastion/compare/v1.3.17...v1.3.18) (2026-09-23)
 
 
