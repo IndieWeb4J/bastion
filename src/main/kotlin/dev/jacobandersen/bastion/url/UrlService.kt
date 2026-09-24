@@ -37,7 +37,14 @@ class UrlService(
             .replace("{slug}", post.slug)
     }
 
-    fun extractPostSlug(url: String): String? {
+    data class ExtractedRef(
+        val slug: String,
+        val year: Int?,
+        val month: Int?,
+        val day: Int?,
+    )
+
+    fun extractPostRef(url: String): ExtractedRef? {
         val parsedUrl = runCatching { URI(url) }.getOrNull() ?: return null
         val urlAuthority = UrlNormalizer.authority(url) ?: return null
         val baseAuthority = UrlNormalizer.authority(config.baseUrl) ?: return null
@@ -57,6 +64,22 @@ class UrlService(
             return null
         }
 
-        return urlParts[slugIndex]
+        val slug = urlParts[slugIndex]
+        if (slug.isBlank()) return null
+
+        fun parsePart(name: String): Int? {
+            val idx = patternParts.indexOf(name)
+            if (idx < 0) return null
+            return urlParts.getOrNull(idx)?.toIntOrNull()
+        }
+
+        return ExtractedRef(
+            slug = slug,
+            year = parsePart("{year}"),
+            month = parsePart("{month}"),
+            day = parsePart("{day}"),
+        )
     }
+
+    fun extractPostSlug(url: String): String? = extractPostRef(url)?.slug
 }

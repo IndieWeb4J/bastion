@@ -10,6 +10,8 @@ import dev.jacobandersen.bastion.microformats2.firstText
 import dev.jacobandersen.bastion.microformats2.htmls
 import dev.jacobandersen.bastion.microformats2.texts
 import dev.jacobandersen.bastion.micropub.data.domain.Post
+import dev.jacobandersen.bastion.micropub.type.PostMf2Type
+import dev.jacobandersen.bastion.micropub.type.PostTertiaryTypeFilter
 import dev.jacobandersen.bastion.micropub.type.PostType
 import dev.jacobandersen.bastion.url.UrlService
 import dev.jacobandersen.bastion.webmention.data.domain.WebmentionInteraction.MENTION
@@ -32,14 +34,19 @@ class PublicPostController(
 ) {
     @GetMapping
     fun feed(
-        @RequestParam(required = false) types: List<PostType>?,
+        @RequestParam(required = false) type: List<String>?,
+        @RequestParam(required = false) subtype: List<String>?,
+        @RequestParam(required = false) tertiaryType: List<String>?,
         @RequestParam(required = false) limit: Int?,
         @RequestParam(required = false) offset: Int?,
         @RequestParam(required = false) year: Int?,
         @RequestParam(required = false) month: Int?,
         @RequestParam(required = false) day: Int?,
     ): FeedResponse {
-        val posts = queryService.feed(types, limit, offset, year, month, day)
+        val parsedTypes = parseMf2Types(type)
+        val parsedSubtypes = parseSubtypes(subtype)
+        val parsedTertiaryTypes = parseTertiaryTypes(tertiaryType)
+        val posts = queryService.feed(parsedTypes, parsedSubtypes, parsedTertiaryTypes, limit, offset, year, month, day)
         val webmentionCounts = countsByPost(posts)
         val items = posts.map { post -> toResponse(post, webmentionCounts[post.id] ?: WebmentionCounts.EMPTY, webmentions = null) }
         val effectiveLimit = limit ?: 10
@@ -136,7 +143,58 @@ class PublicPostController(
         }
     }
 
+    private fun <T> parseCsv(
+        raw: List<String>?,
+        convert: (String) -> T,
+    ): List<T>? =
+        raw
+            ?.flatMap { it.split(",") }
+            ?.map { it.trim() }
+            ?.filter { it.isNotEmpty() }
+            ?.map(convert)
+            ?.takeIf { it.isNotEmpty() }
+
+    private fun parseMf2Types(raw: List<String>?): List<PostMf2Type>? =
+        parseCsv(raw) {
+            try {
+                PostMf2Type.valueOf(it.uppercase().replace('-', '_'))
+            } catch (_: IllegalArgumentException) {
+                throw RuntimeException("unknown mf2 type: $it")
+            }
+        }
+
+    private fun parseSubtypes(raw: List<String>?): List<PostType>? =
+        parseCsv(raw) {
+            try {
+                PostType.valueOf(it.uppercase())
+            } catch (_: IllegalArgumentException) {
+                throw RuntimeException("unknown post type: $it")
+            }
+        }
+
+    private fun parseTertiaryTypes(raw: List<String>?): List<PostTertiaryTypeFilter>? =
+        parseCsv(raw) {
+            try {
+                PostTertiaryTypeFilter.valueOf(it.uppercase())
+            } catch (_: IllegalArgumentException) {
+                throw RuntimeException("unknown tertiary type: $it")
+            }
+        }
+
     @ExceptionHandler(IllegalArgumentException::class)
     fun handleBadRequest(ex: IllegalArgumentException): ResponseEntity<Map<String, String>> =
         ResponseEntity.badRequest().body(mapOf("error" to (ex.message ?: "bad request")))
+
+    @ExceptionHandler(RuntimeException::class)
+    fun handleUnknownType(ex: RuntimeException): ResponseEntity<Map<String, String>> {
+        val message = ex.message ?: "bad request"
+        return if (message.startsWith("unknown mf2 type") ||
+            message.startsWith("unknown post type") ||
+            message.startsWith("unknown tertiary type")
+        ) {
+            ResponseEntity.badRequest().body(mapOf("error" to message))
+        } else {
+            throw ex
+        }
+    }
 }
