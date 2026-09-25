@@ -1,4 +1,4 @@
-package dev.jacobandersen.bastion.api.dto
+package dev.jacobandersen.bastion.api.post.dto
 
 import dev.jacobandersen.bastion.microformats2.Mf2Value
 
@@ -19,16 +19,4 @@ data class PostResponse(
     val properties: Map<String, List<Mf2Value>>,
     val webmentionCounts: WebmentionCounts,
     val webmentions: List<WebmentionDto>? = null,
-)
-
-data class FeedResponse(
-    val items: List<PostResponse>,
-    val pagination: Pagination,
-)
-
-data class Pagination(
-    val limit: Int,
-    val offset: Int,
-    val count: Int,
-    val hasMore: Boolean,
 )

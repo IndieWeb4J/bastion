@@ -1,11 +1,12 @@
-package dev.jacobandersen.bastion.api
+package dev.jacobandersen.bastion.api.post
 
-import dev.jacobandersen.bastion.api.dto.FeedResponse
 import dev.jacobandersen.bastion.api.dto.Pagination
-import dev.jacobandersen.bastion.api.dto.PostGoneResponse
-import dev.jacobandersen.bastion.api.dto.PostResponse
-import dev.jacobandersen.bastion.api.dto.WebmentionCounts
-import dev.jacobandersen.bastion.api.dto.WebmentionDto
+import dev.jacobandersen.bastion.api.post.dto.FeedResponse
+import dev.jacobandersen.bastion.api.post.dto.PostGoneResponse
+import dev.jacobandersen.bastion.api.post.dto.PostLookupResult
+import dev.jacobandersen.bastion.api.post.dto.PostResponse
+import dev.jacobandersen.bastion.api.post.dto.WebmentionCounts
+import dev.jacobandersen.bastion.api.post.dto.WebmentionDto
 import dev.jacobandersen.bastion.microformats2.firstText
 import dev.jacobandersen.bastion.microformats2.htmls
 import dev.jacobandersen.bastion.microformats2.texts
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import java.util.UUID
 
 @RestController
 @RequestMapping("/api/posts")
@@ -37,6 +39,7 @@ class PublicPostController(
         @RequestParam(required = false) type: List<String>?,
         @RequestParam(required = false) subtype: List<String>?,
         @RequestParam(required = false) tertiaryType: List<String>?,
+        @RequestParam(required = false) tag: List<String>? = null,
         @RequestParam(required = false) limit: Int?,
         @RequestParam(required = false) offset: Int?,
         @RequestParam(required = false) year: Int?,
@@ -46,7 +49,8 @@ class PublicPostController(
         val parsedTypes = parseMf2Types(type)
         val parsedSubtypes = parseSubtypes(subtype)
         val parsedTertiaryTypes = parseTertiaryTypes(tertiaryType)
-        val posts = queryService.feed(parsedTypes, parsedSubtypes, parsedTertiaryTypes, limit, offset, year, month, day)
+        val parsedTags = parseTags(tag)
+        val posts = queryService.feed(parsedTypes, parsedSubtypes, parsedTertiaryTypes, limit, offset, year, month, day, parsedTags)
         val webmentionCounts = countsByPost(posts)
         val items = posts.map { post -> toResponse(post, webmentionCounts[post.id] ?: WebmentionCounts.EMPTY, webmentions = null) }
         val effectiveLimit = limit ?: 10
@@ -92,7 +96,8 @@ class PublicPostController(
             is PostLookupResult.Found -> {
                 val post = result.post
                 val counts = countForPost(post)
-                val webmentions = webmentionService.verifiedByPost(post.id).sortedBy { it.firstSeenAt }.map(WebmentionDto::from)
+                val webmentions =
+                    webmentionService.verifiedByPost(post.id).sortedBy { it.firstSeenAt }.map(WebmentionDto.Companion::from)
                 ResponseEntity.ok(toResponse(post, counts, webmentions))
             }
         }
@@ -130,7 +135,7 @@ class PublicPostController(
         return WebmentionCounts.of(byInteraction)
     }
 
-    private fun countsByPost(posts: List<Post>): Map<java.util.UUID, WebmentionCounts> {
+    private fun countsByPost(posts: List<Post>): Map<UUID, WebmentionCounts> {
         if (posts.isEmpty()) return emptyMap()
         val byPost = webmentionService.verifiedByPostIds(posts.map { it.id }).groupBy { it.postId }
         return posts.associate { post ->
@@ -180,6 +185,9 @@ class PublicPostController(
                 throw RuntimeException("unknown tertiary type: $it")
             }
         }
+
+    private fun parseTags(raw: List<String>?): List<String>? =
+        parseCsv(raw) { it.lowercase().trim() }?.filter { it.isNotEmpty() }?.distinct()?.takeIf { it.isNotEmpty() }
 
     @ExceptionHandler(IllegalArgumentException::class)
     fun handleBadRequest(ex: IllegalArgumentException): ResponseEntity<Map<String, String>> =

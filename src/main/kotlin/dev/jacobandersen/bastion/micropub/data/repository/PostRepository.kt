@@ -7,6 +7,8 @@ import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor
+import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
 import java.time.Instant
 import java.util.UUID
@@ -48,4 +50,40 @@ interface PostRepository :
         to: Instant,
         page: Pageable,
     ): Page<PostEntity>
+
+    @Query(
+        value = """
+            select unnest(categories) as tag, count(*) as cnt
+            from posts
+            where status = 'PUBLISHED' and visibility = 'PUBLIC' and deleted = false
+              and categories <> '{}'::text[]
+            group by tag
+            order by cnt desc, tag asc
+            limit :limit offset :offset
+        """,
+        nativeQuery = true,
+    )
+    fun findTagsWithCounts(
+        @Param("limit") limit: Int,
+        @Param("offset") offset: Int,
+    ): List<TagCountRow>
+
+    @Query(
+        value = """
+            select count(*) from (
+                select distinct unnest(categories) as tag
+                from posts
+                where status = 'PUBLISHED' and visibility = 'PUBLIC' and deleted = false
+                  and categories <> '{}'::text[]
+            ) s
+        """,
+        nativeQuery = true,
+    )
+    fun countDistinctTags(): Long
+
+    interface TagCountRow {
+        fun getTag(): String
+
+        fun getCnt(): Long
+    }
 }
