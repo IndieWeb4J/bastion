@@ -45,7 +45,7 @@ class CreateService(
         files: MultiValueMap<String, MultipartFile>?,
     ): ApiResponse<*> {
         logger.info { "Parsing post payload..." }
-        var obj = payload.asMf2Object()
+        var obj = payload.asMf2Object().withoutUntaggedCategory()
 
         logger.info { "Resolving post commands..." }
         val commands =

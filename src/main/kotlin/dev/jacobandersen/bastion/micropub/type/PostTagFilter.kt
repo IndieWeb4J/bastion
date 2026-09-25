@@ -1,5 +1,7 @@
 package dev.jacobandersen.bastion.micropub.type
 
+import java.util.Locale
+
 /**
  * Tag selection for the public post feed.
  *
@@ -22,7 +24,7 @@ data class PostTagFilter(
             rawValues
                 .asSequence()
                 .flatMap { it.splitToSequence(',') }
-                .map { it.trim().lowercase() }
+                .map { it.trim().lowercase(Locale.ROOT) }
                 .filter { it.isNotEmpty() }
                 .forEach { value ->
                     if (value == UNTAGGED) {
