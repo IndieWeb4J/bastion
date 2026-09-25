@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.23](https://github.com/jacobsandersen/bastion/compare/v1.3.22...v1.3.23) (2026-09-25)
+
+
+### Features
+
+* untagged post lookup ([#54](https://github.com/jacobsandersen/bastion/issues/54)) ([4d5b1f1](https://github.com/jacobsandersen/bastion/commit/4d5b1f1bd99c060fba7695d4dc330b2933a43702))
+
 ## [1.3.22](https://github.com/jacobsandersen/bastion/compare/v1.3.21...v1.3.22) (2026-09-25)
 
 
