@@ -1,6 +1,8 @@
 package dev.jacobandersen.bastion.api
 
-import dev.jacobandersen.bastion.api.dto.FeedResponse
+import dev.jacobandersen.bastion.api.post.PostQueryService
+import dev.jacobandersen.bastion.api.post.PublicPostController
+import dev.jacobandersen.bastion.api.post.dto.FeedResponse
 import dev.jacobandersen.bastion.micropub.type.PostMf2Type
 import dev.jacobandersen.bastion.micropub.type.PostTertiaryTypeFilter
 import dev.jacobandersen.bastion.micropub.type.PostType
@@ -23,7 +25,17 @@ class PublicPostControllerCsvTest {
         val webmentionService: ReceivedWebmentionService = mock()
         whenever(webmentionService.verifiedByPostIds(any())).thenReturn(emptyList())
         whenever(
-            queryService.feed(anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull()),
+            queryService.feed(
+                anyOrNull(),
+                anyOrNull(),
+                anyOrNull(),
+                anyOrNull(),
+                anyOrNull(),
+                anyOrNull(),
+                anyOrNull(),
+                anyOrNull(),
+                anyOrNull(),
+            ),
         ).thenReturn(emptyList())
 
         val controller = PublicPostController(queryService, urlService, webmentionService)
@@ -52,6 +64,7 @@ class PublicPostControllerCsvTest {
             anyOrNull(),
             anyOrNull(),
             anyOrNull(),
+            anyOrNull(),
         )
 
         assertEquals(listOf(PostType.NOTE, PostType.ARTICLE), subtypeCaptor.firstValue)
@@ -66,7 +79,17 @@ class PublicPostControllerCsvTest {
         val webmentionService: ReceivedWebmentionService = mock()
         whenever(webmentionService.verifiedByPostIds(any())).thenReturn(emptyList())
         whenever(
-            queryService.feed(anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull()),
+            queryService.feed(
+                anyOrNull(),
+                anyOrNull(),
+                anyOrNull(),
+                anyOrNull(),
+                anyOrNull(),
+                anyOrNull(),
+                anyOrNull(),
+                anyOrNull(),
+                anyOrNull(),
+            ),
         ).thenReturn(emptyList())
 
         val controller = PublicPostController(queryService, urlService, webmentionService)
@@ -95,6 +118,7 @@ class PublicPostControllerCsvTest {
             anyOrNull(),
             anyOrNull(),
             anyOrNull(),
+            anyOrNull(),
         )
 
         assertEquals(listOf(PostType.NOTE, PostType.ARTICLE, PostType.REPLY), subtypeCaptor.firstValue)
@@ -112,7 +136,17 @@ class PublicPostControllerCsvTest {
         val webmentionService: ReceivedWebmentionService = mock()
         whenever(webmentionService.verifiedByPostIds(any())).thenReturn(emptyList())
         whenever(
-            queryService.feed(anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull()),
+            queryService.feed(
+                anyOrNull(),
+                anyOrNull(),
+                anyOrNull(),
+                anyOrNull(),
+                anyOrNull(),
+                anyOrNull(),
+                anyOrNull(),
+                anyOrNull(),
+                anyOrNull(),
+            ),
         ).thenReturn(emptyList())
 
         val controller = PublicPostController(queryService, urlService, webmentionService)

@@ -54,6 +54,11 @@ class PostEntity(
     var tertiaryType: String? = null
 
     @Generated(event = [EventType.INSERT, EventType.UPDATE])
+    @Column(name = "categories", insertable = false, updatable = false)
+    @JdbcTypeCode(SqlTypes.ARRAY)
+    var categories: Array<String>? = null
+
+    @Generated(event = [EventType.INSERT, EventType.UPDATE])
     @Column(name = "created_at_utc", nullable = false, insertable = false, updatable = false)
     var createdAtUtc: Instant? = null
 

@@ -1,5 +1,6 @@
-package dev.jacobandersen.bastion.api
+package dev.jacobandersen.bastion.api.post
 
+import dev.jacobandersen.bastion.api.post.dto.PostLookupResult
 import dev.jacobandersen.bastion.microformats2.firstText
 import dev.jacobandersen.bastion.micropub.data.domain.Post
 import dev.jacobandersen.bastion.micropub.data.service.PostService
@@ -8,6 +9,7 @@ import dev.jacobandersen.bastion.micropub.type.PostTertiaryTypeFilter
 import dev.jacobandersen.bastion.micropub.type.PostType
 import dev.jacobandersen.bastion.url.UrlService
 import org.springframework.stereotype.Service
+import java.time.Instant
 import java.time.YearMonth
 import java.time.ZoneId
 import java.time.ZonedDateTime
@@ -17,7 +19,7 @@ import java.time.ZonedDateTime
  * Lists return only PUBLIC posts; direct lookups additionally allow UNLISTED.
  * PRIVATE and DRAFT posts are never returned here (private is only reachable
  * through the authenticated Micropub source query). A post that was publicly
- * reachable and is now soft-deleted surfaces as [PostLookupResult.Gone].
+ * reachable and is now soft-deleted surfaces as [dev.jacobandersen.bastion.api.post.dto.PostLookupResult.Gone].
  */
 @Service
 class PostQueryService(
@@ -34,6 +36,7 @@ class PostQueryService(
         year: Int? = null,
         month: Int? = null,
         day: Int? = null,
+        tags: List<String>? = null,
     ): List<Post> {
         val limit = limitArg ?: 10
         val offset = offsetArg ?: 0
@@ -43,9 +46,15 @@ class PostQueryService(
         require(offset % limit == 0) { "offset must be a multiple of limit ($offset % $limit != 0)" }
 
         val range = resolveDateRange(year, month, day)
+        val normalizedTags =
+            tags
+                ?.map { it.lowercase().trim() }
+                ?.filter { it.isNotEmpty() }
+                ?.distinct()
+                ?.takeIf { it.isNotEmpty() }
 
         return if (range == null) {
-            postService.findFeedPosts(type, subtype, tertiaryType, limit, offset)
+            postService.findFeedPosts(type, subtype, tertiaryType, limit, offset, null, null, normalizedTags)
         } else {
             postService.findFeedPosts(
                 type,
@@ -55,6 +64,7 @@ class PostQueryService(
                 offset,
                 range.first,
                 range.second,
+                normalizedTags,
             )
         }
     }
@@ -63,7 +73,7 @@ class PostQueryService(
         year: Int?,
         month: Int?,
         day: Int?,
-    ): Pair<java.time.Instant, java.time.Instant>? {
+    ): Pair<Instant, Instant>? {
         if (year == null && month == null && day == null) return null
 
         require(year != null) { "year is required when month or day is provided" }
@@ -100,7 +110,7 @@ class PostQueryService(
 
     /**
      * Resolves a direct post lookup. Returns null when the post does not exist
-     * or was never publicly reachable (draft/private); [PostLookupResult.Gone]
+     * or was never publicly reachable (draft/private); [dev.jacobandersen.bastion.api.post.dto.PostLookupResult.Gone]
      * when the post existed publicly and has since been deleted.
      */
     fun postBySlug(slug: String): PostLookupResult? {
@@ -143,16 +153,4 @@ class PostQueryService(
                 null
             }
         }
-}
-
-sealed interface PostLookupResult {
-    data class Found(
-        val post: Post,
-    ) : PostLookupResult
-
-    data class Gone(
-        val slug: String,
-        val url: String,
-        val published: String,
-    ) : PostLookupResult
 }

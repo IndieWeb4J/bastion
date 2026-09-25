@@ -120,7 +120,7 @@ class PostService(
         tertiaryFilters: Collection<PostTertiaryTypeFilter>?,
         limit: Int,
         offset: Int,
-    ): List<Post> = findFeedPosts(mf2Types, subtypes, tertiaryFilters, limit, offset, null, null)
+    ): List<Post> = findFeedPosts(mf2Types, subtypes, tertiaryFilters, limit, offset, null, null, null)
 
     @Transactional(readOnly = true)
     fun findFeedPosts(
@@ -131,6 +131,18 @@ class PostService(
         offset: Int,
         from: Instant?,
         toExclusive: Instant?,
+    ): List<Post> = findFeedPosts(mf2Types, subtypes, tertiaryFilters, limit, offset, from, toExclusive, null)
+
+    @Transactional(readOnly = true)
+    fun findFeedPosts(
+        mf2Types: Collection<PostMf2Type>?,
+        subtypes: Collection<PostType>?,
+        tertiaryFilters: Collection<PostTertiaryTypeFilter>?,
+        limit: Int,
+        offset: Int,
+        from: Instant?,
+        toExclusive: Instant?,
+        tags: Collection<String>?,
     ): List<Post> {
         require(offset % limit == 0) { "offset must be a multiple of limit" }
         require((from == null) == (toExclusive == null)) { "both from and toExclusive must be provided together" }
@@ -141,8 +153,23 @@ class PostService(
         val subtypeStrings = subtypes?.map { it.subtype() }
         val includeTertiaryNone = tertiaryFilters?.any { it == PostTertiaryTypeFilter.NONE } == true
         val tertiaryTypeStrings = tertiaryFilters?.filterNot { it == PostTertiaryTypeFilter.NONE }?.mapNotNull { it.tertiaryType() }
+        val normalizedTags =
+            tags
+                ?.map { it.lowercase().trim() }
+                ?.filter { it.isNotEmpty() }
+                ?.distinct()
+                ?.takeIf { it.isNotEmpty() }
 
-        val spec = buildFeedSpecification(mf2TypeStrings, subtypeStrings, tertiaryTypeStrings, includeTertiaryNone, from, toExclusive)
+        val spec =
+            buildFeedSpecification(
+                mf2TypeStrings,
+                subtypeStrings,
+                tertiaryTypeStrings,
+                includeTertiaryNone,
+                from,
+                toExclusive,
+                normalizedTags,
+            )
         return repository.findAll(spec, pageRequest).content.map { it.toDomain() }
     }
 
@@ -153,6 +180,7 @@ class PostService(
         includeTertiaryNone: Boolean,
         from: Instant?,
         toExclusive: Instant?,
+        tags: Collection<String>? = null,
     ): Specification<PostEntity> =
         Specification { root, _, cb ->
             val predicates = mutableListOf<Predicate>()
@@ -186,6 +214,19 @@ class PostService(
                         }
                     }
                 predicates += clause
+            }
+
+            if (!tags.isNullOrEmpty()) {
+                val tagArray = tags.toTypedArray()
+                predicates +=
+                    cb.isTrue(
+                        cb.function(
+                            "categories_overlap",
+                            Boolean::class.java,
+                            root.get<Array<String>>("categories"),
+                            cb.literal(tagArray),
+                        ),
+                    )
             }
 
             if (from != null && toExclusive != null) {

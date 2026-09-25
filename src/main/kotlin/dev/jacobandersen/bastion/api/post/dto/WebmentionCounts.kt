@@ -1,4 +1,4 @@
-package dev.jacobandersen.bastion.api.dto
+package dev.jacobandersen.bastion.api.post.dto
 
 import dev.jacobandersen.bastion.webmention.data.domain.WebmentionInteraction
 
