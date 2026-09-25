@@ -49,7 +49,8 @@ class UrlService(
         val urlAuthority = UrlNormalizer.authority(url) ?: return null
         val baseAuthority = UrlNormalizer.authority(config.baseUrl) ?: return null
 
-        if (urlAuthority != baseAuthority) {
+        // Lenient on scheme
+        if (urlAuthority.host != baseAuthority.host || urlAuthority.port != baseAuthority.port) {
             return null
         }
 
