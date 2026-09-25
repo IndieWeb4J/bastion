@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.21](https://github.com/jacobsandersen/bastion/compare/v1.3.20...v1.3.21) (2026-09-25)
+
+
+### Bug Fixes
+
+* fix url service test to accept variable schemes ([6d0912e](https://github.com/jacobsandersen/bastion/commit/6d0912e7bdd3ce53768de667d6773034f6ef0557))
+
 ## [1.3.20](https://github.com/jacobsandersen/bastion/compare/v1.3.19...v1.3.20) (2026-09-25)
 
 
