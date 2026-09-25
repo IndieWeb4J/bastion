@@ -12,6 +12,7 @@ import dev.jacobandersen.bastion.microformats2.htmls
 import dev.jacobandersen.bastion.microformats2.texts
 import dev.jacobandersen.bastion.micropub.data.domain.Post
 import dev.jacobandersen.bastion.micropub.type.PostMf2Type
+import dev.jacobandersen.bastion.micropub.type.PostTagFilter
 import dev.jacobandersen.bastion.micropub.type.PostTertiaryTypeFilter
 import dev.jacobandersen.bastion.micropub.type.PostType
 import dev.jacobandersen.bastion.url.UrlService
@@ -186,8 +187,7 @@ class PublicPostController(
             }
         }
 
-    private fun parseTags(raw: List<String>?): List<String>? =
-        parseCsv(raw) { it.lowercase().trim() }?.filter { it.isNotEmpty() }?.distinct()?.takeIf { it.isNotEmpty() }
+    private fun parseTags(raw: List<String>?): PostTagFilter? = PostTagFilter.parse(raw)
 
     @ExceptionHandler(IllegalArgumentException::class)
     fun handleBadRequest(ex: IllegalArgumentException): ResponseEntity<Map<String, String>> =
