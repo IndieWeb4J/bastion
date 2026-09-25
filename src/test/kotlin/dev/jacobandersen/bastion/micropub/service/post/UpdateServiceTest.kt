@@ -102,6 +102,38 @@ class UpdateServiceTest {
     }
 
     @Test
+    fun removesUntaggedCategoryValuesFromAdditionsAndReplacements() {
+        val post = createPost(uniqueSlug("untagged-category"))
+        val addResponse =
+            updateService.update(
+                updateJson(
+                    urlService.generatePostUrl(post),
+                    """ "add": {"category": [" NoNe ", {"value": "NONE"}, "c"]} """,
+                ),
+            )
+
+        assertEquals(ApiResponse.Success.NoContent, addResponse)
+        assertEquals(
+            listOf(Mf2Value.String("a"), Mf2Value.String("b"), Mf2Value.String("c")),
+            postService.findBySlug(post.slug)!!.post.getProperty("category"),
+        )
+
+        val replaceResponse =
+            updateService.update(
+                updateJson(
+                    urlService.generatePostUrl(post),
+                    """ "replace": {"category": ["nOnE", "d"]} """,
+                ),
+            )
+
+        assertEquals(ApiResponse.Success.NoContent, replaceResponse)
+        assertEquals(
+            listOf(Mf2Value.String("d")),
+            postService.findBySlug(post.slug)!!.post.getProperty("category"),
+        )
+    }
+
+    @Test
     fun deletesProperty() {
         val post = createPost(uniqueSlug("delete-all"))
         val response =

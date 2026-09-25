@@ -96,6 +96,24 @@ class CreateServiceTest {
     }
 
     @Test
+    fun removesUntaggedCategoryOnCreate() {
+        val slug = uniqueSlug("untagged-category")
+        val response =
+            createService.create(
+                createPayload(
+                    """{"mp-slug": ["$slug"], "category": [" NoNe ", "kotlin", {"value": "NONE"}]}""",
+                ),
+                null,
+            )
+
+        assertInstanceOf(ApiResponse.Success.Created::class.java, response)
+        assertEquals(
+            listOf(Mf2Value.String("kotlin")),
+            postService.findBySlug(slug)!!.post.getProperty("category"),
+        )
+    }
+
+    @Test
     fun treatsBlankSlugAsAbsent() {
         val response =
             createService.create(

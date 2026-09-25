@@ -5,6 +5,7 @@ import dev.jacobandersen.bastion.microformats2.firstText
 import dev.jacobandersen.bastion.micropub.data.domain.Post
 import dev.jacobandersen.bastion.micropub.data.service.PostService
 import dev.jacobandersen.bastion.micropub.type.PostMf2Type
+import dev.jacobandersen.bastion.micropub.type.PostTagFilter
 import dev.jacobandersen.bastion.micropub.type.PostTertiaryTypeFilter
 import dev.jacobandersen.bastion.micropub.type.PostType
 import dev.jacobandersen.bastion.url.UrlService
@@ -36,7 +37,7 @@ class PostQueryService(
         year: Int? = null,
         month: Int? = null,
         day: Int? = null,
-        tags: List<String>? = null,
+        tagFilter: PostTagFilter? = null,
     ): List<Post> {
         val limit = limitArg ?: 10
         val offset = offsetArg ?: 0
@@ -46,15 +47,9 @@ class PostQueryService(
         require(offset % limit == 0) { "offset must be a multiple of limit ($offset % $limit != 0)" }
 
         val range = resolveDateRange(year, month, day)
-        val normalizedTags =
-            tags
-                ?.map { it.lowercase().trim() }
-                ?.filter { it.isNotEmpty() }
-                ?.distinct()
-                ?.takeIf { it.isNotEmpty() }
 
         return if (range == null) {
-            postService.findFeedPosts(type, subtype, tertiaryType, limit, offset, null, null, normalizedTags)
+            postService.findFeedPosts(type, subtype, tertiaryType, limit, offset, null, null, tagFilter)
         } else {
             postService.findFeedPosts(
                 type,
@@ -64,7 +59,7 @@ class PostQueryService(
                 offset,
                 range.first,
                 range.second,
-                normalizedTags,
+                tagFilter,
             )
         }
     }

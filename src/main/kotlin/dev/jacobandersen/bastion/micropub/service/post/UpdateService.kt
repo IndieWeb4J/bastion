@@ -27,7 +27,7 @@ class UpdateService(
     fun update(payload: MicropubPayload): ApiResponse<*> {
         val update =
             try {
-                payload.asUpdatePayload()
+                payload.asUpdatePayload().withoutUntaggedCategories()
             } catch (e: Exception) {
                 return ApiResponse.Error.InvalidRequest(errorDescription = "Failed to parse payload as update: ${e.message}")
             }
@@ -72,6 +72,7 @@ class UpdateService(
         update.removals?.let { removals ->
             postObj = applyRemovals(postObj, removals)
         }
+        postObj = postObj.withoutUntaggedCategory()
 
         val targetSlug =
             when {

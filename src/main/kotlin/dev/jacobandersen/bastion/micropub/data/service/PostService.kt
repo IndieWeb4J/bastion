@@ -6,6 +6,7 @@ import dev.jacobandersen.bastion.micropub.data.entity.PostEntity
 import dev.jacobandersen.bastion.micropub.data.repository.PostRepository
 import dev.jacobandersen.bastion.micropub.type.PostMf2Type
 import dev.jacobandersen.bastion.micropub.type.PostStatus
+import dev.jacobandersen.bastion.micropub.type.PostTagFilter
 import dev.jacobandersen.bastion.micropub.type.PostTertiaryTypeFilter
 import dev.jacobandersen.bastion.micropub.type.PostType
 import dev.jacobandersen.bastion.micropub.type.PostVisibility
@@ -109,9 +110,11 @@ class PostService(
 
     /**
      * Published, public, non-deleted posts for the public feed, optionally
-     * restricted by mf2 `type` (h-entry, h-card, ...), `subtype` and
-     * `tertiary_type`. Filters within each list are OR, across lists are AND.
-     * For `tertiary_type`, the `NONE` sentinel means `tertiary_type IS NULL`.
+     * restricted by mf2 `type` (h-entry, h-card, ...), `subtype`,
+     * `tertiary_type` and tags. Filters within each list are OR, across lists
+     * are AND. For `tertiary_type`, the `NONE` sentinel means
+     * `tertiary_type IS NULL`. For tags, the `none` sentinel means an empty
+     * categories array.
      */
     @Transactional(readOnly = true)
     fun findFeedPosts(
@@ -142,7 +145,7 @@ class PostService(
         offset: Int,
         from: Instant?,
         toExclusive: Instant?,
-        tags: Collection<String>?,
+        tagFilter: PostTagFilter?,
     ): List<Post> {
         require(offset % limit == 0) { "offset must be a multiple of limit" }
         require((from == null) == (toExclusive == null)) { "both from and toExclusive must be provided together" }
@@ -153,12 +156,6 @@ class PostService(
         val subtypeStrings = subtypes?.map { it.subtype() }
         val includeTertiaryNone = tertiaryFilters?.any { it == PostTertiaryTypeFilter.NONE } == true
         val tertiaryTypeStrings = tertiaryFilters?.filterNot { it == PostTertiaryTypeFilter.NONE }?.mapNotNull { it.tertiaryType() }
-        val normalizedTags =
-            tags
-                ?.map { it.lowercase().trim() }
-                ?.filter { it.isNotEmpty() }
-                ?.distinct()
-                ?.takeIf { it.isNotEmpty() }
 
         val spec =
             buildFeedSpecification(
@@ -168,7 +165,7 @@ class PostService(
                 includeTertiaryNone,
                 from,
                 toExclusive,
-                normalizedTags,
+                tagFilter,
             )
         return repository.findAll(spec, pageRequest).content.map { it.toDomain() }
     }
@@ -180,7 +177,7 @@ class PostService(
         includeTertiaryNone: Boolean,
         from: Instant?,
         toExclusive: Instant?,
-        tags: Collection<String>? = null,
+        tagFilter: PostTagFilter? = null,
     ): Specification<PostEntity> =
         Specification { root, _, cb ->
             val predicates = mutableListOf<Predicate>()
@@ -216,17 +213,47 @@ class PostService(
                 predicates += clause
             }
 
-            if (!tags.isNullOrEmpty()) {
-                val tagArray = tags.toTypedArray()
-                predicates +=
-                    cb.isTrue(
-                        cb.function(
-                            "categories_overlap",
-                            Boolean::class.java,
-                            root.get<Array<String>>("categories"),
-                            cb.literal(tagArray),
-                        ),
-                    )
+            if (tagFilter != null) {
+                val categories = root.get<Array<String>>("categories")
+                val ordinaryTagPredicate =
+                    if (tagFilter.tags.isNotEmpty()) {
+                        cb.isTrue(
+                            cb.function(
+                                "categories_overlap",
+                                Boolean::class.java,
+                                categories,
+                                cb.literal(tagFilter.tags.toTypedArray()),
+                            ),
+                        )
+                    } else {
+                        null
+                    }
+                val untaggedPredicate =
+                    if (tagFilter.includeUntagged) {
+                        cb.isTrue(
+                            cb.function(
+                                "categories_empty",
+                                Boolean::class.java,
+                                categories,
+                            ),
+                        )
+                    } else {
+                        null
+                    }
+
+                when {
+                    untaggedPredicate != null && ordinaryTagPredicate != null -> {
+                        predicates += cb.or(untaggedPredicate, ordinaryTagPredicate)
+                    }
+
+                    untaggedPredicate != null -> {
+                        predicates += untaggedPredicate
+                    }
+
+                    ordinaryTagPredicate != null -> {
+                        predicates += ordinaryTagPredicate
+                    }
+                }
             }
 
             if (from != null && toExclusive != null) {
