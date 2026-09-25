@@ -31,6 +31,11 @@ class UrlServiceTest {
     }
 
     @Test
+    fun extractsSlugFromUrlWithDifferentScheme() {
+        assertEquals("my-slug", service.extractPostSlug("http://test.jacobandersen.dev/2026/09/02/my-slug"))
+    }
+
+    @Test
     fun returnsNullForForeignDomain() {
         assertNull(service.extractPostSlug("https://example.com/2026/09/02/my-slug"))
     }
@@ -38,11 +43,6 @@ class UrlServiceTest {
     @Test
     fun returnsNullForLookalikeSubdomain() {
         assertNull(service.extractPostSlug("https://evil.test.jacobandersen.dev/2026/09/02/my-slug"))
-    }
-
-    @Test
-    fun returnsNullForDifferentScheme() {
-        assertNull(service.extractPostSlug("http://test.jacobandersen.dev/2026/09/02/my-slug"))
     }
 
     @Test
