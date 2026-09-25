@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.22](https://github.com/jacobsandersen/bastion/compare/v1.3.21...v1.3.22) (2026-09-25)
+
+
+### Features
+
+* add tag listing and tag-filtered post feed ([#52](https://github.com/jacobsandersen/bastion/issues/52)) ([fd11609](https://github.com/jacobsandersen/bastion/commit/fd11609ac790dbe73f0abae390c0e662be9bbd3b))
+
 ## [1.3.21](https://github.com/jacobsandersen/bastion/compare/v1.3.20...v1.3.21) (2026-09-25)
 
 
