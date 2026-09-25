@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.20](https://github.com/jacobsandersen/bastion/compare/v1.3.19...v1.3.20) (2026-09-25)
+
+
+### Bug Fixes
+
+* make schema lenient on URL checking to allow for http/https mixing ([f8b0b82](https://github.com/jacobsandersen/bastion/commit/f8b0b82c2f6fad0ce3ddbfdd98b9c6676a671ef4))
+
 ## [1.3.19](https://github.com/jacobsandersen/bastion/compare/v1.3.18...v1.3.19) (2026-09-24)
 
 
