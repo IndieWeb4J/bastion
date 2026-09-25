@@ -4,6 +4,7 @@ import dev.jacobandersen.bastion.api.post.PostQueryService
 import dev.jacobandersen.bastion.api.post.PublicPostController
 import dev.jacobandersen.bastion.api.post.dto.FeedResponse
 import dev.jacobandersen.bastion.micropub.type.PostMf2Type
+import dev.jacobandersen.bastion.micropub.type.PostTagFilter
 import dev.jacobandersen.bastion.micropub.type.PostTertiaryTypeFilter
 import dev.jacobandersen.bastion.micropub.type.PostType
 import dev.jacobandersen.bastion.url.UrlService
@@ -164,5 +165,57 @@ class PublicPostControllerCsvTest {
                 day = null,
             )
         assertEquals(0, result.items.size)
+    }
+
+    @Test
+    fun `none is parsed as an untagged filter and can be combined with tags`() {
+        val queryService: PostQueryService = mock()
+        val urlService: UrlService = mock()
+        val webmentionService: ReceivedWebmentionService = mock()
+        whenever(webmentionService.verifiedByPostIds(any())).thenReturn(emptyList())
+        whenever(
+            queryService.feed(
+                anyOrNull(),
+                anyOrNull(),
+                anyOrNull(),
+                anyOrNull(),
+                anyOrNull(),
+                anyOrNull(),
+                anyOrNull(),
+                anyOrNull(),
+                anyOrNull(),
+            ),
+        ).thenReturn(emptyList())
+
+        val controller = PublicPostController(queryService, urlService, webmentionService)
+        controller.feed(
+            listOf("h-entry"),
+            listOf("note"),
+            listOf("mood"),
+            listOf(" NONE, Kotlin ", "JAVA", "kotlin"),
+            limit = null,
+            offset = null,
+            year = null,
+            month = null,
+            day = null,
+        )
+
+        val tagFilterCaptor = argumentCaptor<PostTagFilter?>()
+        verify(queryService).feed(
+            anyOrNull(),
+            anyOrNull(),
+            anyOrNull(),
+            anyOrNull(),
+            anyOrNull(),
+            anyOrNull(),
+            anyOrNull(),
+            anyOrNull(),
+            tagFilterCaptor.capture(),
+        )
+
+        assertEquals(
+            PostTagFilter(tags = setOf("kotlin", "java"), includeUntagged = true),
+            tagFilterCaptor.firstValue,
+        )
     }
 }
