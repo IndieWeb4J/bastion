@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.24](https://github.com/jacobsandersen/bastion/compare/v1.3.23...v1.3.24) (2026-10-01)
+
+
+### Features
+
+* support profile scope for quill ([190c7dc](https://github.com/jacobsandersen/bastion/commit/190c7dcee183bf049c016a7c300dd304c524e125))
+
 ## [1.3.23](https://github.com/jacobsandersen/bastion/compare/v1.3.22...v1.3.23) (2026-09-25)
 
 
