@@ -78,6 +78,6 @@ data class IndieAuthConfig(
     )
 
     companion object {
-        val DEFAULT_SCOPES = setOf("create", "update", "delete", "undelete", "media")
+        val DEFAULT_SCOPES = setOf("profile", "create", "update", "delete", "undelete", "media")
     }
 }
