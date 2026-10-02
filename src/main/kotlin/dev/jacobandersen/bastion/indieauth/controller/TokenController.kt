@@ -15,13 +15,17 @@ import org.springframework.web.bind.annotation.RestController
  * The IndieAuth token endpoint. Exchanges an authorization code (plus its
  * `client_id`, `redirect_uri` and PKCE verifier) for an access token, or
  * returns an OAuth error.
+ *
+ * The legacy authorization-endpoint POST is also accepted here: some clients
+ * POST the code exchange to the authorization endpoint instead of the token
+ * endpoint.
  */
 @RestController
 class TokenController(
     private val accessTokenService: AccessTokenService,
 ) {
     @PostMapping(
-        path = [IndieAuthEndpoints.TOKEN],
+        path = [IndieAuthEndpoints.TOKEN, IndieAuthEndpoints.AUTHORIZATION],
         consumes = [MediaType.APPLICATION_FORM_URLENCODED_VALUE],
     )
     fun token(
