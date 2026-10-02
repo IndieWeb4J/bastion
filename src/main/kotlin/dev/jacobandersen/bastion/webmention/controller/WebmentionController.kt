@@ -61,6 +61,9 @@ class WebmentionController(
         if (sourceUrl == targetUrl) {
             return invalidRequest("The source and target URLs must be different")
         }
+        if (urlService.isOwnContentUrl(sourceUrl)) {
+            return invalidRequest("Self webmentions are not accepted")
+        }
         if (hostValidator.isBlocked(sourceUrl)) {
             return invalidRequest("The source URL host is not reachable")
         }

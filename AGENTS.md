@@ -46,3 +46,14 @@ When updating this file, preserve this bar for all agents and keep entries conci
   `post_syndications.syndicated_url` is recorded.
 - Dispatch and the best-effort `@Job(retries = 0)` jobs live in `micropub/syndication/SyndicationService.kt`.
   Syndication is fire-and-forget: failures are logged and must never fail the originating create/update/delete request.
+- The downstream copy is an excerpt plus permalink, never full content (`micropub/syndication/SyndicationContentMapper.kt`):
+  notes send `{excerpt}\n\n{url}`, articles (`subtype == "article"`) send `{name}: {excerpt}\n\n{url}`. The
+  `maxGraphemes` budget covers the total in grapheme clusters (`Graphemes.kt`, Bluesky counts graphemes not chars);
+  the default is 300 via `defaultMaxGraphemes`, overridable per target with `max-graphemes`. The permalink is never
+  dropped; `summary` is overwritten with the same text so full content cannot leak through it.
+
+## Webmention
+
+- Self-webmentions are suppressed: `UrlService.isOwnContentUrl` (host + port match on `bastion.content.base-url`,
+  lenient on scheme) filters targets in `WebmentionService.targetUrlsOf` plus a guard in `sendWebmention`, and
+  `WebmentionController` rejects sources on the own content domain.
