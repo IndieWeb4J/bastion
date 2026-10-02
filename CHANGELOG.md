@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.25](https://github.com/jacobsandersen/bastion/compare/v1.3.24...v1.3.25) (2026-10-02)
+
+
+### Features
+
+* block self-webmentions and syndicate excerpts with permalink ([#57](https://github.com/jacobsandersen/bastion/issues/57)) ([c893336](https://github.com/jacobsandersen/bastion/commit/c8933363c709a9fa60d6b20cd66e3a2c30376db3))
+
 ## [1.3.24](https://github.com/jacobsandersen/bastion/compare/v1.3.23...v1.3.24) (2026-10-01)
 
 
