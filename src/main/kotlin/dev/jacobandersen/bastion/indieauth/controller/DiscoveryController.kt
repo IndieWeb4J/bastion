@@ -1,6 +1,7 @@
 package dev.jacobandersen.bastion.indieauth.controller
 
 import dev.jacobandersen.bastion.indieauth.IndieAuthEndpoints
+import dev.jacobandersen.bastion.indieauth.config.IndieAuthConfig
 import dev.jacobandersen.bastion.indieauth.type.AuthorizationServerMetadata
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.MediaType
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 class DiscoveryController(
     @Value($$"${bastion.public-url}") private val publicUrl: String,
+    private val config: IndieAuthConfig,
 ) {
     @GetMapping("/.well-known/oauth-authorization-server")
     fun authorizationServer(): AuthorizationServerMetadata =
@@ -22,6 +24,7 @@ class DiscoveryController(
             issuer = baseUrl,
             authorizationEndpoint = authorizationEndpoint(),
             tokenEndpoint = tokenEndpoint(),
+            scopesSupported = config.allowedScopes.sorted(),
         )
 
     @GetMapping(

@@ -102,6 +102,7 @@ class IndieAuthIntegrationTest {
             .andExpect(jsonPath("$.authorization_endpoint").value("https://bastion.test/indieauth/auth"))
             .andExpect(jsonPath("$.token_endpoint").value("https://bastion.test/indieauth/token"))
             .andExpect(jsonPath("$.code_challenge_methods_supported[0]").value("S256"))
+            .andExpect(jsonPath("$.scopes_supported").isArray())
     }
 
     @Test
@@ -147,6 +148,42 @@ class IndieAuthIntegrationTest {
         assertEquals("https://bastion.test", auth.getName())
         val token = auth.getDetails() as MicropubToken
         assertEquals(listOf(MicropubTokenScope.CREATE), token.scope)
+    }
+
+    @Test
+    fun `login-only flow without scope issues a token with no scopes`() {
+        val verifier = "test-verifier-value"
+        val challenge = Pkce.s256(verifier)
+
+        val state = beginAuthorization(challenge, scope = null)
+        val code = completeAuthorization(state)
+
+        val body =
+            mockMvc
+                .perform(
+                    post("/indieauth/token")
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .param("grant_type", "authorization_code")
+                        .param("code", code)
+                        .param("client_id", clientId)
+                        .param("redirect_uri", redirectUri)
+                        .param("code_verifier", verifier),
+                ).andExpect(status().isOk)
+                .andExpect(jsonPath("$.me").value("https://bastion.test"))
+                .andExpect(jsonPath("$.scope").doesNotExist())
+                .andExpect(jsonPath("$.token_type").value("Bearer"))
+                .andReturn()
+                .response
+                .contentAsString
+
+        val accessToken = mapper.readTree(body).path("access_token").asText()
+        assertTrue(accessToken.isNotBlank())
+
+        // The login-only token authenticates the identity but grants nothing.
+        val auth = tokenValidator.validateToken(accessToken)
+        assertEquals("https://bastion.test", auth.getName())
+        val token = auth.getDetails() as MicropubToken
+        assertTrue(token.scope.isEmpty())
     }
 
     // ----------------------------------------------------------------- CSRF
@@ -377,19 +414,25 @@ class IndieAuthIntegrationTest {
 
     // --------------------------------------------------------------- helpers
 
-    private fun beginAuthorization(codeChallenge: String = Pkce.s256("integration-verifier")): String {
+    private fun beginAuthorization(
+        codeChallenge: String = Pkce.s256("integration-verifier"),
+        scope: String? = "create",
+    ): String {
+        val request =
+            get("/indieauth/auth")
+                .param("client_id", clientId)
+                .param("redirect_uri", redirectUri)
+                .param("state", "client-state")
+                .param("response_type", "code")
+                .param("code_challenge", codeChallenge)
+                .param("code_challenge_method", "S256")
+        if (scope != null) {
+            request.param("scope", scope)
+        }
         val response =
             mockMvc
-                .perform(
-                    get("/indieauth/auth")
-                        .param("client_id", clientId)
-                        .param("redirect_uri", redirectUri)
-                        .param("state", "client-state")
-                        .param("scope", "create")
-                        .param("response_type", "code")
-                        .param("code_challenge", codeChallenge)
-                        .param("code_challenge_method", "S256"),
-                ).andExpect(status().isFound)
+                .perform(request)
+                .andExpect(status().isFound)
                 .andReturn()
                 .response
 
