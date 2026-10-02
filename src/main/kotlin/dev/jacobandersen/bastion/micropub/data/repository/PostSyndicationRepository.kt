@@ -13,4 +13,9 @@ interface PostSyndicationRepository : JpaRepository<PostSyndicationEntity, UUID>
         postId: UUID,
         targetUid: String,
     ): PostSyndicationEntity?
+
+    fun deleteByPostIdAndTargetUid(
+        postId: UUID,
+        targetUid: String,
+    ): Long
 }
