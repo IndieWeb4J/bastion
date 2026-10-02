@@ -5,12 +5,15 @@ import dev.jacobandersen.bastion.api.post.dto.FeedResponse
 import dev.jacobandersen.bastion.api.post.dto.PostGoneResponse
 import dev.jacobandersen.bastion.api.post.dto.PostLookupResult
 import dev.jacobandersen.bastion.api.post.dto.PostResponse
+import dev.jacobandersen.bastion.api.post.dto.SyndicationDto
 import dev.jacobandersen.bastion.api.post.dto.WebmentionCounts
 import dev.jacobandersen.bastion.api.post.dto.WebmentionDto
 import dev.jacobandersen.bastion.microformats2.firstText
 import dev.jacobandersen.bastion.microformats2.htmls
 import dev.jacobandersen.bastion.microformats2.texts
 import dev.jacobandersen.bastion.micropub.data.domain.Post
+import dev.jacobandersen.bastion.micropub.data.service.PostSyndicationService
+import dev.jacobandersen.bastion.micropub.syndication.SyndicationConfig
 import dev.jacobandersen.bastion.micropub.type.PostMf2Type
 import dev.jacobandersen.bastion.micropub.type.PostTagFilter
 import dev.jacobandersen.bastion.micropub.type.PostTertiaryTypeFilter
@@ -34,6 +37,8 @@ class PublicPostController(
     private val queryService: PostQueryService,
     private val urlService: UrlService,
     private val webmentionService: ReceivedWebmentionService,
+    private val syndicationService: PostSyndicationService,
+    private val syndicationConfig: SyndicationConfig,
 ) {
     @GetMapping
     fun feed(
@@ -99,7 +104,7 @@ class PublicPostController(
                 val counts = countForPost(post)
                 val webmentions =
                     webmentionService.verifiedByPost(post.id).sortedBy { it.firstSeenAt }.map(WebmentionDto.Companion::from)
-                ResponseEntity.ok(toResponse(post, counts, webmentions))
+                ResponseEntity.ok(toResponse(post, counts, webmentions, syndicationsFor(post.id)))
             }
         }
 
@@ -107,6 +112,7 @@ class PublicPostController(
         post: Post,
         counts: WebmentionCounts,
         webmentions: List<WebmentionDto>?,
+        syndications: List<SyndicationDto>? = null,
     ): PostResponse =
         PostResponse(
             id = post.id.toString(),
@@ -125,7 +131,21 @@ class PublicPostController(
             properties = post.post.properties,
             webmentionCounts = counts,
             webmentions = webmentions,
+            syndications = syndications,
         )
+
+    private fun syndicationsFor(postId: UUID): List<SyndicationDto> {
+        val order = syndicationConfig.targets.mapIndexed { index, target -> target.uid to index }.toMap()
+        return syndicationService
+            .findByPostId(postId)
+            .mapNotNull { record ->
+                val url = record.syndicatedUrl ?: return@mapNotNull null
+                val target = syndicationConfig.targetByUid(record.targetUid) ?: return@mapNotNull null
+                SyndicationDto(uid = target.uid, name = target.name, url = url) to
+                    (order[target.uid] ?: Int.MAX_VALUE)
+            }.sortedBy { it.second }
+            .map { it.first }
+    }
 
     private fun countForPost(post: Post): WebmentionCounts {
         val byInteraction =

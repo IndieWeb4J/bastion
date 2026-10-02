@@ -19,4 +19,5 @@ data class PostResponse(
     val properties: Map<String, List<Mf2Value>>,
     val webmentionCounts: WebmentionCounts,
     val webmentions: List<WebmentionDto>? = null,
+    val syndications: List<SyndicationDto>? = null,
 )
