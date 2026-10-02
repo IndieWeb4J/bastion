@@ -83,4 +83,15 @@ class UrlService(
     }
 
     fun extractPostSlug(url: String): String? = extractPostRef(url)?.slug
+
+    /**
+     * Whether the URL points at this site's content domain (host + port match
+     * against `bastion.content.base-url`, lenient on scheme like
+     * [extractPostRef]). Used to suppress self-webmentions.
+     */
+    fun isOwnContentUrl(url: String): Boolean {
+        val urlAuthority = UrlNormalizer.authority(url) ?: return false
+        val baseAuthority = UrlNormalizer.authority(config.baseUrl) ?: return false
+        return urlAuthority.host == baseAuthority.host && urlAuthority.port == baseAuthority.port
+    }
 }

@@ -2,6 +2,7 @@ package dev.jacobandersen.bastion.webmention.service
 
 import dev.jacobandersen.bastion.microformats2.Mf2Object
 import dev.jacobandersen.bastion.url.UrlExtractor
+import dev.jacobandersen.bastion.url.UrlService
 import dev.jacobandersen.bastion.webmention.config.WebmentionConfig
 import dev.jacobandersen.bastion.webmention.data.domain.WebmentionState
 import dev.jacobandersen.bastion.webmention.data.service.EndpointCacheResult
@@ -27,6 +28,7 @@ class WebmentionService(
     private val endpointCacheService: WebmentionEndpointCacheService,
     private val httpClient: WebmentionHttpClient,
     private val config: WebmentionConfig,
+    private val urlService: UrlService,
 ) {
     fun processWebmentions(
         sourceUrl: String,
@@ -102,6 +104,12 @@ class WebmentionService(
     ) {
         logger.info { "Sending webmention for $sourceUrl to $targetUrl..." }
 
+        if (urlService.isOwnContentUrl(targetUrl)) {
+            logger.info { "Skipping self-webmention to $targetUrl" }
+            recordTerminalFailure(sourceUrl, targetUrl, "self webmention skipped")
+            return
+        }
+
         if (HttpUtil.isBlockedHost(targetUrl, failClosedOnDnsError = false)) {
             logger.info { "Skipping webmention to blocked target $targetUrl" }
             recordTerminalFailure(sourceUrl, targetUrl, "target URL resolves to a blocked address")
@@ -142,7 +150,10 @@ class WebmentionService(
         }
     }
 
-    internal fun targetUrlsOf(obj: Mf2Object): Set<String> = Mf2TextExtractor.extractText(obj).let(UrlExtractor::distinctUrls).toSet()
+    internal fun targetUrlsOf(obj: Mf2Object): Set<String> {
+        val urls = UrlExtractor.distinctUrls(Mf2TextExtractor.extractText(obj))
+        return urls.filterNot(urlService::isOwnContentUrl).toSet()
+    }
 
     private fun resolveEndpointForTarget(
         targetUrl: String,

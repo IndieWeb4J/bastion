@@ -197,6 +197,21 @@ class WebmentionControllerTest {
     }
 
     @Test
+    fun `rejects a source on the own content domain`() {
+        val ownSource = "https://test.jacobandersen.dev/2026/01/01/other"
+        `when`(urlService.isOwnContentUrl(ownSource)).thenReturn(true)
+
+        mockMvc
+            .perform(
+                post("/webmention")
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                    .param("source", ownSource)
+                    .param("target", targetUrl),
+            ).andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.error").value("invalid_request"))
+    }
+
+    @Test
     fun `rejects a submission over the rate limit`() {
         submissionLimiter.allow(sourceUrl, targetUrl, Instant.now())
 

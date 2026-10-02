@@ -12,6 +12,7 @@ import org.springframework.web.client.RestClient
 import org.springframework.web.client.RestClientException
 import org.springframework.web.client.RestClientResponseException
 import tools.jackson.databind.ObjectMapper
+import tools.jackson.databind.node.ObjectNode
 import java.net.http.HttpClient
 import java.time.Duration
 
@@ -90,6 +91,61 @@ class SyndicationHttpClient(
                     }
                 },
         )
+
+    /**
+     * Rewrites an outgoing update so the downstream copy stays an excerpt plus
+     * permalink: `content`/`summary` entries in `replace`/`add` are replaced
+     * with [excerptText]. When [titleInExcerpt] is true (article posts, whose
+     * syndicated text leads with the title) and the update renames the post
+     * without touching its content, a `content` replace is added so the
+     * downstream title does not go stale. Unparseable sections are passed
+     * through untouched.
+     */
+    fun mapUpdateToExcerpt(
+        update: SyndicationUpdate,
+        excerptText: String,
+        titleInExcerpt: Boolean,
+    ): SyndicationUpdate {
+        val replaceNode = update.replace?.let(::parseObjectOrNull)
+        val addNode = update.add?.let(::parseObjectOrNull)
+        if ((update.replace != null && replaceNode == null) || (update.add != null && addNode == null)) {
+            return update
+        }
+
+        val mentionsName = listOfNotNull(replaceNode, addNode).any { it.has("name") }
+        val mentionsContent = listOfNotNull(replaceNode, addNode).any { it.has("content") }
+        replaceNode?.let { rewriteContentEntries(it, excerptText) }
+        addNode?.let { rewriteContentEntries(it, excerptText) }
+
+        var replace = replaceNode?.let { objectMapper.writeValueAsString(it) }
+        if (titleInExcerpt && mentionsName && !mentionsContent) {
+            val node = replaceNode ?: objectMapper.createObjectNode()
+            node.set("content", objectMapper.createArrayNode().add(excerptText))
+            replace = objectMapper.writeValueAsString(node)
+        }
+
+        return update.copy(
+            replace = replace,
+            add = addNode?.let { objectMapper.writeValueAsString(it) },
+        )
+    }
+
+    private fun parseObjectOrNull(json: String): ObjectNode? {
+        val node = runCatching { objectMapper.readTree(json) }.getOrNull()
+        return node as? ObjectNode
+    }
+
+    private fun rewriteContentEntries(
+        node: ObjectNode,
+        excerptText: String,
+    ) {
+        if (node.has("content")) {
+            node.set("content", objectMapper.createArrayNode().add(excerptText))
+        }
+        if (node.has("summary")) {
+            node.set("summary", objectMapper.createArrayNode().add(excerptText))
+        }
+    }
 
     private fun send(
         target: SyndicationConfig.Target,

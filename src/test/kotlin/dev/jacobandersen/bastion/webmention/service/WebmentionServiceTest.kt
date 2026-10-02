@@ -2,6 +2,7 @@ package dev.jacobandersen.bastion.webmention.service
 
 import dev.jacobandersen.bastion.microformats2.Mf2Object
 import dev.jacobandersen.bastion.microformats2.Mf2Value
+import dev.jacobandersen.bastion.url.UrlService
 import dev.jacobandersen.bastion.webmention.config.WebmentionConfig
 import dev.jacobandersen.bastion.webmention.data.domain.WebmentionNotification
 import dev.jacobandersen.bastion.webmention.data.domain.WebmentionState
@@ -29,8 +30,12 @@ class WebmentionServiceTest {
     private val endpointCacheService = mock(WebmentionEndpointCacheService::class.java)
     private val httpClient = mock(WebmentionHttpClient::class.java)
     private val config = WebmentionConfig()
+    private val urlService =
+        mock(UrlService::class.java).apply {
+            `when`(isOwnContentUrl(org.mockito.ArgumentMatchers.anyString())).thenReturn(false)
+        }
 
-    private val service = WebmentionService(jobScheduler, notificationService, endpointCacheService, httpClient, config)
+    private val service = WebmentionService(jobScheduler, notificationService, endpointCacheService, httpClient, config, urlService)
 
     private val source = "https://bastion.test/2026/09/07/post"
     private val target = "https://example.com/a"
@@ -231,5 +236,35 @@ class WebmentionServiceTest {
         service.sendWebmention(source, target)
 
         verify(notificationService, times(1)).scheduleNextAttempt(source, target, null)
+    }
+
+    @Test
+    fun `processWebmentions skips targets on the own content domain`() {
+        val own = "https://test.jacobandersen.dev/2026/01/01/other"
+        `when`(urlService.isOwnContentUrl(own)).thenReturn(true)
+
+        service.processWebmentions(source, entry("see $target and $own"))
+
+        verify(notificationService, times(1)).setActivePending(source, target)
+        verify(notificationService, never()).setActivePending(source, own)
+    }
+
+    @Test
+    fun `sendWebmention records terminal failure for self targets without sending`() {
+        val own = "https://test.jacobandersen.dev/2026/01/01/other"
+        `when`(urlService.isOwnContentUrl(own)).thenReturn(true)
+
+        service.sendWebmention(source, own)
+
+        verify(notificationService, times(1)).recordFailure(source, own, null, "self webmention skipped")
+        verify(notificationService, times(1)).scheduleNextAttempt(source, own, null)
+        verify(
+            httpClient,
+            never(),
+        ).sendWebmention(
+            org.mockito.ArgumentMatchers.anyString(),
+            org.mockito.ArgumentMatchers.anyString(),
+            org.mockito.ArgumentMatchers.anyString(),
+        )
     }
 }
