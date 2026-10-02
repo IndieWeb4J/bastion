@@ -39,7 +39,7 @@ class PublicPostControllerCsvTest {
             ),
         ).thenReturn(emptyList())
 
-        val controller = PublicPostController(queryService, urlService, webmentionService)
+        val controller = PublicPostController(queryService, urlService, webmentionService, mock(), mock())
 
         controller.feed(
             listOf("h-entry,h-card"),
@@ -93,7 +93,7 @@ class PublicPostControllerCsvTest {
             ),
         ).thenReturn(emptyList())
 
-        val controller = PublicPostController(queryService, urlService, webmentionService)
+        val controller = PublicPostController(queryService, urlService, webmentionService, mock(), mock())
 
         controller.feed(
             listOf("h-entry", "h-card"),
@@ -150,7 +150,7 @@ class PublicPostControllerCsvTest {
             ),
         ).thenReturn(emptyList())
 
-        val controller = PublicPostController(queryService, urlService, webmentionService)
+        val controller = PublicPostController(queryService, urlService, webmentionService, mock(), mock())
 
         // blank values should be ignored -> null
         val result: FeedResponse =
@@ -187,7 +187,7 @@ class PublicPostControllerCsvTest {
             ),
         ).thenReturn(emptyList())
 
-        val controller = PublicPostController(queryService, urlService, webmentionService)
+        val controller = PublicPostController(queryService, urlService, webmentionService, mock(), mock())
         controller.feed(
             listOf("h-entry"),
             listOf("note"),
