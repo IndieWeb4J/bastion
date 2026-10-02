@@ -16,4 +16,5 @@ data class AuthorizationServerMetadata(
     val responseTypesSupported: List<String> = listOf("code"),
     val grantTypesSupported: List<String> = listOf("authorization_code"),
     val codeChallengeMethodsSupported: List<String> = listOf("S256"),
+    val scopesSupported: List<String> = emptyList(),
 )
