@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.26](https://github.com/jacobsandersen/bastion/compare/v1.3.25...v1.3.26) (2026-10-02)
+
+
+### Features
+
+* support adding and removing syndication targets via update ([#59](https://github.com/jacobsandersen/bastion/issues/59)) ([7d6513a](https://github.com/jacobsandersen/bastion/commit/7d6513a68420e4c52d7f63fbe929cae7d57685f5))
+
 ## [1.3.25](https://github.com/jacobsandersen/bastion/compare/v1.3.24...v1.3.25) (2026-10-02)
 
 
