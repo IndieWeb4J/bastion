@@ -496,4 +496,105 @@ class SyndicationServiceTest {
                 org.mockito.kotlin.eq(serializedUpdate),
             )
     }
+
+    private fun updatePayload(
+        replacements: Map<String, List<Mf2Value>>? = null,
+        additions: Map<String, List<Mf2Value>>? = null,
+        removals: MicropubUpdatePayload.Removals? = null,
+    ) = MicropubUpdatePayload(
+        url = "https://bastion.test/2026/01/01/slug",
+        replacements = replacements,
+        additions = additions,
+        removals = removals,
+    )
+
+    private fun syndicateTo(vararg uids: String) = uids.map { Mf2Value.String(it) }
+
+    @Test
+    fun `diffTargets treats replace as the desired set`() {
+        val update = updatePayload(replacements = mapOf("mp-syndicate-to" to syndicateTo("b", "c")))
+
+        assertEquals(setOf("c") to setOf("a"), service.diffTargets(setOf("a", "b"), update))
+    }
+
+    @Test
+    fun `diffTargets removes everything on an empty replace`() {
+        val update = updatePayload(replacements = mapOf("mp-syndicate-to" to emptyList()))
+
+        assertEquals(emptySet<String>() to setOf("a", "b"), service.diffTargets(setOf("a", "b"), update))
+    }
+
+    @Test
+    fun `diffTargets adds without removing on add`() {
+        val update = updatePayload(additions = mapOf("mp-syndicate-to" to syndicateTo("b", "a")))
+
+        assertEquals(setOf("b") to emptySet<String>(), service.diffTargets(setOf("a"), update))
+    }
+
+    @Test
+    fun `diffTargets removes deleted values`() {
+        val update =
+            updatePayload(
+                removals = MicropubUpdatePayload.Removals.Many(mapOf("mp-syndicate-to" to syndicateTo("a"))),
+            )
+
+        assertEquals(emptySet<String>() to setOf("a"), service.diffTargets(setOf("a", "b"), update))
+    }
+
+    @Test
+    fun `diffTargets removes everything on a blanket delete`() {
+        val update = updatePayload(removals = MicropubUpdatePayload.Removals.All(listOf("mp-syndicate-to")))
+
+        assertEquals(emptySet<String>() to setOf("a", "b"), service.diffTargets(setOf("a", "b"), update))
+    }
+
+    @Test
+    fun `diffTargets ignores unrelated updates`() {
+        val update = updatePayload(replacements = mapOf("name" to listOf(Mf2Value.String("Renamed"))))
+
+        assertEquals(emptySet<String>() to emptySet<String>(), service.diffTargets(setOf("a"), update))
+    }
+
+    @Test
+    fun `retractTargets deletes the copy and forgets the record`() {
+        `when`(postSyndicationService.findByPostId(postId))
+            .thenReturn(
+                listOf(
+                    PostSyndicationEntity(postId = postId, targetUid = "bridgy").apply {
+                        syndicatedUrl = "https://brid.gy/syndicated"
+                    },
+                ),
+            )
+        `when`(config.targetByUid("bridgy")).thenReturn(createTarget)
+
+        service.retractTargets(post, listOf("bridgy"), "https://bastion.test/2026/01/01/slug")
+
+        verify(jobScheduler, times(1)).enqueue<SyndicationService>(org.mockito.kotlin.any())
+        verify(postSyndicationService, times(1)).remove(postId, "bridgy")
+    }
+
+    @Test
+    fun `retractTargets forgets the record without dispatching when no copy exists`() {
+        `when`(postSyndicationService.findByPostId(postId))
+            .thenReturn(listOf(PostSyndicationEntity(postId = postId, targetUid = "bridgy")))
+        `when`(config.targetByUid("bridgy")).thenReturn(createTarget)
+
+        service.retractTargets(post, listOf("bridgy"), "https://bastion.test/2026/01/01/slug")
+
+        verify(jobScheduler, never()).enqueue<SyndicationService>(org.mockito.kotlin.any())
+        verify(postSyndicationService, times(1)).remove(postId, "bridgy")
+    }
+
+    @Test
+    fun `retractTargets ignores unrecorded targets`() {
+        `when`(postSyndicationService.findByPostId(postId)).thenReturn(emptyList())
+
+        service.retractTargets(post, listOf("bridgy"), "https://bastion.test/2026/01/01/slug")
+
+        verify(jobScheduler, never()).enqueue<SyndicationService>(org.mockito.kotlin.any())
+        verify(postSyndicationService, never()).remove(
+            org.mockito.kotlin.any(),
+            org.mockito.kotlin.any(),
+        )
+    }
 }

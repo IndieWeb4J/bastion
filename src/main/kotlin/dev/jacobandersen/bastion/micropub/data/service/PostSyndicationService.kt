@@ -29,4 +29,12 @@ class PostSyndicationService(
 
     @Transactional(readOnly = true)
     fun findByPostId(postId: UUID): List<PostSyndicationEntity> = repository.findByPostId(postId)
+
+    @Transactional
+    fun remove(
+        postId: UUID,
+        targetUid: String,
+    ) {
+        repository.deleteByPostIdAndTargetUid(postId, targetUid)
+    }
 }
