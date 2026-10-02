@@ -54,6 +54,10 @@ When updating this file, preserve this bar for all agents and keep entries conci
 - Updates go through the same budget: `runUpdateJob` rewrites `content`/`summary` entries via
   `SyndicationHttpClient.mapUpdateToExcerpt`, and an article rename without a content change injects a
   `content` replace so the downstream title does not go stale.
+- `mp-syndicate-to` is honored on update as well as create (`SyndicationService.diffTargets`): a `replace`
+  entry is the desired target set, otherwise `add`/`delete` apply incrementally. Added targets are syndicated
+  (or retained when non-public); removed targets are retracted via `retractTargets` (best-effort delete when a
+  copy is held, then the record is forgotten).
 
 ## Webmention
 

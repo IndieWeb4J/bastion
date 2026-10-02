@@ -407,4 +407,71 @@ class SyndicationIntegrationTest {
         assertDoesNotThrow { syndicationService.runCreateJob(post.id, "bridgy") }
         assertEquals(null, postSyndicationService.findByPostId(post.id).single().syndicatedUrl)
     }
+
+    @Test
+    fun `updating to add a target syndicates the post there`() {
+        `when`(httpClient.sendCreate(any(), any()))
+            .thenReturn(SyndicationSendResult.Success(201, "https://brid.gy/syndicated"))
+
+        val slug = uniqueSlug("add-target")
+        createService.create(
+            createPayload("""{"name": ["Hello"], "content": ["Body"], "mp-slug": ["$slug"]}"""),
+            null,
+        )
+        val post = postService.findBySlug(slug)!!
+        assertTrue(postSyndicationService.findByPostId(post.id).isEmpty())
+
+        val response =
+            updateService.update(updateJson(urlService.generatePostUrl(post), """"mp-syndicate-to": ["bridgy"]"""))
+        assertInstanceOf(ApiResponse.Success.NoContent::class.java, response)
+
+        verify(jobScheduler, times(1)).enqueue<SyndicationService>(any())
+        assertEquals("bridgy", record(post).targetUid)
+
+        syndicationService.runCreateJob(post.id, "bridgy")
+        assertEquals("https://brid.gy/syndicated", record(post).syndicatedUrl)
+    }
+
+    @Test
+    fun `updating to add a target on a draft retains without dispatching`() {
+        val slug = uniqueSlug("add-target-draft")
+        createService.create(
+            createPayload(
+                """{"name": ["Hello"], "content": ["Body"], "mp-slug": ["$slug"], "post-status": ["draft"]}""",
+            ),
+            null,
+        )
+        val post = postService.findBySlug(slug)!!
+
+        val response =
+            updateService.update(updateJson(urlService.generatePostUrl(post), """"mp-syndicate-to": ["bridgy"]"""))
+        assertInstanceOf(ApiResponse.Success.NoContent::class.java, response)
+
+        verify(jobScheduler, never()).enqueue<SyndicationService>(any())
+        assertEquals("bridgy", record(post).targetUid)
+        assertEquals(null, record(post).syndicatedUrl)
+    }
+
+    @Test
+    fun `updating to remove a target retracts the copy and forgets it`() {
+        `when`(httpClient.sendCreate(any(), any()))
+            .thenReturn(SyndicationSendResult.Success(201, "https://brid.gy/syndicated"))
+        `when`(httpClient.sendDelete(any(), any()))
+            .thenReturn(SyndicationSendResult.Success(204, null))
+
+        val post = createPublicPost(uniqueSlug("remove-target"))
+        syndicationService.runCreateJob(post.id, "bridgy")
+        assertEquals("https://brid.gy/syndicated", record(post).syndicatedUrl)
+        reset(jobScheduler)
+
+        val url = urlService.generatePostUrl(post)
+        val response =
+            updateService.update(updateJson(url, """"mp-syndicate-to": []"""))
+        assertInstanceOf(ApiResponse.Success.NoContent::class.java, response)
+
+        verify(jobScheduler, times(1)).enqueue<SyndicationService>(any())
+        assertDoesNotThrow { syndicationService.runDeleteJob(post.id, "bridgy", url) }
+        verify(httpClient).sendDelete(any(), eq(url))
+        assertTrue(postSyndicationService.findByPostId(post.id).isEmpty())
+    }
 }

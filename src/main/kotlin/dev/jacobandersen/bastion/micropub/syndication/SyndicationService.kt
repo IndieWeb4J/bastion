@@ -1,8 +1,11 @@
 package dev.jacobandersen.bastion.micropub.syndication
 
+import dev.jacobandersen.bastion.microformats2.Mf2Value
+import dev.jacobandersen.bastion.microformats2.plainTextOrNull
 import dev.jacobandersen.bastion.micropub.data.domain.Post
 import dev.jacobandersen.bastion.micropub.data.service.PostService
 import dev.jacobandersen.bastion.micropub.data.service.PostSyndicationService
+import dev.jacobandersen.bastion.micropub.type.MicropubCommand
 import dev.jacobandersen.bastion.micropub.type.req.MicropubUpdatePayload
 import dev.jacobandersen.bastion.url.UrlService
 import dev.jacobandersen.bastion.webmention.util.HttpUtil
@@ -138,6 +141,70 @@ class SyndicationService(
         targets.forEach { target ->
             jobScheduler.enqueue<SyndicationService> { it.runUpdateJob(post.id, target.uid, serialized) }
         }
+    }
+
+    /**
+     * Diffs an update's `mp-syndicate-to` against the recorded targets,
+     * returning the (added, removed) uid sets. A `replace` entry wins when
+     * present (its values are the desired set, so an empty replace removes
+     * everything); otherwise `add` values are added and `delete` values (or a
+     * blanket `delete: ["mp-syndicate-to"]`) are removed. Unknown uids are kept
+     * in the sets here and ignored later by the dispatch filters, matching the
+     * create path.
+     */
+    fun diffTargets(
+        recordedUids: Collection<String>,
+        update: MicropubUpdatePayload,
+    ): Pair<Set<String>, Set<String>> {
+        val recorded = recordedUids.toSet()
+        val replacement = targetUids(update.replacements?.get(MicropubCommand.MP_SYNDICATE_TO))
+        if (replacement != null) {
+            return (replacement - recorded) to (recorded - replacement)
+        }
+
+        val added = targetUids(update.additions?.get(MicropubCommand.MP_SYNDICATE_TO)).orEmpty() - recorded
+        val removed =
+            when (val removals = update.removals) {
+                is MicropubUpdatePayload.Removals.Many -> {
+                    targetUids(removals.properties[MicropubCommand.MP_SYNDICATE_TO]).orEmpty() intersect recorded
+                }
+
+                is MicropubUpdatePayload.Removals.All -> {
+                    if (MicropubCommand.MP_SYNDICATE_TO in removals.properties) recorded else emptySet()
+                }
+
+                null -> {
+                    emptySet()
+                }
+            }
+        return added to removed
+    }
+
+    /**
+     * Retracts downstream copies for removed syndication targets: targets that
+     * hold a copy and support delete get a best-effort delete job, then every
+     * listed record is forgotten. [sourceUrl] is the URL the copies live under
+     * (the pre-update URL when the post moved in the same step).
+     */
+    fun retractTargets(
+        post: Post,
+        targetUids: Collection<String>,
+        sourceUrl: String,
+    ) {
+        val records = postSyndicationService.findByPostId(post.id).associateBy { it.targetUid }
+        targetUids.distinct().forEach { uid ->
+            val record = records[uid] ?: return@forEach
+            val target = config.targetByUid(uid)
+            if (record.syndicatedUrl != null && target != null && target.supports(SyndicationAction.DELETE)) {
+                jobScheduler.enqueue<SyndicationService> { it.runDeleteJob(post.id, uid, sourceUrl) }
+            }
+            postSyndicationService.remove(post.id, uid)
+        }
+    }
+
+    private fun targetUids(values: List<Mf2Value>?): Set<String>? {
+        if (values == null) return null
+        return values.mapNotNull { it.plainTextOrNull }.filter { it.isNotBlank() }.toSet()
     }
 
     @Job(retries = 0)

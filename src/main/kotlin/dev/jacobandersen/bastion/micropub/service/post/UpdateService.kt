@@ -2,6 +2,7 @@ package dev.jacobandersen.bastion.micropub.service.post
 
 import dev.jacobandersen.bastion.microformats2.Mf2Object
 import dev.jacobandersen.bastion.micropub.data.service.PostService
+import dev.jacobandersen.bastion.micropub.data.service.PostSyndicationService
 import dev.jacobandersen.bastion.micropub.service.MicropubCommandResolver
 import dev.jacobandersen.bastion.micropub.syndication.SyndicationService
 import dev.jacobandersen.bastion.micropub.type.MicropubCommand
@@ -22,6 +23,7 @@ class UpdateService(
     private val webmentionService: WebmentionService,
     private val websubPublisher: WebsubPublisher,
     private val syndicationService: SyndicationService,
+    private val postSyndicationService: PostSyndicationService,
 ) {
     @PreAuthorize("hasAuthority('UPDATE')")
     fun update(payload: MicropubPayload): ApiResponse<*> {
@@ -95,6 +97,13 @@ class UpdateService(
 
         val updatedUrl = urlService.generatePostUrl(updated)
         val isPublic = updated.publiclyReachable
+
+        val recordedTargetUids = postSyndicationService.findByPostId(post.id).map { it.targetUid }.toSet()
+        val (addedTargetUids, removedTargetUids) = syndicationService.diffTargets(recordedTargetUids, update)
+        if (removedTargetUids.isNotEmpty()) {
+            syndicationService.retractTargets(post, removedTargetUids, previousUrl)
+        }
+
         when {
             wasPublic && !isPublic -> {
                 webmentionService.deactivateWebmentions(previousUrl)
@@ -117,6 +126,14 @@ class UpdateService(
                 webmentionService.processUpdatedWebmentions(updatedUrl, previousTargetUrls, postObj)
                 syndicationService.syndicateUpdated(updated, update)
                 websubPublisher.publish()
+            }
+        }
+
+        if (addedTargetUids.isNotEmpty()) {
+            if (isPublic) {
+                syndicationService.syndicateCreated(updated, addedTargetUids)
+            } else {
+                syndicationService.retainSyndicationTargets(updated, addedTargetUids)
             }
         }
 
