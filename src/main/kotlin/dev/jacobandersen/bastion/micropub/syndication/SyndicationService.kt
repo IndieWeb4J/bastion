@@ -165,7 +165,8 @@ class SyndicationService(
                 return
             }
 
-            when (val result = httpClient.sendCreate(target, post.post)) {
+            val canonicalUrl = urlService.generatePostUrl(post)
+            when (val result = httpClient.sendCreate(target, syndicatedPost(post, target, canonicalUrl))) {
                 is SyndicationSendResult.Success -> {
                     logger.info { "Syndicated post $postId to target \"$targetUid\" (HTTP ${result.statusCode})" }
                     postSyndicationService.recordOutcome(
@@ -266,7 +267,8 @@ class SyndicationService(
                 return
             }
 
-            when (val createResult = httpClient.sendCreate(target, post.post)) {
+            val canonicalUrl = urlService.generatePostUrl(post)
+            when (val createResult = httpClient.sendCreate(target, syndicatedPost(post, target, canonicalUrl))) {
                 is SyndicationSendResult.Success -> {
                     logger.info { "Syndication rebase re-created post $postId at target \"$targetUid\" (HTTP ${createResult.statusCode})" }
                     postSyndicationService.recordOutcome(
@@ -307,7 +309,10 @@ class SyndicationService(
                 return
             }
 
-            when (val result = httpClient.sendUpdate(target, urlService.generatePostUrl(post), update)) {
+            val canonicalUrl = urlService.generatePostUrl(post)
+            val mappedUpdate = mapUpdateToExcerpt(post, target, canonicalUrl, update)
+
+            when (val result = httpClient.sendUpdate(target, canonicalUrl, mappedUpdate)) {
                 is SyndicationSendResult.Success -> {
                     logger.info { "Syndication update sent for post $postId to target \"$targetUid\" (HTTP ${result.statusCode})" }
                 }
@@ -319,5 +324,21 @@ class SyndicationService(
         } catch (e: Exception) {
             logger.error(e) { "Syndication update to target \"$targetUid\" for post $postId failed unexpectedly" }
         }
+    }
+
+    private fun syndicatedPost(
+        post: Post,
+        target: SyndicationConfig.Target,
+        canonicalUrl: String,
+    ) = SyndicationContentMapper.build(post, canonicalUrl, config.effectiveMaxGraphemes(target))
+
+    private fun mapUpdateToExcerpt(
+        post: Post,
+        target: SyndicationConfig.Target,
+        canonicalUrl: String,
+        update: SyndicationUpdate,
+    ): SyndicationUpdate {
+        val excerptText = SyndicationContentMapper.excerptText(post, canonicalUrl, config.effectiveMaxGraphemes(target))
+        return httpClient.mapUpdateToExcerpt(update, excerptText, SyndicationContentMapper.includesTitle(post))
     }
 }
