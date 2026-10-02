@@ -20,6 +20,7 @@ class IndieAuthSecurityConfig(
         http
             .securityMatcher(
                 IndieAuthEndpoints.TOKEN,
+                IndieAuthEndpoints.AUTHORIZATION,
                 "/.well-known/oauth-authorization-server",
                 "/.well-known/oauth-authorization-endpoint",
                 "/.well-known/oauth-token-endpoint",
