@@ -12,6 +12,7 @@ import dev.jacobandersen.bastion.indieauth.security.Pkce
 import dev.jacobandersen.bastion.indieauth.security.Tokens
 import dev.jacobandersen.bastion.indieauth.type.IndieAuthError
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -153,6 +154,30 @@ class AuthorizationServiceTest {
     @Test
     fun `begin rejects a disallowed scope`() {
         assertCode(IndieAuthError.Code.INVALID_SCOPE) { service.begin(request(scope = "create admin")) }
+    }
+
+    @Test
+    fun `begin accepts a missing scope for login-only flows`() {
+        val location = service.begin(request(scope = null))
+
+        assertTrue(location.startsWith("https://herald.test/auth?"))
+        assertNull(queryParam(location, "scope"))
+
+        val captor = ArgumentCaptor.forClass(AuthRequestEntity::class.java)
+        verify(authRequestRepository).save(captor.capture())
+        assertEquals("", captor.value.scope)
+    }
+
+    @Test
+    fun `begin accepts a blank scope for login-only flows`() {
+        val location = service.begin(request(scope = "  "))
+
+        assertTrue(location.startsWith("https://herald.test/auth?"))
+        assertNull(queryParam(location, "scope"))
+
+        val captor = ArgumentCaptor.forClass(AuthRequestEntity::class.java)
+        verify(authRequestRepository).save(captor.capture())
+        assertEquals("", captor.value.scope)
     }
 
     @Test

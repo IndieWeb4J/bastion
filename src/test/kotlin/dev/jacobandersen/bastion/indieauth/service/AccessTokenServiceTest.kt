@@ -36,12 +36,13 @@ class AccessTokenServiceTest {
         redirectUri: String = this.redirectUri,
         expiresAt: Instant = Instant.now().plusSeconds(60),
         codeChallenge: String? = null,
+        scope: String = "create",
     ) = AuthorizationCodeEntity(
         codeHash = codeHash,
         clientId = clientId,
         redirectUri = redirectUri,
         me = "https://bastion.test",
-        scope = "create",
+        scope = scope,
         codeChallenge = codeChallenge,
         expiresAt = expiresAt,
         createdAt = Instant.now(),
@@ -61,6 +62,17 @@ class AccessTokenServiceTest {
             ArgumentCaptor.forClass(dev.jacobandersen.bastion.indieauth.data.entity.AccessTokenEntity::class.java)
         verify(accessTokenRepository).save(captor.capture())
         assertEquals(Tokens.sha256(issued.accessToken), captor.value.tokenHash)
+    }
+
+    @Test
+    fun `exchange preserves an empty scope for login-only grants`() {
+        `when`(authorizationCodeRepository.findByCodeHash(codeHash))
+            .thenReturn(code(scope = ""))
+        `when`(authorizationCodeRepository.claim(eq(codeHash), any())).thenReturn(1)
+
+        val issued = service.exchange(rawCode, clientId, redirectUri, null)
+
+        assertEquals("", issued.scope)
     }
 
     @Test

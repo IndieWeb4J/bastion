@@ -37,7 +37,7 @@ class TokenController(
             ResponseEntity.ok(
                 TokenResponse(
                     accessToken = issued.accessToken,
-                    scope = issued.scope,
+                    scope = issued.scope.takeIf { it.isNotBlank() },
                     me = issued.me,
                 ),
             )

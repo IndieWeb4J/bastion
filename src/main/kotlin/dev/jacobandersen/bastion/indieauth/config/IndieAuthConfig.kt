@@ -41,7 +41,8 @@ data class IndieAuthConfig(
      * The contract Bastion uses to hand the authentication screen to the Herald
      * service. This is deliberately provider-agnostic: Bastion redirects the
      * browser to `baseUrl + authorizePath` carrying `state`, `me`, `client_id`,
-     * `scope` and `return_to` (Bastion's own callback URL), and Herald returns
+     * `return_to` (Bastion's own callback URL) and `scope` (omitted for
+     * login-only, empty-scope requests), and Herald returns
      * the browser to that callback carrying `state` and either `code` (success)
      * or `error`.
      */
