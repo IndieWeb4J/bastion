@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.27](https://github.com/jacobsandersen/bastion/compare/v1.3.26...v1.3.27) (2026-10-02)
+
+
+### Features
+
+* **api:** expose post syndications on single post lookup ([#61](https://github.com/jacobsandersen/bastion/issues/61)) ([d83c41c](https://github.com/jacobsandersen/bastion/commit/d83c41cca969a0070d9683c3a8fe1340177a6784))
+
 ## [1.3.26](https://github.com/jacobsandersen/bastion/compare/v1.3.25...v1.3.26) (2026-10-02)
 
 
