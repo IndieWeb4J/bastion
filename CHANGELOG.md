@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.28](https://github.com/jacobsandersen/bastion/compare/v1.3.27...v1.3.28) (2026-10-02)
+
+
+### Features
+
+* **indieauth:** allow empty-scope login-only flows ([#63](https://github.com/jacobsandersen/bastion/issues/63)) ([a0b7640](https://github.com/jacobsandersen/bastion/commit/a0b764068144af34229cff9dca57790e2acfbeb4))
+
 ## [1.3.27](https://github.com/jacobsandersen/bastion/compare/v1.3.26...v1.3.27) (2026-10-02)
 
 
