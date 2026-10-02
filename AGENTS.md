@@ -51,6 +51,9 @@ When updating this file, preserve this bar for all agents and keep entries conci
   `maxGraphemes` budget covers the total in grapheme clusters (`Graphemes.kt`, Bluesky counts graphemes not chars);
   the default is 300 via `defaultMaxGraphemes`, overridable per target with `max-graphemes`. The permalink is never
   dropped; `summary` is overwritten with the same text so full content cannot leak through it.
+- Updates go through the same budget: `runUpdateJob` rewrites `content`/`summary` entries via
+  `SyndicationHttpClient.mapUpdateToExcerpt`, and an article rename without a content change injects a
+  `content` replace so the downstream title does not go stale.
 
 ## Webmention
 

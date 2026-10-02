@@ -95,4 +95,65 @@ class SyndicationHttpClientTest {
             add = """{"category":["extra"]}""",
             delete = """["name"]""",
         )
+
+    @Test
+    fun `mapUpdateToExcerpt rewrites content and summary entries to the excerpt`() {
+        val update =
+            SyndicationUpdate(
+                replace = """{"content":["the full post body that must not go downstream"],"name":["Title"],"summary":["full summary"]}""",
+                add = """{"category":["extra"]}""",
+                delete = """["photo"]""",
+            )
+
+        val mapped = client.mapUpdateToExcerpt(update, "excerpt…\n\nhttps://bastion.test/post", titleInExcerpt = false)
+
+        val replace = mapper.readTree(mapped.replace!!)
+        assertEquals("excerpt…\n\nhttps://bastion.test/post", replace.get("content").get(0).asString())
+        assertEquals("excerpt…\n\nhttps://bastion.test/post", replace.get("summary").get(0).asString())
+        assertEquals("Title", replace.get("name").get(0).asString())
+        val add = mapper.readTree(mapped.add!!)
+        assertEquals("extra", add.get("category").get(0).asString())
+        assertEquals("""["photo"]""", mapped.delete)
+    }
+
+    @Test
+    fun `mapUpdateToExcerpt rewrites content entries in additions`() {
+        val update = SyndicationUpdate(replace = null, add = """{"content":["added full body"]}""", delete = null)
+
+        val mapped = client.mapUpdateToExcerpt(update, "excerpt…", titleInExcerpt = false)
+
+        val add = mapper.readTree(mapped.add!!)
+        assertEquals("excerpt…", add.get("content").get(0).asString())
+    }
+
+    @Test
+    fun `mapUpdateToExcerpt adds a content replace when an article is renamed`() {
+        val update = SyndicationUpdate(replace = """{"name":["New Title"]}""", add = null, delete = null)
+
+        val mapped = client.mapUpdateToExcerpt(update, "New Title: excerpt…", titleInExcerpt = true)
+
+        val replace = mapper.readTree(mapped.replace!!)
+        assertEquals("New Title", replace.get("name").get(0).asString())
+        assertEquals("New Title: excerpt…", replace.get("content").get(0).asString())
+    }
+
+    @Test
+    fun `mapUpdateToExcerpt leaves a note rename without injected content`() {
+        val update = SyndicationUpdate(replace = """{"name":["New Title"]}""", add = null, delete = null)
+
+        val mapped = client.mapUpdateToExcerpt(update, "excerpt…", titleInExcerpt = false)
+
+        val replace = mapper.readTree(mapped.replace!!)
+        assertEquals("New Title", replace.get("name").get(0).asString())
+        assertTrue(!replace.has("content"))
+    }
+
+    @Test
+    fun `mapUpdateToExcerpt passes unparseable sections through untouched`() {
+        val update = SyndicationUpdate(replace = "not json", add = null, delete = """["name"]""")
+
+        val mapped = client.mapUpdateToExcerpt(update, "excerpt…", titleInExcerpt = true)
+
+        assertEquals(update, mapped)
+    }
 }

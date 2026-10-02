@@ -22,36 +22,47 @@ object SyndicationContentMapper {
         canonicalUrl: String,
         maxGraphemes: Int,
     ): Mf2Object {
-        val max = maxGraphemes.coerceAtLeast(1)
-        val linkSuffix = "\n\n$canonicalUrl"
-        val content = normalizedOrNull(post.post.firstText("content"))
-        val name = normalizedOrNull(post.post.firstText("name"))
-        val isArticle = post.subtype.equals("article", ignoreCase = true) && name != null
-
-        val text =
-            if (isArticle && name != null) {
-                val prefix = "$name: "
-                val excerptAllowance = max - Graphemes.count(prefix) - Graphemes.count(linkSuffix)
-                if (content != null && excerptAllowance >= MIN_EXCERPT_GRAPHEMES) {
-                    prefix + truncate(content, excerptAllowance) + linkSuffix
-                } else {
-                    titleOnlyFallback(name, linkSuffix, canonicalUrl, max)
-                }
-            } else {
-                val source = content ?: name
-                val excerptAllowance = max - Graphemes.count(linkSuffix)
-                if (source != null && excerptAllowance >= MIN_EXCERPT_GRAPHEMES) {
-                    truncate(source, excerptAllowance) + linkSuffix
-                } else {
-                    canonicalUrl
-                }
-            }
+        val text = excerptText(post, canonicalUrl, maxGraphemes)
 
         var mapped = post.post.setProperty("content", Mf2Value.String(text))
         if (post.post.hasProperty("summary")) {
             mapped = mapped.setProperty("summary", Mf2Value.String(text))
         }
         return mapped.setProperty("url", Mf2Value.String(canonicalUrl))
+    }
+
+    /** Whether the syndicated text leads with the post title (article posts). */
+    fun includesTitle(post: Post): Boolean =
+        post.subtype.equals("article", ignoreCase = true) && !post.post.firstText("name").isNullOrBlank()
+
+    /** The exact downstream text for a post: excerpt plus permalink within [maxGraphemes]. */
+    fun excerptText(
+        post: Post,
+        canonicalUrl: String,
+        maxGraphemes: Int,
+    ): String {
+        val max = maxGraphemes.coerceAtLeast(1)
+        val linkSuffix = "\n\n$canonicalUrl"
+        val content = normalizedOrNull(post.post.firstText("content"))
+        val name = normalizedOrNull(post.post.firstText("name"))
+
+        return if (includesTitle(post) && name != null) {
+            val prefix = "$name: "
+            val excerptAllowance = max - Graphemes.count(prefix) - Graphemes.count(linkSuffix)
+            if (content != null && excerptAllowance >= MIN_EXCERPT_GRAPHEMES) {
+                prefix + truncate(content, excerptAllowance) + linkSuffix
+            } else {
+                titleOnlyFallback(name, linkSuffix, canonicalUrl, max)
+            }
+        } else {
+            val source = content ?: name
+            val excerptAllowance = max - Graphemes.count(linkSuffix)
+            if (source != null && excerptAllowance >= MIN_EXCERPT_GRAPHEMES) {
+                truncate(source, excerptAllowance) + linkSuffix
+            } else {
+                canonicalUrl
+            }
+        }
     }
 
     private fun titleOnlyFallback(

@@ -309,7 +309,10 @@ class SyndicationService(
                 return
             }
 
-            when (val result = httpClient.sendUpdate(target, urlService.generatePostUrl(post), update)) {
+            val canonicalUrl = urlService.generatePostUrl(post)
+            val mappedUpdate = mapUpdateToExcerpt(post, target, canonicalUrl, update)
+
+            when (val result = httpClient.sendUpdate(target, canonicalUrl, mappedUpdate)) {
                 is SyndicationSendResult.Success -> {
                     logger.info { "Syndication update sent for post $postId to target \"$targetUid\" (HTTP ${result.statusCode})" }
                 }
@@ -328,4 +331,14 @@ class SyndicationService(
         target: SyndicationConfig.Target,
         canonicalUrl: String,
     ) = SyndicationContentMapper.build(post, canonicalUrl, config.effectiveMaxGraphemes(target))
+
+    private fun mapUpdateToExcerpt(
+        post: Post,
+        target: SyndicationConfig.Target,
+        canonicalUrl: String,
+        update: SyndicationUpdate,
+    ): SyndicationUpdate {
+        val excerptText = SyndicationContentMapper.excerptText(post, canonicalUrl, config.effectiveMaxGraphemes(target))
+        return httpClient.mapUpdateToExcerpt(update, excerptText, SyndicationContentMapper.includesTitle(post))
+    }
 }

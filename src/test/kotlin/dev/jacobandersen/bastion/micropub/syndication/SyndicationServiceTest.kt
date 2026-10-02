@@ -457,4 +457,43 @@ class SyndicationServiceTest {
         assertTrue(Graphemes.count(content) <= 60)
         assertTrue(content.endsWith("https://bastion.test/2026/01/01/slug"))
     }
+
+    @Test
+    fun `runUpdateJob maps the update through the excerpt budget`() {
+        var excerptArg: String? = null
+        var titleArg: Boolean? = null
+        `when`(postService.findById(postId)).thenReturn(post)
+        `when`(config.targetByUid("update-capable")).thenReturn(updateTarget)
+        `when`(config.effectiveMaxGraphemes(updateTarget)).thenReturn(300)
+        `when`(urlService.generatePostUrl(post)).thenReturn("https://bastion.test/2026/01/01/slug")
+        `when`(
+            httpClient.mapUpdateToExcerpt(
+                org.mockito.kotlin.any(),
+                org.mockito.kotlin.any(),
+                org.mockito.kotlin.any(),
+            ),
+        ).thenAnswer {
+            excerptArg = it.arguments[1] as String
+            titleArg = it.arguments[2] as Boolean
+            serializedUpdate
+        }
+        `when`(
+            httpClient.sendUpdate(
+                org.mockito.kotlin.any(),
+                org.mockito.kotlin.any(),
+                org.mockito.kotlin.any(),
+            ),
+        ).thenReturn(SyndicationSendResult.Success(204, null))
+
+        service.runUpdateJob(postId, "update-capable", serializedUpdate)
+
+        assertTrue(excerptArg!!.endsWith("https://bastion.test/2026/01/01/slug"))
+        assertEquals(false, titleArg)
+        verify(httpClient, times(1))
+            .sendUpdate(
+                org.mockito.kotlin.eq(updateTarget),
+                org.mockito.kotlin.eq("https://bastion.test/2026/01/01/slug"),
+                org.mockito.kotlin.eq(serializedUpdate),
+            )
+    }
 }
