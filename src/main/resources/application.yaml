@@ -21,6 +21,12 @@ bastion:
       authorize-path: ${BASTION_INDIEAUTH_HERALD_AUTHORIZE_PATH:/auth}
     purge-interval: ${BASTION_INDIEAUTH_PURGE_INTERVAL:1h}
     code-retention: ${BASTION_INDIEAUTH_CODE_RETENTION:1d}
+    refresh-token-ttl: ${BASTION_INDIEAUTH_REFRESH_TOKEN_TTL:90d}
+    profile:
+      name: ${BASTION_INDIEAUTH_PROFILE_NAME:}
+      url: ${BASTION_INDIEAUTH_PROFILE_URL:}
+      photo: ${BASTION_INDIEAUTH_PROFILE_PHOTO:}
+      email: ${BASTION_INDIEAUTH_PROFILE_EMAIL:}
     github:
       client-id: ${BASTION_INDIEAUTH_GITHUB_CLIENT_ID:}
       client-secret: ${BASTION_INDIEAUTH_GITHUB_CLIENT_SECRET:}

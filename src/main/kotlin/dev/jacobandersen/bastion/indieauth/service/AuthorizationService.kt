@@ -12,6 +12,8 @@ import dev.jacobandersen.bastion.indieauth.security.Pkce
 import dev.jacobandersen.bastion.indieauth.security.Tokens
 import dev.jacobandersen.bastion.indieauth.type.IndieAuthError
 import dev.jacobandersen.bastion.indieauth.type.Scopes
+import dev.jacobandersen.bastion.indieauth.util.IndieAuthUrls
+import dev.jacobandersen.bastion.indieauth.util.Issuers
 import dev.jacobandersen.bastion.indieauth.util.Redirects
 import dev.jacobandersen.bastion.indieauth.util.Uris
 import dev.jacobandersen.bastion.url.UrlNormalizer
@@ -60,8 +62,11 @@ class AuthorizationService(
     private val authRequestRepository: AuthRequestRepository,
     private val authorizationCodeRepository: AuthorizationCodeRepository,
     private val ownerVerifier: OwnerVerifier,
+    private val clientMetadataFetcher: ClientMetadataFetcher,
     @Value($$"${bastion.public-url}") private val publicUrl: String,
 ) {
+    private val issuer: String = Issuers.issuer(publicUrl)
+
     /** Starts the flow, returning the Herald redirect location. */
     @Transactional
     fun begin(request: AuthorizationRequest): String {
@@ -71,6 +76,7 @@ class AuthorizationService(
         validateClientId(request.clientId)
         val scope = validateScope(request.scope)
         validatePkce(request.codeChallenge, request.codeChallengeMethod)
+        validateRedirectAllowed(request.clientId!!, request.redirectUri!!)
 
         if (config.herald.baseUrl.isBlank()) {
             throw IndieAuthException(IndieAuthError.Code.SERVER_ERROR, "The authentication UI host is not configured")
@@ -232,7 +238,7 @@ class AuthorizationService(
     private fun codeRedirect(
         authRequest: AuthRequestEntity,
         code: String,
-    ): String = Redirects.code(authRequest.redirectUri, authRequest.clientState, code)
+    ): String = Redirects.code(authRequest.redirectUri, authRequest.clientState, code, issuer)
 
     private fun errorRedirect(
         authRequest: AuthRequestEntity,
@@ -253,6 +259,9 @@ class AuthorizationService(
         if (me.isNullOrBlank()) {
             return
         }
+        if (!IndieAuthUrls.isValidProfileUrl(me)) {
+            throw IndieAuthException(IndieAuthError.Code.INVALID_REQUEST, "The 'me' value is not a valid profile URL")
+        }
         val expected = UrlNormalizer.identity(config.me)
         val actual = UrlNormalizer.identity(me)
         if (expected == null || actual == null || expected != actual) {
@@ -267,8 +276,42 @@ class AuthorizationService(
     }
 
     private fun validateClientId(clientId: String?) {
-        if (clientId.isNullOrBlank() || !Uris.isRedirectUri(clientId)) {
+        if (clientId.isNullOrBlank() || !IndieAuthUrls.isValidClientId(clientId)) {
             throw IndieAuthException(IndieAuthError.Code.INVALID_REQUEST, "A valid 'client_id' URL is required")
+        }
+    }
+
+    /**
+     * Enforces the 4.2.2 redirect check: when the redirect target differs in
+     * scheme, host or port from the client, it must exactly match a redirect
+     * URL the client published. Inconclusive metadata fetches allow the
+     * request with a warning (fail-open); a fetched allowlist that lacks the
+     * target blocks it.
+     */
+    private fun validateRedirectAllowed(
+        clientId: String,
+        redirectUri: String,
+    ) {
+        if (!IndieAuthUrls.isCrossHost(clientId, redirectUri)) {
+            return
+        }
+        val allowed =
+            try {
+                clientMetadataFetcher.fetchRedirectUris(clientId)
+            } catch (e: Exception) {
+                logger.warn(e) { "Client metadata fetch failed for $clientId, allowing cross-host redirect with warning" }
+                null
+            }
+        if (allowed == null) {
+            logger.warn { "Allowing cross-host redirect_uri $redirectUri for client $clientId without verified allowlist" }
+            return
+        }
+        val match = allowed.any { it == redirectUri || UrlNormalizer.identity(it) == UrlNormalizer.identity(redirectUri) }
+        if (!match) {
+            throw IndieAuthException(
+                IndieAuthError.Code.INVALID_REQUEST,
+                "The 'redirect_uri' is not published by the client",
+            )
         }
     }
 
@@ -284,15 +327,26 @@ class AuthorizationService(
         return requested
     }
 
+    /**
+     * PKCE is backwards-compatible lenient per 5.2: a missing `code_challenge`
+     * is accepted (with a deprecation warning) for older clients, while a
+     * present challenge must use S256. The redemption side still enforces the
+     * conditional rule: no challenge means no verifier, challenge means a
+     * matching verifier is required.
+     */
     private fun validatePkce(
         codeChallenge: String?,
         codeChallengeMethod: String?,
     ) {
         if (codeChallenge.isNullOrBlank()) {
-            throw IndieAuthException(
-                IndieAuthError.Code.INVALID_REQUEST,
-                "PKCE is required: a 'code_challenge' must be supplied",
-            )
+            if (!codeChallengeMethod.isNullOrBlank()) {
+                throw IndieAuthException(
+                    IndieAuthError.Code.INVALID_REQUEST,
+                    "A 'code_challenge_method' without a 'code_challenge' is not valid",
+                )
+            }
+            logger.warn { "Authorization request without PKCE code_challenge (deprecated, required for max client compat)" }
+            return
         }
         if (codeChallengeMethod != null && !codeChallengeMethod.equals(Pkce.METHOD_S256, ignoreCase = true)) {
             throw IndieAuthException(
