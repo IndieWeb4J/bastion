@@ -19,7 +19,7 @@ class MicropubTokenValidatorTest {
         me: String = expectedMe,
         clientId: String = "https://client.example",
         scope: List<String> = listOf("create"),
-    ) = IssuedAccessToken(me, clientId, scope, Instant.now().plusSeconds(60))
+    ) = IssuedAccessToken(me, clientId, scope, Instant.now(), Instant.now().plusSeconds(60))
 
     @Test
     fun `resolves a valid token to an authentication with mapped scopes`() {

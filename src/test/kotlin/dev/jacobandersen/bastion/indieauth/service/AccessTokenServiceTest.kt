@@ -65,14 +65,18 @@ class AccessTokenServiceTest {
     }
 
     @Test
-    fun `exchange preserves an empty scope for login-only grants`() {
+    fun `exchange rejects an empty scope for login-only grants`() {
         `when`(authorizationCodeRepository.findByCodeHash(codeHash))
             .thenReturn(code(scope = ""))
-        `when`(authorizationCodeRepository.claim(eq(codeHash), any())).thenReturn(1)
 
-        val issued = service.exchange(rawCode, clientId, redirectUri, null)
+        assertInvalidGrant { service.exchange(rawCode, clientId, redirectUri, null) }
+    }
 
-        assertEquals("", issued.scope)
+    @Test
+    fun `exchange rejects a verifier for a code issued without a challenge`() {
+        `when`(authorizationCodeRepository.findByCodeHash(codeHash)).thenReturn(code(codeChallenge = null))
+
+        assertInvalidGrant { service.exchange(rawCode, clientId, redirectUri, "unexpected-verifier") }
     }
 
     @Test

@@ -31,6 +31,8 @@ class AccessTokenService(
     /**
      * Exchanges an authorization code for an access token, enforcing the
      * single-use, expiry, `client_id`, `redirect_uri` and PKCE guarantees.
+     * Per 5.3.3 the token endpoint must not issue a token for an empty-scope
+     * (login-only) code; those redeem at the authorization endpoint instead.
      */
     @Transactional
     fun exchange(
@@ -48,6 +50,13 @@ class AccessTokenService(
             throw IndieAuthException(IndieAuthError.Code.INVALID_GRANT, "The authorization code has expired")
         }
 
+        if (authorizationCode.scope.isBlank()) {
+            throw IndieAuthException(
+                IndieAuthError.Code.INVALID_GRANT,
+                "This authorization code carries no scope and must be redeemed at the authorization endpoint",
+            )
+        }
+
         validateClient(authorizationCode, clientId, redirectUri)
         validatePkce(authorizationCode, codeVerifier)
 
@@ -57,27 +66,54 @@ class AccessTokenService(
             throw IndieAuthException(IndieAuthError.Code.INVALID_GRANT, "The authorization code has already been used")
         }
 
+        val issued = issue(authorizationCode.me, authorizationCode.clientId, authorizationCode.scope)
+
+        logger.info { "Issued access token for ${authorizationCode.me} (client ${authorizationCode.clientId})" }
+
+        return issued
+    }
+
+    /**
+     * Issues a fresh access token for an identity without consuming an
+     * authorization code. Used by the refresh-token flow.
+     */
+    @Transactional
+    fun issue(
+        me: String,
+        clientId: String,
+        scope: String,
+    ): IssuedToken {
         val rawToken = Tokens.random()
-        val expiresAt = Instant.now().plus(config.accessTokenTtl)
+        val now = Instant.now()
+        val expiresAt = now.plus(config.accessTokenTtl)
         accessTokenRepository.save(
             AccessTokenEntity(
                 tokenHash = Tokens.sha256(rawToken),
-                me = authorizationCode.me,
-                clientId = authorizationCode.clientId,
-                scope = authorizationCode.scope,
-                issuedAt = Instant.now(),
+                me = me,
+                clientId = clientId,
+                scope = scope,
+                issuedAt = now,
                 expiresAt = expiresAt,
             ),
         )
 
-        logger.info { "Issued access token for ${authorizationCode.me} (client ${authorizationCode.clientId})" }
-
         return IssuedToken(
             accessToken = rawToken,
-            scope = authorizationCode.scope,
-            me = authorizationCode.me,
+            scope = scope,
+            me = me,
             expiresAt = expiresAt,
         )
+    }
+
+    /**
+     * Revokes an access token by hash. Returns true when a row was removed;
+     * unknown tokens report false so callers can decide on the response.
+     */
+    @Transactional
+    fun revoke(rawToken: String): Boolean {
+        val entity = accessTokenRepository.findByTokenHash(Tokens.sha256(rawToken)) ?: return false
+        accessTokenRepository.delete(entity)
+        return true
     }
 
     /**
@@ -113,7 +149,16 @@ class AccessTokenService(
         authorizationCode: AuthorizationCodeEntity,
         codeVerifier: String?,
     ) {
-        val challenge = authorizationCode.codeChallenge ?: return
+        val challenge = authorizationCode.codeChallenge
+        if (challenge.isNullOrBlank()) {
+            if (!codeVerifier.isNullOrBlank()) {
+                throw IndieAuthException(
+                    IndieAuthError.Code.INVALID_GRANT,
+                    "No code_verifier is expected for a code issued without a code_challenge",
+                )
+            }
+            return
+        }
         if (codeVerifier == null || !Pkce.verify(challenge, codeVerifier)) {
             throw IndieAuthException(
                 IndieAuthError.Code.INVALID_GRANT,

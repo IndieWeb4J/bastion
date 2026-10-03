@@ -11,5 +11,6 @@ data class IssuedAccessToken(
     val me: String,
     val clientId: String,
     val scope: List<String>,
+    val issuedAt: Instant,
     val expiresAt: Instant,
 )

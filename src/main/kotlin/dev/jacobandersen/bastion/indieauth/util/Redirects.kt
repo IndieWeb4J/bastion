@@ -4,19 +4,22 @@ import org.springframework.web.util.UriComponentsBuilder
 
 /**
  * Builds the redirects the IndieAuth endpoints produce back to a client's
- * `redirect_uri`: a successful one carrying `code` + `state`, and an error one
- * carrying `error` (+ optional `error_description`) + `state`.
+ * `redirect_uri`: a successful one carrying `code` + `state` + `iss`
+ * (the issuer identifier, REQUIRED per 5.2.1 for mix-up protection), and an
+ * error one carrying `error` (+ optional `error_description`) + `state`.
  */
 object Redirects {
     fun code(
         redirectUri: String,
         state: String?,
         code: String,
+        issuer: String,
     ): String =
         UriComponentsBuilder
             .fromUriString(redirectUri)
             .queryParam("code", code)
             .queryParam("state", state)
+            .queryParam("iss", issuer)
             .build()
             .encode()
             .toUriString()

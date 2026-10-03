@@ -21,6 +21,9 @@ class IndieAuthSecurityConfig(
             .securityMatcher(
                 IndieAuthEndpoints.TOKEN,
                 IndieAuthEndpoints.AUTHORIZATION,
+                IndieAuthEndpoints.INTROSPECTION,
+                IndieAuthEndpoints.REVOCATION,
+                IndieAuthEndpoints.USERINFO,
                 "/.well-known/oauth-authorization-server",
                 "/.well-known/oauth-authorization-endpoint",
                 "/.well-known/oauth-token-endpoint",

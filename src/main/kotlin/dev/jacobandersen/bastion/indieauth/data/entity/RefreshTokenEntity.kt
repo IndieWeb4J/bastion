@@ -1,7 +1,5 @@
 package dev.jacobandersen.bastion.indieauth.data.entity
 
-import dev.jacobandersen.bastion.indieauth.data.domain.IssuedAccessToken
-import dev.jacobandersen.bastion.indieauth.type.Scopes
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.GeneratedValue
@@ -12,13 +10,14 @@ import java.time.Instant
 import java.util.UUID
 
 /**
- * An access token Bastion issued, keyed by the token hash. Only the hash is
- * persisted; the raw token is returned to the client exactly once and cannot be
- * recovered from the database.
+ * A refresh token Bastion issued alongside a scoped access token, keyed by
+ * the token hash. Only the hash is persisted; the raw token is returned to
+ * the client exactly once. Refresh tokens are single-use with rotation: each
+ * use claims the old row and issues a replacement.
  */
 @Entity
-@Table(name = "indieauth_access_tokens")
-class AccessTokenEntity(
+@Table(name = "indieauth_refresh_tokens")
+class RefreshTokenEntity(
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     var id: UUID? = null,
@@ -34,13 +33,6 @@ class AccessTokenEntity(
     var issuedAt: Instant,
     @Column(nullable = false)
     var expiresAt: Instant,
-) {
-    fun toDomain(): IssuedAccessToken =
-        IssuedAccessToken(
-            me = me,
-            clientId = clientId,
-            scope = Scopes.parse(scope),
-            issuedAt = issuedAt,
-            expiresAt = expiresAt,
-        )
-}
+    @Column(nullable = true)
+    var usedAt: Instant? = null,
+)

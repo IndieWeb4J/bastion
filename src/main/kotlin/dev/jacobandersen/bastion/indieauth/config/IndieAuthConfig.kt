@@ -26,6 +26,10 @@ data class IndieAuthConfig(
     val authRequestTtl: Duration = Duration.ofMinutes(10),
     /** How long an issued access token stays valid. */
     val accessTokenTtl: Duration = Duration.ofDays(30),
+    /** How long an issued refresh token stays valid. */
+    val refreshTokenTtl: Duration = Duration.ofDays(90),
+    /** Static single-user profile claims returned for the profile/email scopes and userinfo. */
+    val profile: IndieAuthProfile = IndieAuthProfile(),
     /** How often the recurring dead-row purge job runs. */
     val purgeInterval: Duration = Duration.ofHours(1),
     /** How long a used or expired authorization-code row is retained before the purge job deletes it. */
@@ -54,6 +58,23 @@ data class IndieAuthConfig(
     )
 
     /**
+     * Static profile claims for Bastion's single identity. Returned as the
+     * `profile` object in token and profile-URL responses (5.3.4) and from
+     * the userinfo endpoint when the corresponding scopes were granted.
+     * Informational only; clients must not treat it as authoritative.
+     */
+    data class IndieAuthProfile(
+        /** Display name the user wishes to share with clients. */
+        val name: String = "",
+        /** URL of the user's website, may differ from [me]. */
+        val url: String = "",
+        /** Photo URL the user wishes clients to use as a profile image. */
+        val photo: String = "",
+        /** Email address shared only when the `email` scope is granted. */
+        val email: String = "",
+    )
+
+    /**
      * GitHub OAuth 2.0 client settings. Only the token exchange and user-info
      * lookup happen here; the browser-facing GitHub redirect is handled by the
      * UI host, so the client secret never leaves Bastion.
@@ -79,6 +100,6 @@ data class IndieAuthConfig(
     )
 
     companion object {
-        val DEFAULT_SCOPES = setOf("profile", "create", "update", "delete", "undelete", "media")
+        val DEFAULT_SCOPES = setOf("profile", "email", "create", "update", "delete", "undelete", "media")
     }
 }

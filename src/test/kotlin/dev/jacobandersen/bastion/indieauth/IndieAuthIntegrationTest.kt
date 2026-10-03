@@ -70,6 +70,9 @@ class IndieAuthIntegrationTest {
     lateinit var accessTokenRepository: AccessTokenRepository
 
     @Autowired
+    lateinit var refreshTokenRepository: dev.jacobandersen.bastion.indieauth.data.repository.RefreshTokenRepository
+
+    @Autowired
     lateinit var rowPurgeService: IndieAuthRowPurgeService
 
     @MockitoBean
@@ -98,10 +101,17 @@ class IndieAuthIntegrationTest {
         mockMvc
             .perform(get("/.well-known/oauth-authorization-server"))
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$.issuer").value("https://bastion.test"))
+            .andExpect(jsonPath("$.issuer").value("https://bastion.test/"))
             .andExpect(jsonPath("$.authorization_endpoint").value("https://bastion.test/indieauth/auth"))
             .andExpect(jsonPath("$.token_endpoint").value("https://bastion.test/indieauth/token"))
+            .andExpect(jsonPath("$.introspection_endpoint").value("https://bastion.test/indieauth/introspect"))
+            .andExpect(jsonPath("$.revocation_endpoint").value("https://bastion.test/indieauth/revocation"))
+            .andExpect(jsonPath("$.revocation_endpoint_auth_methods_supported[0]").value("none"))
+            .andExpect(jsonPath("$.userinfo_endpoint").value("https://bastion.test/indieauth/userinfo"))
             .andExpect(jsonPath("$.code_challenge_methods_supported[0]").value("S256"))
+            .andExpect(jsonPath("$.authorization_response_iss_parameter_supported").value(true))
+            .andExpect(jsonPath("$.service_documentation").value("https://indieauth.spec.indieweb.org/"))
+            .andExpect(jsonPath("$.grant_types_supported").isArray())
             .andExpect(jsonPath("$.scopes_supported").isArray())
     }
 
@@ -136,6 +146,8 @@ class IndieAuthIntegrationTest {
                 .andExpect(jsonPath("$.me").value("https://bastion.test"))
                 .andExpect(jsonPath("$.scope").value("create"))
                 .andExpect(jsonPath("$.token_type").value("Bearer"))
+                .andExpect(jsonPath("$.expires_in").isNumber())
+                .andExpect(jsonPath("$.refresh_token").isNotEmpty())
                 .andReturn()
                 .response
                 .contentAsString
@@ -151,39 +163,46 @@ class IndieAuthIntegrationTest {
     }
 
     @Test
-    fun `login-only flow without scope issues a token with no scopes`() {
+    fun `login-only flow without scope redeems a profile url at the authorization endpoint`() {
         val verifier = "test-verifier-value"
         val challenge = Pkce.s256(verifier)
 
         val state = beginAuthorization(challenge, scope = null)
         val code = completeAuthorization(state)
 
-        val body =
-            mockMvc
-                .perform(
-                    post("/indieauth/token")
-                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                        .param("grant_type", "authorization_code")
-                        .param("code", code)
-                        .param("client_id", clientId)
-                        .param("redirect_uri", redirectUri)
-                        .param("code_verifier", verifier),
-                ).andExpect(status().isOk)
-                .andExpect(jsonPath("$.me").value("https://bastion.test"))
-                .andExpect(jsonPath("$.scope").doesNotExist())
-                .andExpect(jsonPath("$.token_type").value("Bearer"))
-                .andReturn()
-                .response
-                .contentAsString
+        mockMvc
+            .perform(
+                post("/indieauth/auth")
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                    .param("grant_type", "authorization_code")
+                    .param("code", code)
+                    .param("client_id", clientId)
+                    .param("redirect_uri", redirectUri)
+                    .param("code_verifier", verifier),
+            ).andExpect(status().isOk)
+            .andExpect(jsonPath("$.me").value("https://bastion.test"))
+            .andExpect(jsonPath("$.access_token").doesNotExist())
+    }
 
-        val accessToken = mapper.readTree(body).path("access_token").asText()
-        assertTrue(accessToken.isNotBlank())
+    @Test
+    fun `token endpoint rejects an empty-scope code`() {
+        val verifier = "test-verifier-value"
+        val challenge = Pkce.s256(verifier)
 
-        // The login-only token authenticates the identity but grants nothing.
-        val auth = tokenValidator.validateToken(accessToken)
-        assertEquals("https://bastion.test", auth.getName())
-        val token = auth.getDetails() as MicropubToken
-        assertTrue(token.scope.isEmpty())
+        val state = beginAuthorization(challenge, scope = null)
+        val code = completeAuthorization(state)
+
+        mockMvc
+            .perform(
+                post("/indieauth/token")
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                    .param("grant_type", "authorization_code")
+                    .param("code", code)
+                    .param("client_id", clientId)
+                    .param("redirect_uri", redirectUri)
+                    .param("code_verifier", verifier),
+            ).andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.error").value("invalid_grant"))
     }
 
     // ----------------------------------------------------------------- CSRF
@@ -197,7 +216,7 @@ class IndieAuthIntegrationTest {
     }
 
     @Test
-    fun `authorization without a code challenge is rejected`() {
+    fun `authorization without a code challenge is allowed for backwards compatibility`() {
         mockMvc
             .perform(
                 get("/indieauth/auth")
@@ -210,7 +229,7 @@ class IndieAuthIntegrationTest {
             .andExpect(
                 header().string(
                     HttpHeaders.LOCATION,
-                    org.hamcrest.Matchers.containsString("error=invalid_request"),
+                    org.hamcrest.Matchers.startsWith("https://herald.test/auth?"),
                 ),
             )
     }
@@ -271,6 +290,211 @@ class IndieAuthIntegrationTest {
                     .param("grant_type", "client_credentials"),
             ).andExpect(status().isBadRequest)
             .andExpect(jsonPath("$.error").value("unsupported_grant_type"))
+    }
+
+    @Test
+    fun `refresh flow rotates tokens and narrows scope`() {
+        val verifier = "test-verifier-value"
+        val state = beginAuthorization(Pkce.s256(verifier), scope = "create update")
+        val code = completeAuthorization(state)
+
+        val body =
+            mockMvc
+                .perform(
+                    post("/indieauth/token")
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .param("grant_type", "authorization_code")
+                        .param("code", code)
+                        .param("client_id", clientId)
+                        .param("redirect_uri", redirectUri)
+                        .param("code_verifier", verifier),
+                ).andExpect(status().isOk)
+                .andReturn()
+                .response
+                .contentAsString
+        val refreshToken = mapper.readTree(body).path("refresh_token").asText()
+        assertTrue(refreshToken.isNotBlank())
+
+        val rotatedBody =
+            mockMvc
+                .perform(
+                    post("/indieauth/token")
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .param("grant_type", "refresh_token")
+                        .param("refresh_token", refreshToken)
+                        .param("client_id", clientId)
+                        .param("scope", "create"),
+                ).andExpect(status().isOk)
+                .andExpect(jsonPath("$.scope").value("create"))
+                .andExpect(jsonPath("$.refresh_token").isNotEmpty())
+                .andReturn()
+                .response
+                .contentAsString
+        val replacement = mapper.readTree(rotatedBody).path("refresh_token").asText()
+        assertTrue(replacement.isNotBlank() && replacement != refreshToken)
+
+        mockMvc
+            .perform(
+                post("/indieauth/token")
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                    .param("grant_type", "refresh_token")
+                    .param("refresh_token", refreshToken)
+                    .param("client_id", clientId),
+            ).andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.error").value("invalid_grant"))
+    }
+
+    @Test
+    fun `refresh cannot widen scope`() {
+        val verifier = "test-verifier-value"
+        val state = beginAuthorization(Pkce.s256(verifier), scope = "create")
+        val code = completeAuthorization(state)
+
+        val body =
+            mockMvc
+                .perform(
+                    post("/indieauth/token")
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .param("grant_type", "authorization_code")
+                        .param("code", code)
+                        .param("client_id", clientId)
+                        .param("redirect_uri", redirectUri)
+                        .param("code_verifier", verifier),
+                ).andExpect(status().isOk)
+                .andReturn()
+                .response
+                .contentAsString
+        val refreshToken = mapper.readTree(body).path("refresh_token").asText()
+
+        mockMvc
+            .perform(
+                post("/indieauth/token")
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                    .param("grant_type", "refresh_token")
+                    .param("refresh_token", refreshToken)
+                    .param("client_id", clientId)
+                    .param("scope", "create delete"),
+            ).andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.error").value("invalid_scope"))
+    }
+
+    @Test
+    fun `introspection reports active tokens and hides inactive ones`() {
+        val tokens = issueScopedTokens("create")
+
+        mockMvc
+            .perform(
+                post("/indieauth/introspect")
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer ${tokens.first}")
+                    .param("token", tokens.first),
+            ).andExpect(status().isOk)
+            .andExpect(jsonPath("$.active").value(true))
+            .andExpect(jsonPath("$.me").value("https://bastion.test"))
+            .andExpect(jsonPath("$.client_id").value(clientId))
+            .andExpect(jsonPath("$.scope").value("create"))
+
+        mockMvc
+            .perform(
+                post("/indieauth/introspect")
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer ${tokens.first}")
+                    .param("token", "bogus-token"),
+            ).andExpect(status().isOk)
+            .andExpect(jsonPath("$.active").value(false))
+            .andExpect(jsonPath("$.me").doesNotExist())
+    }
+
+    @Test
+    fun `introspection requires bearer authorization`() {
+        mockMvc
+            .perform(
+                post("/indieauth/introspect")
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                    .param("token", "whatever"),
+            ).andExpect(status().isUnauthorized)
+    }
+
+    @Test
+    fun `revocation disables a token`() {
+        val tokens = issueScopedTokens("create")
+
+        mockMvc
+            .perform(
+                post("/indieauth/revocation")
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                    .param("token", tokens.first),
+            ).andExpect(status().isOk)
+
+        mockMvc
+            .perform(
+                post("/indieauth/introspect")
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer ${tokens.second}")
+                    .param("token", tokens.first),
+            ).andExpect(status().isOk)
+            .andExpect(jsonPath("$.active").value(false))
+    }
+
+    @Test
+    fun `revocation of an unknown token still succeeds`() {
+        mockMvc
+            .perform(
+                post("/indieauth/revocation")
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                    .param("token", "unknown-token"),
+            ).andExpect(status().isOk)
+    }
+
+    @Test
+    fun `userinfo requires the profile scope`() {
+        val tokens = issueScopedTokens("create")
+
+        mockMvc
+            .perform(get("/indieauth/userinfo").header(HttpHeaders.AUTHORIZATION, "Bearer ${tokens.first}"))
+            .andExpect(status().isForbidden)
+
+        mockMvc
+            .perform(get("/indieauth/userinfo"))
+            .andExpect(status().isUnauthorized)
+    }
+
+    private fun issueScopedTokens(scope: String): Pair<String, String> {
+        val verifier = "test-verifier-value-$scope-${System.nanoTime()}"
+        val state = beginAuthorization(Pkce.s256(verifier), scope = scope)
+        val code = completeAuthorization(state)
+        val body =
+            mockMvc
+                .perform(
+                    post("/indieauth/token")
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .param("grant_type", "authorization_code")
+                        .param("code", code)
+                        .param("client_id", clientId)
+                        .param("redirect_uri", redirectUri)
+                        .param("code_verifier", verifier),
+                ).andExpect(status().isOk)
+                .andReturn()
+                .response
+                .contentAsString
+        val first = mapper.readTree(body).path("access_token").asText()
+        val secondState = beginAuthorization(Pkce.s256("$verifier-2"), scope = scope)
+        val secondCode = completeAuthorization(secondState)
+        val secondBody =
+            mockMvc
+                .perform(
+                    post("/indieauth/token")
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .param("grant_type", "authorization_code")
+                        .param("code", secondCode)
+                        .param("client_id", clientId)
+                        .param("redirect_uri", redirectUri)
+                        .param("code_verifier", "$verifier-2"),
+                ).andExpect(status().isOk)
+                .andReturn()
+                .response
+                .contentAsString
+        return first to mapper.readTree(secondBody).path("access_token").asText()
     }
 
     @Test
@@ -399,6 +623,26 @@ class IndieAuthIntegrationTest {
                 expiresAt = now.plusSeconds(86400 * 30),
             ),
         )
+        refreshTokenRepository.save(
+            dev.jacobandersen.bastion.indieauth.data.entity.RefreshTokenEntity(
+                tokenHash = Tokens.sha256("expired-refresh"),
+                me = "https://bastion.test",
+                clientId = clientId,
+                scope = "create",
+                issuedAt = now.minusSeconds(86400 * 100),
+                expiresAt = now.minusSeconds(86400 * 2),
+            ),
+        )
+        refreshTokenRepository.save(
+            dev.jacobandersen.bastion.indieauth.data.entity.RefreshTokenEntity(
+                tokenHash = Tokens.sha256("live-refresh"),
+                me = "https://bastion.test",
+                clientId = clientId,
+                scope = "create",
+                issuedAt = now,
+                expiresAt = now.plusSeconds(86400 * 90),
+            ),
+        )
 
         rowPurgeService.purge(now)
 
@@ -406,10 +650,12 @@ class IndieAuthIntegrationTest {
         assertNull(authorizationCodeRepository.findByCodeHash(Tokens.sha256("used-old-code")))
         assertNull(authorizationCodeRepository.findByCodeHash(Tokens.sha256("expired-unused-code")))
         assertNull(accessTokenRepository.findByTokenHash(Tokens.sha256("expired-token")))
+        assertNull(refreshTokenRepository.findByTokenHash(Tokens.sha256("expired-refresh")))
 
         assertNotNull(authRequestRepository.findByStateHash(Tokens.sha256("live-state")))
         assertNotNull(authorizationCodeRepository.findByCodeHash(Tokens.sha256("recently-used-code")))
         assertNotNull(accessTokenRepository.findByTokenHash(Tokens.sha256("live-token")))
+        assertNotNull(refreshTokenRepository.findByTokenHash(Tokens.sha256("live-refresh")))
     }
 
     // --------------------------------------------------------------- helpers
@@ -452,6 +698,7 @@ class IndieAuthIntegrationTest {
         val location = response.getHeader(HttpHeaders.LOCATION)!!
         assertTrue(location.startsWith("$redirectUri?"), "expected client redirect, got $location")
         assertEquals("client-state", queryParam(location, "state"))
+        assertEquals("https://bastion.test/", queryParam(location, "iss"))
         return queryParam(location, "code")!!
     }
 
