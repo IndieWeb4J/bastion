@@ -7,7 +7,7 @@ import tools.jackson.databind.annotation.JsonNaming
 /**
  * The successful response from the IndieAuth token endpoint. `scope` is the
  * space-delimited set of granted scopes and `me` the identity the token was
- * issued for. `scope` is omitted for login-only (empty-scope) grants.
+ * issued for. `expires_in` is the token lifetime in seconds.
  */
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 data class TokenResponse(
@@ -16,4 +16,9 @@ data class TokenResponse(
     @JsonInclude(JsonInclude.Include.NON_NULL)
     val scope: String?,
     val me: String,
+    val expiresIn: Long,
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    val profile: UserProfile? = null,
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    val refreshToken: String? = null,
 )

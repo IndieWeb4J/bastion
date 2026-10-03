@@ -4,6 +4,7 @@ import dev.jacobandersen.bastion.indieauth.config.IndieAuthConfig
 import dev.jacobandersen.bastion.indieauth.data.repository.AccessTokenRepository
 import dev.jacobandersen.bastion.indieauth.data.repository.AuthRequestRepository
 import dev.jacobandersen.bastion.indieauth.data.repository.AuthorizationCodeRepository
+import dev.jacobandersen.bastion.indieauth.data.repository.RefreshTokenRepository
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
@@ -16,8 +17,15 @@ class IndieAuthRowPurgeServiceTest {
     private val authRequestRepository = mock(AuthRequestRepository::class.java)
     private val authorizationCodeRepository = mock(AuthorizationCodeRepository::class.java)
     private val accessTokenRepository = mock(AccessTokenRepository::class.java)
+    private val refreshTokenRepository = mock(RefreshTokenRepository::class.java)
     private val service =
-        IndieAuthRowPurgeService(config, authRequestRepository, authorizationCodeRepository, accessTokenRepository)
+        IndieAuthRowPurgeService(
+            config,
+            authRequestRepository,
+            authorizationCodeRepository,
+            accessTokenRepository,
+            refreshTokenRepository,
+        )
 
     @Test
     fun `purge deletes expired requests and tokens and codes past retention`() {
@@ -25,12 +33,14 @@ class IndieAuthRowPurgeServiceTest {
         `when`(authRequestRepository.deleteExpired(now)).thenReturn(2)
         `when`(authorizationCodeRepository.deleteDead(now.minus(config.codeRetention))).thenReturn(3)
         `when`(accessTokenRepository.deleteExpired(now)).thenReturn(4)
+        `when`(refreshTokenRepository.deleteDead(now.minus(config.codeRetention))).thenReturn(5)
 
         val purged = service.purge(now)
 
-        assertEquals(9, purged)
+        assertEquals(14, purged)
         verify(authRequestRepository).deleteExpired(now)
         verify(authorizationCodeRepository).deleteDead(now.minus(config.codeRetention))
         verify(accessTokenRepository).deleteExpired(now)
+        verify(refreshTokenRepository).deleteDead(now.minus(config.codeRetention))
     }
 }

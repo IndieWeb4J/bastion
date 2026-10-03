@@ -37,6 +37,7 @@ class AuthorizationServiceTest {
     private val authRequestRepository = mock(AuthRequestRepository::class.java)
     private val authorizationCodeRepository = mock(AuthorizationCodeRepository::class.java)
     private val ownerVerifier = mock(OwnerVerifier::class.java)
+    private val clientMetadataFetcher = mock(ClientMetadataFetcher::class.java)
     private val service =
         AuthorizationService(
             config,
@@ -44,6 +45,7 @@ class AuthorizationServiceTest {
             authRequestRepository,
             authorizationCodeRepository,
             ownerVerifier,
+            clientMetadataFetcher,
             "https://bastion.test",
         )
 
@@ -112,19 +114,23 @@ class AuthorizationServiceTest {
     }
 
     @Test
-    fun `begin requires a code challenge`() {
-        assertCode(IndieAuthError.Code.INVALID_REQUEST) {
+    fun `begin allows a missing code challenge for backwards compatibility`() {
+        val location =
             service.begin(
                 request(
                     codeChallenge = null,
                     codeChallengeMethod = null,
                 ),
             )
-        }
+
+        assertTrue(location.startsWith("https://herald.test/auth?"))
+        val captor = ArgumentCaptor.forClass(AuthRequestEntity::class.java)
+        verify(authRequestRepository).save(captor.capture())
+        assertNull(captor.value.codeChallenge)
     }
 
     @Test
-    fun `begin requires a code challenge even when the method is present`() {
+    fun `begin still rejects a method without a challenge`() {
         assertCode(IndieAuthError.Code.INVALID_REQUEST) {
             service.begin(request(codeChallenge = null, codeChallengeMethod = Pkce.METHOD_S256))
         }
@@ -188,6 +194,48 @@ class AuthorizationServiceTest {
     }
 
     @Test
+    fun `begin rejects a client id containing an ip address`() {
+        assertCode(IndieAuthError.Code.INVALID_REQUEST) {
+            service.begin(request(clientId = "https://172.28.92.51/"))
+        }
+    }
+
+    @Test
+    fun `begin rejects a client id with a fragment`() {
+        assertCode(IndieAuthError.Code.INVALID_REQUEST) {
+            service.begin(request(clientId = "https://client.example#me"))
+        }
+    }
+
+    @Test
+    fun `begin allows a cross-host redirect published by the client`() {
+        val otherRedirect = "https://app.example/callback"
+        `when`(clientMetadataFetcher.fetchRedirectUris(clientId)).thenReturn(setOf(otherRedirect))
+
+        val location = service.begin(request(redirectUri = otherRedirect))
+
+        assertTrue(location.startsWith("https://herald.test/auth?"))
+    }
+
+    @Test
+    fun `begin blocks a cross-host redirect missing from the client allowlist`() {
+        `when`(clientMetadataFetcher.fetchRedirectUris(clientId)).thenReturn(setOf("https://client.example/other"))
+
+        assertCode(IndieAuthError.Code.INVALID_REQUEST) {
+            service.begin(request(redirectUri = "https://app.example/callback"))
+        }
+    }
+
+    @Test
+    fun `begin allows a cross-host redirect when metadata is inconclusive`() {
+        `when`(clientMetadataFetcher.fetchRedirectUris(clientId)).thenReturn(null)
+
+        val location = service.begin(request(redirectUri = "https://app.example/callback"))
+
+        assertTrue(location.startsWith("https://herald.test/auth?"))
+    }
+
+    @Test
     fun `begin rejects a mismatched me`() {
         assertCode(IndieAuthError.Code.INVALID_REQUEST) { service.begin(request(me = "https://someone.else")) }
     }
@@ -215,6 +263,7 @@ class AuthorizationServiceTest {
         val location = (result as CompleteResult.Redirect).url
         assertTrue(location.startsWith("$redirectUri?"))
         assertEquals("client-state", queryParam(location, "state"))
+        assertEquals("https://bastion.test/", queryParam(location, "iss"))
         val code = queryParam(location, "code")
         assertTrue(!code.isNullOrBlank())
 
