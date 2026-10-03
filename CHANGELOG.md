@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.30](https://github.com/jacobsandersen/bastion/compare/v1.3.29...v1.3.30) (2026-10-03)
+
+
+### Features
+
+* **indieauth:** IndieAuth server metadata and spec audit fixes ([#67](https://github.com/jacobsandersen/bastion/issues/67)) ([b8aa32f](https://github.com/jacobsandersen/bastion/commit/b8aa32f128abcac20fc9ba72378786d79461eba4))
+
 ## [1.3.29](https://github.com/jacobsandersen/bastion/compare/v1.3.28...v1.3.29) (2026-10-02)
 
 
