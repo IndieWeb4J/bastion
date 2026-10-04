@@ -8,7 +8,6 @@ data class PostResponse(
     val url: String,
     val type: String,
     val subtype: String?,
-    val tertiaryType: String?,
     val published: String,
     val updated: String,
     val name: String?,

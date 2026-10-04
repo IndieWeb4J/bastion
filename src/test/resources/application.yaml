@@ -33,6 +33,8 @@ logging:
     root: info
 
 spring:
+  config:
+    import: classpath:post-types.yaml
   application:
     name: bastion
   jackson:

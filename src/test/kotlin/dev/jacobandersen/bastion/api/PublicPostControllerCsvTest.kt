@@ -5,8 +5,8 @@ import dev.jacobandersen.bastion.api.post.PublicPostController
 import dev.jacobandersen.bastion.api.post.dto.FeedResponse
 import dev.jacobandersen.bastion.micropub.type.PostMf2Type
 import dev.jacobandersen.bastion.micropub.type.PostTagFilter
-import dev.jacobandersen.bastion.micropub.type.PostTertiaryTypeFilter
-import dev.jacobandersen.bastion.micropub.type.PostType
+import dev.jacobandersen.bastion.post.PostTypesConfig
+import dev.jacobandersen.bastion.post.PostTypesRegistry
 import dev.jacobandersen.bastion.url.UrlService
 import dev.jacobandersen.bastion.webmention.data.service.ReceivedWebmentionService
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -19,12 +19,29 @@ import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 
 class PublicPostControllerCsvTest {
-    @Test
-    fun `csv splits for subtype and type and tertiaryType`() {
-        val queryService: PostQueryService = mock()
+    private val registry =
+        PostTypesRegistry(
+            PostTypesConfig(
+                postTypes =
+                    listOf(
+                        PostTypesConfig.PostTypeDefinition(type = "note"),
+                        PostTypesConfig.PostTypeDefinition(type = "article"),
+                        PostTypesConfig.PostTypeDefinition(type = "reply"),
+                        PostTypesConfig.PostTypeDefinition(type = "bookmark"),
+                        PostTypesConfig.PostTypeDefinition(type = "mood"),
+                    ),
+            ),
+        )
+
+    private fun controllerWith(queryService: PostQueryService): PublicPostController {
         val urlService: UrlService = mock()
         val webmentionService: ReceivedWebmentionService = mock()
         whenever(webmentionService.verifiedByPostIds(any())).thenReturn(emptyList())
+        return PublicPostController(queryService, urlService, webmentionService, mock(), mock(), registry)
+    }
+
+    private fun mockFeed(): PostQueryService {
+        val queryService: PostQueryService = mock()
         whenever(
             queryService.feed(
                 anyOrNull(),
@@ -35,16 +52,20 @@ class PublicPostControllerCsvTest {
                 anyOrNull(),
                 anyOrNull(),
                 anyOrNull(),
-                anyOrNull(),
             ),
         ).thenReturn(emptyList())
+        return queryService
+    }
 
-        val controller = PublicPostController(queryService, urlService, webmentionService, mock(), mock())
+    @Test
+    fun `csv splits for subtype and type`() {
+        val queryService = mockFeed()
+        val controller = controllerWith(queryService)
 
         controller.feed(
             listOf("h-entry,h-card"),
             listOf("note,article"),
-            listOf("bookmark,none"),
+            tag = null,
             limit = null,
             offset = null,
             year = null,
@@ -53,13 +74,11 @@ class PublicPostControllerCsvTest {
         )
 
         val typeCaptor = argumentCaptor<List<PostMf2Type>?>()
-        val subtypeCaptor = argumentCaptor<List<PostType>?>()
-        val tertiaryCaptor = argumentCaptor<List<PostTertiaryTypeFilter>?>()
+        val subtypeCaptor = argumentCaptor<List<String>?>()
 
         verify(queryService).feed(
             typeCaptor.capture(),
             subtypeCaptor.capture(),
-            tertiaryCaptor.capture(),
             anyOrNull(),
             anyOrNull(),
             anyOrNull(),
@@ -68,37 +87,19 @@ class PublicPostControllerCsvTest {
             anyOrNull(),
         )
 
-        assertEquals(listOf(PostType.NOTE, PostType.ARTICLE), subtypeCaptor.firstValue)
+        assertEquals(listOf("note", "article"), subtypeCaptor.firstValue)
         assertEquals(listOf(PostMf2Type.H_ENTRY, PostMf2Type.H_CARD), typeCaptor.firstValue)
-        assertEquals(listOf(PostTertiaryTypeFilter.BOOKMARK, PostTertiaryTypeFilter.NONE), tertiaryCaptor.firstValue)
     }
 
     @Test
     fun `repeated and csv combined`() {
-        val queryService: PostQueryService = mock()
-        val urlService: UrlService = mock()
-        val webmentionService: ReceivedWebmentionService = mock()
-        whenever(webmentionService.verifiedByPostIds(any())).thenReturn(emptyList())
-        whenever(
-            queryService.feed(
-                anyOrNull(),
-                anyOrNull(),
-                anyOrNull(),
-                anyOrNull(),
-                anyOrNull(),
-                anyOrNull(),
-                anyOrNull(),
-                anyOrNull(),
-                anyOrNull(),
-            ),
-        ).thenReturn(emptyList())
-
-        val controller = PublicPostController(queryService, urlService, webmentionService, mock(), mock())
+        val queryService = mockFeed()
+        val controller = controllerWith(queryService)
 
         controller.feed(
             listOf("h-entry", "h-card"),
             listOf("note,article", "reply"),
-            listOf("mood,none", "bookmark"),
+            tag = null,
             limit = null,
             offset = null,
             year = null,
@@ -107,13 +108,11 @@ class PublicPostControllerCsvTest {
         )
 
         val typeCaptor = argumentCaptor<List<PostMf2Type>?>()
-        val subtypeCaptor = argumentCaptor<List<PostType>?>()
-        val tertiaryCaptor = argumentCaptor<List<PostTertiaryTypeFilter>?>()
+        val subtypeCaptor = argumentCaptor<List<String>?>()
 
         verify(queryService).feed(
             typeCaptor.capture(),
             subtypeCaptor.capture(),
-            tertiaryCaptor.capture(),
             anyOrNull(),
             anyOrNull(),
             anyOrNull(),
@@ -122,42 +121,21 @@ class PublicPostControllerCsvTest {
             anyOrNull(),
         )
 
-        assertEquals(listOf(PostType.NOTE, PostType.ARTICLE, PostType.REPLY), subtypeCaptor.firstValue)
+        assertEquals(listOf("note", "article", "reply"), subtypeCaptor.firstValue)
         assertEquals(listOf(PostMf2Type.H_ENTRY, PostMf2Type.H_CARD), typeCaptor.firstValue)
-        assertEquals(
-            listOf(PostTertiaryTypeFilter.MOOD, PostTertiaryTypeFilter.NONE, PostTertiaryTypeFilter.BOOKMARK),
-            tertiaryCaptor.firstValue,
-        )
     }
 
     @Test
     fun `empty after split yields no filter`() {
-        val queryService: PostQueryService = mock()
-        val urlService: UrlService = mock()
-        val webmentionService: ReceivedWebmentionService = mock()
-        whenever(webmentionService.verifiedByPostIds(any())).thenReturn(emptyList())
-        whenever(
-            queryService.feed(
-                anyOrNull(),
-                anyOrNull(),
-                anyOrNull(),
-                anyOrNull(),
-                anyOrNull(),
-                anyOrNull(),
-                anyOrNull(),
-                anyOrNull(),
-                anyOrNull(),
-            ),
-        ).thenReturn(emptyList())
-
-        val controller = PublicPostController(queryService, urlService, webmentionService, mock(), mock())
+        val queryService = mockFeed()
+        val controller = controllerWith(queryService)
 
         // blank values should be ignored -> null
         val result: FeedResponse =
             controller.feed(
                 listOf(" , "),
                 listOf(""),
-                listOf("  , "),
+                tag = null,
                 limit = null,
                 offset = null,
                 year = null,
@@ -169,29 +147,11 @@ class PublicPostControllerCsvTest {
 
     @Test
     fun `none is parsed as an untagged filter and can be combined with tags`() {
-        val queryService: PostQueryService = mock()
-        val urlService: UrlService = mock()
-        val webmentionService: ReceivedWebmentionService = mock()
-        whenever(webmentionService.verifiedByPostIds(any())).thenReturn(emptyList())
-        whenever(
-            queryService.feed(
-                anyOrNull(),
-                anyOrNull(),
-                anyOrNull(),
-                anyOrNull(),
-                anyOrNull(),
-                anyOrNull(),
-                anyOrNull(),
-                anyOrNull(),
-                anyOrNull(),
-            ),
-        ).thenReturn(emptyList())
-
-        val controller = PublicPostController(queryService, urlService, webmentionService, mock(), mock())
+        val queryService = mockFeed()
+        val controller = controllerWith(queryService)
         controller.feed(
             listOf("h-entry"),
             listOf("note"),
-            listOf("mood"),
             listOf(" NONE, Kotlin ", "JAVA", "kotlin"),
             limit = null,
             offset = null,
@@ -209,7 +169,6 @@ class PublicPostControllerCsvTest {
             anyOrNull(),
             anyOrNull(),
             anyOrNull(),
-            anyOrNull(),
             tagFilterCaptor.capture(),
         )
 
@@ -217,5 +176,24 @@ class PublicPostControllerCsvTest {
             PostTagFilter(tags = setOf("kotlin", "java"), includeUntagged = true),
             tagFilterCaptor.firstValue,
         )
+    }
+
+    @Test
+    fun `unknown subtype is rejected`() {
+        val queryService = mockFeed()
+        val controller = controllerWith(queryService)
+
+        org.junit.jupiter.api.assertThrows<RuntimeException> {
+            controller.feed(
+                null,
+                listOf("unknown-thing"),
+                tag = null,
+                limit = null,
+                offset = null,
+                year = null,
+                month = null,
+                day = null,
+            )
+        }
     }
 }

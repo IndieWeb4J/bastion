@@ -12,6 +12,8 @@ import dev.jacobandersen.bastion.micropub.data.service.PostSyndicationService
 import dev.jacobandersen.bastion.micropub.syndication.SyndicationConfig
 import dev.jacobandersen.bastion.micropub.type.PostStatus
 import dev.jacobandersen.bastion.micropub.type.PostVisibility
+import dev.jacobandersen.bastion.post.PostTypesConfig
+import dev.jacobandersen.bastion.post.PostTypesRegistry
 import dev.jacobandersen.bastion.url.UrlService
 import dev.jacobandersen.bastion.webmention.data.service.ReceivedWebmentionService
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -61,6 +63,14 @@ class PublicPostControllerSyndicationsTest {
             webmentionService,
             syndicationService,
             SyndicationConfig(targets = targets),
+            PostTypesRegistry(
+                PostTypesConfig(
+                    postTypes =
+                        listOf(
+                            PostTypesConfig.PostTypeDefinition(type = "note"),
+                        ),
+                ),
+            ),
         )
     }
 
@@ -127,7 +137,6 @@ class PublicPostControllerSyndicationsTest {
                 anyOrNull(),
                 anyOrNull(),
                 anyOrNull(),
-                anyOrNull(),
             ),
         ).thenReturn(listOf(post))
         whenever(urlService.generatePostUrl(post)).thenReturn("https://bastion.test/2026/01/01/slug")
@@ -139,8 +148,14 @@ class PublicPostControllerSyndicationsTest {
                 webmentionService,
                 syndicationService,
                 SyndicationConfig(),
+                PostTypesRegistry(
+                    PostTypesConfig(
+                        postTypes = listOf(PostTypesConfig.PostTypeDefinition(type = "note")),
+                    ),
+                ),
             )
-        val feed = controller.feed(null, null, null, limit = null, offset = null, year = null, month = null, day = null)
+        val feed =
+            controller.feed(null, null, null, limit = null, offset = null, year = null, month = null, day = null)
         assertEquals(1, feed.items.size)
         assertNull(feed.items.first().syndications)
     }

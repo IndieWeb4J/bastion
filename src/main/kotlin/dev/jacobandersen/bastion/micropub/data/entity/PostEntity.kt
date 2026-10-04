@@ -50,10 +50,6 @@ class PostEntity(
     var subtype: String? = null
 
     @Generated(event = [EventType.INSERT, EventType.UPDATE])
-    @Column(name = "tertiary_type", nullable = true, insertable = false, updatable = false)
-    var tertiaryType: String? = null
-
-    @Generated(event = [EventType.INSERT, EventType.UPDATE])
     @Column(name = "categories", insertable = false, updatable = false)
     @JdbcTypeCode(SqlTypes.ARRAY)
     var categories: Array<String>? = null
@@ -98,7 +94,6 @@ class PostEntity(
             deleted = deleted,
             type = requireNotNull(type),
             subtype = subtype,
-            tertiaryType = tertiaryType,
             post = post,
         )
 }

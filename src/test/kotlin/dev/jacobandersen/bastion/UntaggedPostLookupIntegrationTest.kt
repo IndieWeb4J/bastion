@@ -51,7 +51,6 @@ class UntaggedPostLookupIntegrationTest {
             postQueryService.feed(
                 type = null,
                 subtype = null,
-                tertiaryType = null,
                 limitArg = 100,
                 offsetArg = 0,
                 tagFilter = PostTagFilter.parse(listOf("none")),
@@ -62,7 +61,6 @@ class UntaggedPostLookupIntegrationTest {
             postQueryService.feed(
                 type = null,
                 subtype = null,
-                tertiaryType = null,
                 limitArg = 100,
                 offsetArg = 0,
                 tagFilter = PostTagFilter.parse(listOf("none", "KOTLIN")),
@@ -76,7 +74,6 @@ class UntaggedPostLookupIntegrationTest {
             postQueryService.feed(
                 type = null,
                 subtype = null,
-                tertiaryType = null,
                 limitArg = 100,
                 offsetArg = 0,
                 tagFilter = PostTagFilter.parse(listOf("kotlin")),
@@ -87,7 +84,6 @@ class UntaggedPostLookupIntegrationTest {
             postQueryService.feed(
                 type = null,
                 subtype = null,
-                tertiaryType = null,
                 limitArg = 100,
                 offsetArg = 0,
             )

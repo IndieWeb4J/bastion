@@ -7,12 +7,8 @@ import dev.jacobandersen.bastion.micropub.data.repository.PostRepository
 import dev.jacobandersen.bastion.micropub.type.PostMf2Type
 import dev.jacobandersen.bastion.micropub.type.PostStatus
 import dev.jacobandersen.bastion.micropub.type.PostTagFilter
-import dev.jacobandersen.bastion.micropub.type.PostTertiaryTypeFilter
-import dev.jacobandersen.bastion.micropub.type.PostType
 import dev.jacobandersen.bastion.micropub.type.PostVisibility
 import dev.jacobandersen.bastion.micropub.type.mf2Type
-import dev.jacobandersen.bastion.micropub.type.subtype
-import dev.jacobandersen.bastion.micropub.type.tertiaryType
 import jakarta.persistence.criteria.Predicate
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
@@ -110,37 +106,32 @@ class PostService(
 
     /**
      * Published, public, non-deleted posts for the public feed, optionally
-     * restricted by mf2 `type` (h-entry, h-card, ...), `subtype`,
-     * `tertiary_type` and tags. Filters within each list are OR, across lists
-     * are AND. For `tertiary_type`, the `NONE` sentinel means
-     * `tertiary_type IS NULL`. For tags, the `none` sentinel means an empty
-     * categories array.
+     * restricted by mf2 `type` (h-entry, h-card, ...), `subtype` and tags.
+     * Filters within each list are OR, across lists are AND. For tags, the
+     * `none` sentinel means an empty categories array.
      */
     @Transactional(readOnly = true)
     fun findFeedPosts(
         mf2Types: Collection<PostMf2Type>?,
-        subtypes: Collection<PostType>?,
-        tertiaryFilters: Collection<PostTertiaryTypeFilter>?,
+        subtypes: Collection<String>?,
         limit: Int,
         offset: Int,
-    ): List<Post> = findFeedPosts(mf2Types, subtypes, tertiaryFilters, limit, offset, null, null, null)
+    ): List<Post> = findFeedPosts(mf2Types, subtypes, limit, offset, null, null, null)
 
     @Transactional(readOnly = true)
     fun findFeedPosts(
         mf2Types: Collection<PostMf2Type>?,
-        subtypes: Collection<PostType>?,
-        tertiaryFilters: Collection<PostTertiaryTypeFilter>?,
+        subtypes: Collection<String>?,
         limit: Int,
         offset: Int,
         from: Instant?,
         toExclusive: Instant?,
-    ): List<Post> = findFeedPosts(mf2Types, subtypes, tertiaryFilters, limit, offset, from, toExclusive, null)
+    ): List<Post> = findFeedPosts(mf2Types, subtypes, limit, offset, from, toExclusive, null)
 
     @Transactional(readOnly = true)
     fun findFeedPosts(
         mf2Types: Collection<PostMf2Type>?,
-        subtypes: Collection<PostType>?,
-        tertiaryFilters: Collection<PostTertiaryTypeFilter>?,
+        subtypes: Collection<String>?,
         limit: Int,
         offset: Int,
         from: Instant?,
@@ -153,16 +144,11 @@ class PostService(
         val pageRequest = PageRequest.of(offset / limit, limit, Sort.by("createdAtUtc").descending())
 
         val mf2TypeStrings = mf2Types?.map { it.mf2Type() }
-        val subtypeStrings = subtypes?.map { it.subtype() }
-        val includeTertiaryNone = tertiaryFilters?.any { it == PostTertiaryTypeFilter.NONE } == true
-        val tertiaryTypeStrings = tertiaryFilters?.filterNot { it == PostTertiaryTypeFilter.NONE }?.mapNotNull { it.tertiaryType() }
 
         val spec =
             buildFeedSpecification(
                 mf2TypeStrings,
-                subtypeStrings,
-                tertiaryTypeStrings,
-                includeTertiaryNone,
+                subtypes,
                 from,
                 toExclusive,
                 tagFilter,
@@ -173,8 +159,6 @@ class PostService(
     private fun buildFeedSpecification(
         mf2Types: Collection<String>?,
         subtypes: Collection<String>?,
-        tertiaryTypes: Collection<String>?,
-        includeTertiaryNone: Boolean,
         from: Instant?,
         toExclusive: Instant?,
         tagFilter: PostTagFilter? = null,
@@ -191,26 +175,6 @@ class PostService(
             }
             if (!subtypes.isNullOrEmpty()) {
                 predicates += root.get<String>("subtype").`in`(subtypes)
-            }
-
-            val hasTertiaryValues = !tertiaryTypes.isNullOrEmpty()
-            if (hasTertiaryValues || includeTertiaryNone) {
-                val tertiaryPath = root.get<String>("tertiaryType")
-                val clause =
-                    when {
-                        hasTertiaryValues && includeTertiaryNone -> {
-                            cb.or(tertiaryPath.isNull, tertiaryPath.`in`(tertiaryTypes))
-                        }
-
-                        hasTertiaryValues -> {
-                            tertiaryPath.`in`(tertiaryTypes)
-                        }
-
-                        else -> {
-                            tertiaryPath.isNull
-                        }
-                    }
-                predicates += clause
             }
 
             if (tagFilter != null) {
