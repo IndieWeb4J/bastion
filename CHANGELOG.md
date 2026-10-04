@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.31](https://github.com/jacobsandersen/bastion/compare/v1.3.30...v1.3.31) (2026-10-04)
+
+
+### Bug Fixes
+
+* remove service doc from auth metadata, as indielib has a minor bug, and it's not important for bastion anyway ([eb02a3d](https://github.com/jacobsandersen/bastion/commit/eb02a3d4dcc5959aff91fb5711db25da28faeab0))
+
 ## [1.3.30](https://github.com/jacobsandersen/bastion/compare/v1.3.29...v1.3.30) (2026-10-03)
 
 
