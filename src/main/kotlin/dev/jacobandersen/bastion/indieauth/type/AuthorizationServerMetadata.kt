@@ -24,7 +24,6 @@ data class AuthorizationServerMetadata(
     val scopesSupported: List<String> = emptyList(),
     val responseTypesSupported: List<String> = listOf("code"),
     val grantTypesSupported: List<String> = listOf("authorization_code"),
-    val serviceDocumentation: String? = "https://indieauth.spec.indieweb.org/",
     val codeChallengeMethodsSupported: List<String> = listOf("S256"),
     val authorizationResponseIssParameterSupported: Boolean = true,
     val userinfoEndpoint: String? = null,

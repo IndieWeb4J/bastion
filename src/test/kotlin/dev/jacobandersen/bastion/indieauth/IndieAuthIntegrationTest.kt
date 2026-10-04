@@ -110,7 +110,6 @@ class IndieAuthIntegrationTest {
             .andExpect(jsonPath("$.userinfo_endpoint").value("https://bastion.test/indieauth/userinfo"))
             .andExpect(jsonPath("$.code_challenge_methods_supported[0]").value("S256"))
             .andExpect(jsonPath("$.authorization_response_iss_parameter_supported").value(true))
-            .andExpect(jsonPath("$.service_documentation").value("https://indieauth.spec.indieweb.org/"))
             .andExpect(jsonPath("$.grant_types_supported").isArray())
             .andExpect(jsonPath("$.scopes_supported").isArray())
     }
