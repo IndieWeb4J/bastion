@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.3.33](https://github.com/jacobsandersen/bastion/compare/v1.3.32...v1.3.33) (2026-10-05)
+
+
+### ⚠ BREAKING CHANGES
+
+* add q=properties micropub query ([#72](https://github.com/jacobsandersen/bastion/issues/72))
+
+### Features
+
+* add q=properties micropub query ([#72](https://github.com/jacobsandersen/bastion/issues/72)) ([6bd9d43](https://github.com/jacobsandersen/bastion/commit/6bd9d435f176e8b8d65343d2ce05840b6c678986))
+
 ## [1.3.32](https://github.com/jacobsandersen/bastion/compare/v1.3.31...v1.3.32) (2026-10-05)
 
 
