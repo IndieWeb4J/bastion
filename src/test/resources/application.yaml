@@ -34,7 +34,7 @@ logging:
 
 spring:
   config:
-    import: classpath:post-types.yaml
+    import: classpath:post-types.yaml,classpath:properties.yaml
   application:
     name: bastion
   jackson:

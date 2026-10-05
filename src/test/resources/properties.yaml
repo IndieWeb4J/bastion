@@ -1,0 +1,56 @@
+bastion:
+  properties:
+    properties:
+      - name: published
+        display-name: Date Published
+        hints: [date]
+      - name: updated
+        display-name: Date Updated
+        hints: [date]
+      - name: category
+        display-name: Category / tag
+        hints: [multivalue]
+      - name: post-status
+        display-name: Whether the post is `published` or `draft`
+        options: [draft, published]
+        default: published
+      - name: visibility
+        display-name: Visibility
+        options: [public, unlisted, private]
+        default: public
+      - name: mp-syndicate-to
+        display-name: Syndication Targets
+        hints: [multivalue]
+      - name: content
+        display-name: Content
+        hints: [multiline]
+      - name: name
+        display-name: Title
+      - name: summary
+        display-name: Summary
+      - name: in-reply-to
+        display-name: URL to Reply To
+        hints: [url]
+      - name: like-of
+        display-name: URL to Like
+        hints: [url]
+      - name: repost-of
+        display-name: URL to be Reposted
+        hints: [url]
+      - name: rsvp
+        display-name: RSVP
+        options: [yes, no, maybe, interested]
+        default: yes
+      - name: photo
+        display-name: Photo
+        hints: [url]
+      - name: video
+        display-name: Video
+        hints: [url]
+      - name: bookmark-of
+        display-name: URL to Bookmark
+        hints: [url]
+      - name: checkin
+        display-name: Checkin
+      - name: mood
+        display-name: Mood
