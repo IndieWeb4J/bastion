@@ -9,6 +9,7 @@ class GetDispatchService(
     val configService: ConfigService,
     val sourceService: SourceService,
     val syndicationTargetsService: SyndicationTargetsService,
+    val propertiesService: PropertiesService,
 ) {
     fun handleMicropubGet(
         command: GetQueryOption,
@@ -18,5 +19,6 @@ class GetDispatchService(
             GetQueryOption.CONFIG -> configService.getConfig()
             GetQueryOption.SOURCE -> sourceService.getSource(params)
             GetQueryOption.SYNDICATE_TO -> syndicationTargetsService.getSyndicationTargets()
+            GetQueryOption.PROPERTIES -> propertiesService.getProperties(params["post-type"]?.firstOrNull())
         }
 }
