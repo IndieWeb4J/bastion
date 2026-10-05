@@ -238,8 +238,8 @@ class WebmentionControllerTest {
             status = status,
             visibility = visibility,
             deleted = deleted,
-            type = "h-entry",
-            subtype = null,
+            h = "h-entry",
+            type = null,
             post =
                 Mf2Object(
                     type = listOf("h-entry"),

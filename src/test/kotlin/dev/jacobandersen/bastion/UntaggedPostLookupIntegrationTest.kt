@@ -49,9 +49,8 @@ class UntaggedPostLookupIntegrationTest {
 
         val untagged =
             postQueryService.feed(
+                h = null,
                 type = null,
-                subtype = null,
-                tertiaryType = null,
                 limitArg = 100,
                 offsetArg = 0,
                 tagFilter = PostTagFilter.parse(listOf("none")),
@@ -60,9 +59,8 @@ class UntaggedPostLookupIntegrationTest {
 
         val untaggedOrKotlin =
             postQueryService.feed(
+                h = null,
                 type = null,
-                subtype = null,
-                tertiaryType = null,
                 limitArg = 100,
                 offsetArg = 0,
                 tagFilter = PostTagFilter.parse(listOf("none", "KOTLIN")),
@@ -74,9 +72,8 @@ class UntaggedPostLookupIntegrationTest {
 
         val kotlinOnly =
             postQueryService.feed(
+                h = null,
                 type = null,
-                subtype = null,
-                tertiaryType = null,
                 limitArg = 100,
                 offsetArg = 0,
                 tagFilter = PostTagFilter.parse(listOf("kotlin")),
@@ -85,9 +82,8 @@ class UntaggedPostLookupIntegrationTest {
 
         val allPublic =
             postQueryService.feed(
+                h = null,
                 type = null,
-                subtype = null,
-                tertiaryType = null,
                 limitArg = 100,
                 offsetArg = 0,
             )

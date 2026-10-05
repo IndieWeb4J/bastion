@@ -18,14 +18,14 @@ class SyndicationContentMapperTest {
 
     private fun post(
         properties: Map<String, List<Mf2Value>>,
-        subtype: String? = null,
+        type: String? = null,
     ) = Post(
         id = UUID.randomUUID(),
         slug = "slug",
         status = PostStatus.PUBLISHED,
         visibility = PostVisibility.PUBLIC,
-        type = "h-entry",
-        subtype = subtype,
+        h = "h-entry",
+        type = type,
         post = Mf2Object(type = listOf("h-entry"), properties = properties, children = null),
     )
 
@@ -65,7 +65,7 @@ class SyndicationContentMapperTest {
                         "name" to listOf(Mf2Value.String("My Title")),
                         "content" to listOf(Mf2Value.String("Some body text here")),
                     ),
-                    subtype = "article",
+                    type = "article",
                 ),
                 canonicalUrl,
                 300,
@@ -87,7 +87,7 @@ class SyndicationContentMapperTest {
                         "name" to listOf(Mf2Value.String("A fairly long article title")),
                         "content" to listOf(Mf2Value.String(body)),
                     ),
-                    subtype = "article",
+                    type = "article",
                 ),
                 canonicalUrl,
                 120,
@@ -108,7 +108,7 @@ class SyndicationContentMapperTest {
                         "name" to listOf(Mf2Value.String("A title")),
                         "content" to listOf(Mf2Value.String("word ".repeat(200))),
                     ),
-                    subtype = "article",
+                    type = "article",
                 ),
                 canonicalUrl,
                 60,

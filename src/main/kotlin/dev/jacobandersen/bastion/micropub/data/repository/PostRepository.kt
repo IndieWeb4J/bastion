@@ -27,10 +27,10 @@ interface PostRepository :
         page: Pageable,
     ): Page<PostEntity>
 
-    fun findByStatusAndVisibilityAndDeletedFalseAndSubtypeIn(
+    fun findByStatusAndVisibilityAndDeletedFalseAndTypeIn(
         status: PostStatus,
         visibility: PostVisibility,
-        subtypes: Collection<String>,
+        types: Collection<String>,
         page: Pageable,
     ): Page<PostEntity>
 
@@ -42,10 +42,10 @@ interface PostRepository :
         page: Pageable,
     ): Page<PostEntity>
 
-    fun findByStatusAndVisibilityAndDeletedFalseAndSubtypeInAndCreatedAtUtcGreaterThanEqualAndCreatedAtUtcLessThan(
+    fun findByStatusAndVisibilityAndDeletedFalseAndTypeInAndCreatedAtUtcGreaterThanEqualAndCreatedAtUtcLessThan(
         status: PostStatus,
         visibility: PostVisibility,
-        subtypes: Collection<String>,
+        types: Collection<String>,
         from: Instant,
         to: Instant,
         page: Pageable,

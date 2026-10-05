@@ -1,5 +1,3 @@
-spring.config.import: optional:file:/etc/config/micropub.yml
-
 bastion:
   timezone: ${BASTION_TIMEZONE}
   public-url: ${BASTION_PUBLIC_URL}
@@ -60,6 +58,8 @@ logging:
     root: ${LOGGING_LEVEL_ROOT:info}
 
 spring:
+  config:
+    import: optional:file:/etc/config/micropub.yml,file:${BASTION_POST_TYPES_CONFIG_FILE:/etc/config/post-types.yaml}
   application:
     name: bastion
   jackson:

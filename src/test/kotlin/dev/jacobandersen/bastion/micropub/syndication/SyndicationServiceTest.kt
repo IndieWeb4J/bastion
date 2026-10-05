@@ -42,7 +42,7 @@ class SyndicationServiceTest {
             slug = "slug",
             status = PostStatus.PUBLISHED,
             visibility = PostVisibility.PUBLIC,
-            type = "h-entry",
+            h = "h-entry",
             post =
                 Mf2Object(
                     type = listOf("h-entry"),

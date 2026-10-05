@@ -1,0 +1,65 @@
+bastion:
+  post-types:
+    common-properties:
+      - published
+      - updated
+      - category
+      - post-status
+      - visibility
+      - mp-syndicate-to
+    post-types:
+      - type: note
+        name: Note
+        h: entry
+        properties: [content]
+        required-properties: [content, published]
+      - type: article
+        name: Article
+        h: entry
+        properties: [name, content, summary]
+        required-properties: [content, name, published, summary]
+      - type: reply
+        name: Reply
+        h: entry
+        properties: [in-reply-to, content]
+        required-properties: [content, in-reply-to, published]
+      - type: repost
+        name: Repost
+        h: entry
+        properties: [repost-of]
+        required-properties: [repost-of, published]
+      - type: like
+        name: Like
+        h: entry
+        properties: [like-of]
+        required-properties: [like-of, published]
+      - type: rsvp
+        name: RSVP
+        h: entry
+        properties: [rsvp, in-reply-to]
+        required-properties: [in-reply-to, published, rsvp]
+      - type: photo
+        name: Photo
+        h: entry
+        properties: [photo]
+        required-properties: [photo, published]
+      - type: video
+        name: Video
+        h: entry
+        properties: [video]
+        required-properties: [video, published]
+      - type: bookmark
+        name: Bookmark
+        h: entry
+        properties: [bookmark-of, content]
+        required-properties: [bookmark-of, published]
+      - type: checkin
+        name: Checkin
+        h: entry
+        properties: [checkin, content]
+        required-properties: [checkin, published]
+      - type: mood
+        name: Mood
+        h: entry
+        properties: [mood]
+        required-properties: [mood, published]

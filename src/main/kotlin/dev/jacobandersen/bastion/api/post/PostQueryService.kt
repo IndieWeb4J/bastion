@@ -6,8 +6,6 @@ import dev.jacobandersen.bastion.micropub.data.domain.Post
 import dev.jacobandersen.bastion.micropub.data.service.PostService
 import dev.jacobandersen.bastion.micropub.type.PostMf2Type
 import dev.jacobandersen.bastion.micropub.type.PostTagFilter
-import dev.jacobandersen.bastion.micropub.type.PostTertiaryTypeFilter
-import dev.jacobandersen.bastion.micropub.type.PostType
 import dev.jacobandersen.bastion.url.UrlService
 import org.springframework.stereotype.Service
 import java.time.Instant
@@ -29,9 +27,8 @@ class PostQueryService(
     private val zone: ZoneId,
 ) {
     fun feed(
-        type: List<PostMf2Type>?,
-        subtype: List<PostType>?,
-        tertiaryType: List<PostTertiaryTypeFilter>?,
+        h: List<PostMf2Type>?,
+        type: List<String>?,
         limitArg: Int?,
         offsetArg: Int?,
         year: Int? = null,
@@ -49,12 +46,11 @@ class PostQueryService(
         val range = resolveDateRange(year, month, day)
 
         return if (range == null) {
-            postService.findFeedPosts(type, subtype, tertiaryType, limit, offset, null, null, tagFilter)
+            postService.findFeedPosts(h, type, limit, offset, null, null, tagFilter)
         } else {
             postService.findFeedPosts(
+                h,
                 type,
-                subtype,
-                tertiaryType,
                 limit,
                 offset,
                 range.first,

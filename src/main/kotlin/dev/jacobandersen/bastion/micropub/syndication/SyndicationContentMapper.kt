@@ -8,7 +8,7 @@ import dev.jacobandersen.bastion.micropub.data.domain.Post
 /**
  * Builds the downstream copy of a post for syndication targets. The copy is an
  * excerpt plus a permalink, never the full content: notes become
- * `{excerpt}\n\n{url}`, while articles (`subtype == "article"`) lead with the
+ * `{excerpt}\n\n{url}`, while articles (`type == "article"`) lead with the
  * title as `{name}: {excerpt}\n\n{url}`.
  *
  * The [maxGraphemes] budget covers the total (title + excerpt + link), counted
@@ -32,8 +32,7 @@ object SyndicationContentMapper {
     }
 
     /** Whether the syndicated text leads with the post title (article posts). */
-    fun includesTitle(post: Post): Boolean =
-        post.subtype.equals("article", ignoreCase = true) && !post.post.firstText("name").isNullOrBlank()
+    fun includesTitle(post: Post): Boolean = post.type.equals("article", ignoreCase = true) && !post.post.firstText("name").isNullOrBlank()
 
     /** The exact downstream text for a post: excerpt plus permalink within [maxGraphemes]. */
     fun excerptText(

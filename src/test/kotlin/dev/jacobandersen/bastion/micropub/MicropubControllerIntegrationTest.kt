@@ -89,6 +89,13 @@ class MicropubControllerIntegrationTest {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.media-endpoint").value(containsString("/micropub/media")))
             .andExpect(jsonPath("$.syndicate-to").isArray)
+            .andExpect(jsonPath("$.post-types").isArray)
+            .andExpect(jsonPath("$.post-types.length()").value(11))
+            .andExpect(jsonPath("$.post-types[0].type").isString)
+            .andExpect(jsonPath("$.post-types[0].name").isString)
+            .andExpect(jsonPath("$.post-types[0].h").value("entry"))
+            .andExpect(jsonPath("$.post-types[0].properties").isArray)
+            .andExpect(jsonPath("$.post-types[0].required-properties").isArray)
     }
 
     @Test

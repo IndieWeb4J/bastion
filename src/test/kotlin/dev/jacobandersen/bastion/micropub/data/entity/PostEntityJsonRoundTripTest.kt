@@ -53,9 +53,9 @@ class PostEntityJsonRoundTripTest {
         assertEquals(slug, reloaded.slug)
         assertEquals(obj, reloaded.post)
 
-        assertEquals("h-entry", saved.type)
-        assertEquals("h-entry", reloaded.type)
-        assertEquals("note", reloaded.subtype)
+        assertEquals("h-entry", saved.h)
+        assertEquals("h-entry", reloaded.h)
+        assertEquals("note", reloaded.type)
         assertEquals(Instant.parse("2026-08-31T00:00:00Z"), reloaded.createdAtUtc)
         assertEquals(Instant.parse("2026-08-31T00:00:00Z"), reloaded.updatedAtUtc)
     }
