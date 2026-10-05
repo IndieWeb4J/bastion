@@ -99,6 +99,39 @@ class MicropubControllerIntegrationTest {
     }
 
     @Test
+    fun propertiesReturnsAllDefined() {
+        mockMvc
+            .perform(get("/micropub").param("q", "properties").header(HttpHeaders.AUTHORIZATION, bearer))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.properties").isArray)
+            .andExpect(jsonPath("$.properties[?(@.name == 'published')].hints[0]").value("date"))
+    }
+
+    @Test
+    fun propertiesFilteredByPostType() {
+        mockMvc
+            .perform(
+                get("/micropub")
+                    .param("q", "properties")
+                    .param("post-type", "article")
+                    .header(HttpHeaders.AUTHORIZATION, bearer),
+            ).andExpect(status().isOk)
+            .andExpect(jsonPath("$.properties[?(@.name == 'name')].display-name").value("Title"))
+            .andExpect(jsonPath("$.properties.length()").value(9))
+    }
+
+    @Test
+    fun propertiesRejectsUnknownPostType() {
+        mockMvc
+            .perform(
+                get("/micropub")
+                    .param("q", "properties")
+                    .param("post-type", "bogus")
+                    .header(HttpHeaders.AUTHORIZATION, bearer),
+            ).andExpect(status().isBadRequest())
+    }
+
+    @Test
     fun syndicateToReturnsSpecKey() {
         mockMvc
             .perform(get("/micropub").param("q", "syndicate-to").header(HttpHeaders.AUTHORIZATION, bearer))

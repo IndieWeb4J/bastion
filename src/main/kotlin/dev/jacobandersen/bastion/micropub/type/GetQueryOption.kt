@@ -6,6 +6,7 @@ enum class GetQueryOption(
     CONFIG(null),
     SOURCE(null),
     SYNDICATE_TO("syndicate-to"),
+    PROPERTIES("properties"),
     ;
 
     companion object {
