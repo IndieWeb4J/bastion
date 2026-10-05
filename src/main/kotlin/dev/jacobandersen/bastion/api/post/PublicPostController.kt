@@ -16,8 +16,7 @@ import dev.jacobandersen.bastion.micropub.data.service.PostSyndicationService
 import dev.jacobandersen.bastion.micropub.syndication.SyndicationConfig
 import dev.jacobandersen.bastion.micropub.type.PostMf2Type
 import dev.jacobandersen.bastion.micropub.type.PostTagFilter
-import dev.jacobandersen.bastion.micropub.type.PostTertiaryTypeFilter
-import dev.jacobandersen.bastion.micropub.type.PostType
+import dev.jacobandersen.bastion.post.PostTypesRegistry
 import dev.jacobandersen.bastion.url.UrlService
 import dev.jacobandersen.bastion.webmention.data.domain.WebmentionInteraction.MENTION
 import dev.jacobandersen.bastion.webmention.data.service.ReceivedWebmentionService
@@ -39,12 +38,12 @@ class PublicPostController(
     private val webmentionService: ReceivedWebmentionService,
     private val syndicationService: PostSyndicationService,
     private val syndicationConfig: SyndicationConfig,
+    private val postTypesRegistry: PostTypesRegistry,
 ) {
     @GetMapping
     fun feed(
+        @RequestParam(required = false) h: List<String>?,
         @RequestParam(required = false) type: List<String>?,
-        @RequestParam(required = false) subtype: List<String>?,
-        @RequestParam(required = false) tertiaryType: List<String>?,
         @RequestParam(required = false) tag: List<String>? = null,
         @RequestParam(required = false) limit: Int?,
         @RequestParam(required = false) offset: Int?,
@@ -52,11 +51,10 @@ class PublicPostController(
         @RequestParam(required = false) month: Int?,
         @RequestParam(required = false) day: Int?,
     ): FeedResponse {
-        val parsedTypes = parseMf2Types(type)
-        val parsedSubtypes = parseSubtypes(subtype)
-        val parsedTertiaryTypes = parseTertiaryTypes(tertiaryType)
+        val parsedHs = parseHs(h)
+        val parsedTypes = parseTypes(type)
         val parsedTags = parseTags(tag)
-        val posts = queryService.feed(parsedTypes, parsedSubtypes, parsedTertiaryTypes, limit, offset, year, month, day, parsedTags)
+        val posts = queryService.feed(parsedHs, parsedTypes, limit, offset, year, month, day, parsedTags)
         val webmentionCounts = countsByPost(posts)
         val items = posts.map { post -> toResponse(post, webmentionCounts[post.id] ?: WebmentionCounts.EMPTY, webmentions = null) }
         val effectiveLimit = limit ?: 10
@@ -118,9 +116,8 @@ class PublicPostController(
             id = post.id.toString(),
             slug = post.slug,
             url = requireNotNull(runCatching { urlService.generatePostUrl(post) }.getOrNull()) { "post ${post.id} missing url" },
+            h = post.h,
             type = post.type,
-            subtype = post.subtype,
-            tertiaryType = post.tertiaryType,
             published = requireNotNull(post.post.firstText("published")) { "post ${post.id} missing published" },
             updated = requireNotNull(post.post.firstText("updated")) { "post ${post.id} missing updated" },
             name = post.post.firstText("name"),
@@ -180,31 +177,23 @@ class PublicPostController(
             ?.map(convert)
             ?.takeIf { it.isNotEmpty() }
 
-    private fun parseMf2Types(raw: List<String>?): List<PostMf2Type>? =
+    private fun parseHs(raw: List<String>?): List<PostMf2Type>? =
         parseCsv(raw) {
+            val normalized = it.lowercase().let { value -> if (value.startsWith("h-")) value else "h-$value" }
             try {
-                PostMf2Type.valueOf(it.uppercase().replace('-', '_'))
+                PostMf2Type.valueOf(normalized.uppercase().replace('-', '_'))
             } catch (_: IllegalArgumentException) {
-                throw RuntimeException("unknown mf2 type: $it")
+                throw RuntimeException("unknown h type: $it")
             }
         }
 
-    private fun parseSubtypes(raw: List<String>?): List<PostType>? =
+    private fun parseTypes(raw: List<String>?): List<String>? =
         parseCsv(raw) {
-            try {
-                PostType.valueOf(it.uppercase())
-            } catch (_: IllegalArgumentException) {
+            val value = it.lowercase()
+            if (!postTypesRegistry.isKnownType(value)) {
                 throw RuntimeException("unknown post type: $it")
             }
-        }
-
-    private fun parseTertiaryTypes(raw: List<String>?): List<PostTertiaryTypeFilter>? =
-        parseCsv(raw) {
-            try {
-                PostTertiaryTypeFilter.valueOf(it.uppercase())
-            } catch (_: IllegalArgumentException) {
-                throw RuntimeException("unknown tertiary type: $it")
-            }
+            value
         }
 
     private fun parseTags(raw: List<String>?): PostTagFilter? = PostTagFilter.parse(raw)
@@ -216,9 +205,8 @@ class PublicPostController(
     @ExceptionHandler(RuntimeException::class)
     fun handleUnknownType(ex: RuntimeException): ResponseEntity<Map<String, String>> {
         val message = ex.message ?: "bad request"
-        return if (message.startsWith("unknown mf2 type") ||
-            message.startsWith("unknown post type") ||
-            message.startsWith("unknown tertiary type")
+        return if (message.startsWith("unknown h type") ||
+            message.startsWith("unknown post type")
         ) {
             ResponseEntity.badRequest().body(mapOf("error" to message))
         } else {

@@ -135,6 +135,29 @@ class PostTypeDiscoverySqlTest {
     }
 
     @Test
+    fun `classifies a bookmark by bookmark-of`() {
+        expect("bookmark", "\"bookmark-of\":[\"https://example.com/a\"],\"content\":[\"Look at this\"]")
+    }
+
+    @Test
+    fun `classifies a checkin by checkin property`() {
+        expect(
+            "checkin",
+            "\"checkin\":[{\"type\":[\"h-card\"],\"properties\":{\"name\":[\"Blue Bottle\"]}}]",
+        )
+    }
+
+    @Test
+    fun `classifies a mood by mood property`() {
+        expect("mood", "\"mood\":[\"happy\"],\"content\":[\"Feeling good\"]")
+    }
+
+    @Test
+    fun `a plain note still discovers as a note`() {
+        expect("note", "\"content\":[\"Just a thought\"]")
+    }
+
+    @Test
     fun `a non h-entry object has no discovered post type`() {
         assertNull(discover("""{"type":["h-card"],"properties":{"name":["Sally"]}}"""))
     }
