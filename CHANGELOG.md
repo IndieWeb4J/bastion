@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.32](https://github.com/jacobsandersen/bastion/compare/v1.3.31...v1.3.32) (2026-10-05)
+
+
+### Features
+
+* unify tertiary types into post type discovery and serve post-types from external config ([#70](https://github.com/jacobsandersen/bastion/issues/70)) ([3561027](https://github.com/jacobsandersen/bastion/commit/3561027d60b41d40bc965d3dfd08c102b3a09c74))
+
 ## [1.3.31](https://github.com/jacobsandersen/bastion/compare/v1.3.30...v1.3.31) (2026-10-04)
 
 
