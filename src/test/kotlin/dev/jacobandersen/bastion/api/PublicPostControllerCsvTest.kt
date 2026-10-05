@@ -58,12 +58,12 @@ class PublicPostControllerCsvTest {
     }
 
     @Test
-    fun `csv splits for subtype and type`() {
+    fun `csv splits for h and type`() {
         val queryService = mockFeed()
         val controller = controllerWith(queryService)
 
         controller.feed(
-            listOf("h-entry,h-card"),
+            listOf("entry,h-card"),
             listOf("note,article"),
             tag = null,
             limit = null,
@@ -74,11 +74,11 @@ class PublicPostControllerCsvTest {
         )
 
         val typeCaptor = argumentCaptor<List<PostMf2Type>?>()
-        val subtypeCaptor = argumentCaptor<List<String>?>()
+        val typeCaptor2 = argumentCaptor<List<String>?>()
 
         verify(queryService).feed(
             typeCaptor.capture(),
-            subtypeCaptor.capture(),
+            typeCaptor2.capture(),
             anyOrNull(),
             anyOrNull(),
             anyOrNull(),
@@ -87,7 +87,7 @@ class PublicPostControllerCsvTest {
             anyOrNull(),
         )
 
-        assertEquals(listOf("note", "article"), subtypeCaptor.firstValue)
+        assertEquals(listOf("note", "article"), typeCaptor2.firstValue)
         assertEquals(listOf(PostMf2Type.H_ENTRY, PostMf2Type.H_CARD), typeCaptor.firstValue)
     }
 
@@ -97,7 +97,7 @@ class PublicPostControllerCsvTest {
         val controller = controllerWith(queryService)
 
         controller.feed(
-            listOf("h-entry", "h-card"),
+            listOf("entry", "h-card"),
             listOf("note,article", "reply"),
             tag = null,
             limit = null,
@@ -108,11 +108,11 @@ class PublicPostControllerCsvTest {
         )
 
         val typeCaptor = argumentCaptor<List<PostMf2Type>?>()
-        val subtypeCaptor = argumentCaptor<List<String>?>()
+        val typeCaptor2 = argumentCaptor<List<String>?>()
 
         verify(queryService).feed(
             typeCaptor.capture(),
-            subtypeCaptor.capture(),
+            typeCaptor2.capture(),
             anyOrNull(),
             anyOrNull(),
             anyOrNull(),
@@ -121,7 +121,7 @@ class PublicPostControllerCsvTest {
             anyOrNull(),
         )
 
-        assertEquals(listOf("note", "article", "reply"), subtypeCaptor.firstValue)
+        assertEquals(listOf("note", "article", "reply"), typeCaptor2.firstValue)
         assertEquals(listOf(PostMf2Type.H_ENTRY, PostMf2Type.H_CARD), typeCaptor.firstValue)
     }
 
@@ -150,7 +150,7 @@ class PublicPostControllerCsvTest {
         val queryService = mockFeed()
         val controller = controllerWith(queryService)
         controller.feed(
-            listOf("h-entry"),
+            listOf("entry"),
             listOf("note"),
             listOf(" NONE, Kotlin ", "JAVA", "kotlin"),
             limit = null,
@@ -179,7 +179,7 @@ class PublicPostControllerCsvTest {
     }
 
     @Test
-    fun `unknown subtype is rejected`() {
+    fun `unknown type is rejected`() {
         val queryService = mockFeed()
         val controller = controllerWith(queryService)
 

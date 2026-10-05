@@ -3,7 +3,7 @@ package dev.jacobandersen.bastion.micropub.type
 import org.springframework.core.convert.converter.Converter
 import org.springframework.stereotype.Component
 
-/** Microformats2 `h-*` types stored in `posts.type`. */
+/** Microformats2 `h-*` types stored in `posts.h`. */
 enum class PostMf2Type {
     H_ENTRY,
     H_CARD,

@@ -42,12 +42,12 @@ class PostEntity(
     var post: Mf2Object,
 ) {
     @Generated(event = [EventType.INSERT, EventType.UPDATE])
-    @Column(name = "type", nullable = false, insertable = false, updatable = false)
-    var type: String? = null
+    @Column(name = "h", nullable = false, insertable = false, updatable = false)
+    var h: String? = null
 
     @Generated(event = [EventType.INSERT, EventType.UPDATE])
-    @Column(name = "subtype", nullable = true, insertable = false, updatable = false)
-    var subtype: String? = null
+    @Column(name = "type", nullable = true, insertable = false, updatable = false)
+    var type: String? = null
 
     @Generated(event = [EventType.INSERT, EventType.UPDATE])
     @Column(name = "categories", insertable = false, updatable = false)
@@ -92,8 +92,8 @@ class PostEntity(
             status = status,
             visibility = visibility,
             deleted = deleted,
-            type = requireNotNull(type),
-            subtype = subtype,
+            h = requireNotNull(h),
+            type = type,
             post = post,
         )
 }

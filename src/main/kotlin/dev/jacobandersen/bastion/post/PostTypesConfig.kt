@@ -3,7 +3,7 @@ package dev.jacobandersen.bastion.post
 import org.springframework.boot.context.properties.ConfigurationProperties
 
 /**
- * Post-type metadata served from q=config and used to validate `subtype`
+ * Post-type metadata served from q=config and used to validate `type`
  * query filters. Bound from an external YAML file (mounted via k8s
  * configmap) imported with spring.config.import; missing/malformed
  * configuration fails fast at startup.

@@ -106,32 +106,32 @@ class PostService(
 
     /**
      * Published, public, non-deleted posts for the public feed, optionally
-     * restricted by mf2 `type` (h-entry, h-card, ...), `subtype` and tags.
+     * restricted by mf2 `type` (h-entry, h-card, ...), `type` and tags.
      * Filters within each list are OR, across lists are AND. For tags, the
      * `none` sentinel means an empty categories array.
      */
     @Transactional(readOnly = true)
     fun findFeedPosts(
         mf2Types: Collection<PostMf2Type>?,
-        subtypes: Collection<String>?,
+        types: Collection<String>?,
         limit: Int,
         offset: Int,
-    ): List<Post> = findFeedPosts(mf2Types, subtypes, limit, offset, null, null, null)
+    ): List<Post> = findFeedPosts(mf2Types, types, limit, offset, null, null, null)
 
     @Transactional(readOnly = true)
     fun findFeedPosts(
         mf2Types: Collection<PostMf2Type>?,
-        subtypes: Collection<String>?,
+        types: Collection<String>?,
         limit: Int,
         offset: Int,
         from: Instant?,
         toExclusive: Instant?,
-    ): List<Post> = findFeedPosts(mf2Types, subtypes, limit, offset, from, toExclusive, null)
+    ): List<Post> = findFeedPosts(mf2Types, types, limit, offset, from, toExclusive, null)
 
     @Transactional(readOnly = true)
     fun findFeedPosts(
         mf2Types: Collection<PostMf2Type>?,
-        subtypes: Collection<String>?,
+        types: Collection<String>?,
         limit: Int,
         offset: Int,
         from: Instant?,
@@ -148,7 +148,7 @@ class PostService(
         val spec =
             buildFeedSpecification(
                 mf2TypeStrings,
-                subtypes,
+                types,
                 from,
                 toExclusive,
                 tagFilter,
@@ -158,7 +158,7 @@ class PostService(
 
     private fun buildFeedSpecification(
         mf2Types: Collection<String>?,
-        subtypes: Collection<String>?,
+        types: Collection<String>?,
         from: Instant?,
         toExclusive: Instant?,
         tagFilter: PostTagFilter? = null,
@@ -171,10 +171,10 @@ class PostService(
             predicates += cb.isFalse(root.get("deleted"))
 
             if (!mf2Types.isNullOrEmpty()) {
-                predicates += root.get<String>("type").`in`(mf2Types)
+                predicates += root.get<String>("h").`in`(mf2Types)
             }
-            if (!subtypes.isNullOrEmpty()) {
-                predicates += root.get<String>("subtype").`in`(subtypes)
+            if (!types.isNullOrEmpty()) {
+                predicates += root.get<String>("type").`in`(types)
             }
 
             if (tagFilter != null) {

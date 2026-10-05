@@ -14,8 +14,8 @@ data class Post(
     val status: PostStatus,
     val visibility: PostVisibility,
     val deleted: Boolean = false,
-    val type: String,
-    val subtype: String? = null,
+    val h: String,
+    val type: String? = null,
     val post: Mf2Object,
 ) {
     val publishedAt: OffsetDateTime?
@@ -38,7 +38,7 @@ data class Post(
 
     /**
      * Map this domain Post to a PostEntity for persisting a new post.
-     * `type`, `subtype`, `created_at_utc` and `updated_at_utc` are
+     * `h`, `type`, `created_at_utc` and `updated_at_utc` are
      * database-generated columns, so they are intentionally not set here -
      * Postgres recomputes them from the `post` JSON on INSERT and Hibernate
      * refetches them after flush. Updates go through the managed entity

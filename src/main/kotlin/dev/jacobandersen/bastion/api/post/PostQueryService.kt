@@ -27,8 +27,8 @@ class PostQueryService(
     private val zone: ZoneId,
 ) {
     fun feed(
-        type: List<PostMf2Type>?,
-        subtype: List<String>?,
+        h: List<PostMf2Type>?,
+        type: List<String>?,
         limitArg: Int?,
         offsetArg: Int?,
         year: Int? = null,
@@ -46,11 +46,11 @@ class PostQueryService(
         val range = resolveDateRange(year, month, day)
 
         return if (range == null) {
-            postService.findFeedPosts(type, subtype, limit, offset, null, null, tagFilter)
+            postService.findFeedPosts(h, type, limit, offset, null, null, tagFilter)
         } else {
             postService.findFeedPosts(
+                h,
                 type,
-                subtype,
                 limit,
                 offset,
                 range.first,
