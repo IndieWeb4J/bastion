@@ -12,24 +12,11 @@ bastion:
       endpoint: ${BASTION_MEDIA_S3_ENDPOINT}
       region: ${BASTION_MEDIA_S3_REGION}
       bucket: ${BASTION_MEDIA_S3_BUCKET}
-  indieauth:
-    me: ${BASTION_INDIEAUTH_ME}
-    herald:
-      base-url: ${BASTION_INDIEAUTH_HERALD_BASE_URL:}
-      authorize-path: ${BASTION_INDIEAUTH_HERALD_AUTHORIZE_PATH:/auth}
-    purge-interval: ${BASTION_INDIEAUTH_PURGE_INTERVAL:1h}
-    code-retention: ${BASTION_INDIEAUTH_CODE_RETENTION:1d}
-    refresh-token-ttl: ${BASTION_INDIEAUTH_REFRESH_TOKEN_TTL:90d}
-    profile:
-      name: ${BASTION_INDIEAUTH_PROFILE_NAME:}
-      url: ${BASTION_INDIEAUTH_PROFILE_URL:}
-      photo: ${BASTION_INDIEAUTH_PROFILE_PHOTO:}
-      email: ${BASTION_INDIEAUTH_PROFILE_EMAIL:}
-    github:
-      client-id: ${BASTION_INDIEAUTH_GITHUB_CLIENT_ID:}
-      client-secret: ${BASTION_INDIEAUTH_GITHUB_CLIENT_SECRET:}
-      redirect-uri: ${BASTION_INDIEAUTH_GITHUB_REDIRECT_URI:}
-      authorize-url: ${BASTION_INDIEAUTH_GITHUB_AUTHORIZE_URL:https://github.com/login/oauth/authorize}
+  sigil:
+    base-url: ${BASTION_SIGIL_BASE_URL:}
+    service-token: ${BASTION_SIGIL_SERVICE_TOKEN:}
+    me: ${BASTION_SIGIL_ME:}
+    introspection-cache-ttl: ${BASTION_SIGIL_INTROSPECTION_CACHE_TTL:30s}
   webmention:
     retry-interval-minutes: ${BASTION_WEBMENTION_RETRY_INTERVAL_MINUTES:30}
     max-attempts: ${BASTION_WEBMENTION_MAX_ATTEMPTS:5}

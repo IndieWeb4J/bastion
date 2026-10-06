@@ -25,35 +25,13 @@ When updating this file, preserve this bar for all agents and keep entries conci
 
 ## IndieAuth
 
-- Bastion is its own IndieAuth provider (`dev.jacobandersen.bastion.indieauth`): no local accounts, GitHub is the only
-  identity provider, the browser UI is delegated to the "Herald" service via `bastion.indieauth.herald.*`.
-- Server metadata (`/.well-known/oauth-authorization-server`, `type/AuthorizationServerMetadata.kt`) advertises the
-  `issuer` (trailing-slash normalized, https-only via `util/Issuers.kt`), token/introspection/revocation/userinfo
-  endpoints, `service_documentation`, and `authorization_response_iss_parameter_supported=true`. The metadata URL
-  itself is discovered via the `indieauth-metadata` link relation published manually on the external `me` site
-  (Bastion serves no profile pages); see `DiscoveryController.kt`.
-- The authorization redirect carries `code` + `state` + `iss` (`util/Redirects.kt`); `iss` must equal the metadata
-  issuer for mix-up protection.
-- Code redemption is split per spec: POST `/indieauth/auth` returns `{me}` only (`ProfileUrlController` +
-  `ProfileUrlService`), POST `/indieauth/token` returns tokens (`TokenController` + `AccessTokenService`) and
-  rejects empty-scope codes with `invalid_grant`. Token responses carry `expires_in` and rotate a `refresh_token`
-  (`grant_type=refresh_token`, same-or-narrower scope, single-use rotation via `RefreshTokenService` and the
-  `indieauth_refresh_tokens` table, TTLs `access-token-ttl` 30d / `refresh-token-ttl` 90d).
-- Introspection (`/indieauth/introspect`, Bearer-gated, RFC 7662 plus `me`), revocation (`/indieauth/revocation`,
-  always 200), and userinfo (`/indieauth/userinfo`, needs `profile`/`email` scope) are served and advertised.
-  Profile claims come from static `bastion.indieauth.profile.*` config (`ProfileClaimService`); `email` needs both
-  `profile` and `email` scopes. Default scopes include `email` (`IndieAuthConfig`).
-- Micropub token validation (`MicropubTokenValidator`) resolves against Bastion-issued access tokens, not an external
-  token endpoint.
-- Raw `state`/`code`/`access_token`/`refresh_token` values are never persisted - only their SHA-256 digests
-  (`indieauth/security/Tokens.kt`). PKCE is lenient for max client compat (deprecated): a missing `code_challenge`
-  is accepted with a warning, S256-only when present, and the redemption enforces the conditional rule (no challenge
-  means no verifier, challenge means a matching verifier is required).
-- Client validation (`util/IndieAuthUrls.kt`, `service/ClientMetadataFetcher.kt`) enforces strict profile/client URL
-  rules and the 4.2.2 cross-host redirect allowlist (JSON `redirect_uris`, `Link rel=redirect_uri`, HTML link tags).
-  Loopback clients are never fetched; inconclusive fetches allow with a warning (fail-open), a fetched allowlist
-  missing the target blocks.
-- Adding a provider = one new `IdentityProvider` implementation plus config.
+- IndieAuth lives in the standalone **Sigil** service now, not Bastion. Bastion holds no IndieAuth state; it
+  validates Micropub bearer tokens by calling Sigil's RFC 7662 introspection endpoint
+  (`dev.jacobandersen.bastion.sigil.SigilIntrospectionClient`), authenticating with the shared
+  `bastion.sigil.service-token`. `bastion.sigil.me` is the identity a token must have been issued for.
+- Introspection results are cached for `bastion.sigil.introspection-cache-ttl` (default 30s), which is also the
+  upper bound on how long a revoked token may still be accepted (revocation lag). Transport failures fail closed.
+- The old `indieauth_*` tables are dropped by `V16__drop_indieauth_tables.sql`; existing tokens are invalidated.
 
 ## Micropub syndication
 

@@ -19,10 +19,9 @@ env:
   BASTION_MEDIA_S3_ENDPOINT: https://s3.bastion.test
   BASTION_MEDIA_S3_REGION: us-east-1
   BASTION_MEDIA_S3_BUCKET: bastion-test
-  BASTION_INDIEAUTH_ME: https://bastion.test
-  BASTION_INDIEAUTH_HERALD_BASE_URL: https://herald.test
-  BASTION_INDIEAUTH_GITHUB_CLIENT_ID: test-client-id
-  BASTION_INDIEAUTH_GITHUB_CLIENT_SECRET: test-client-secret
+  BASTION_SIGIL_BASE_URL: https://sigil.test
+  BASTION_SIGIL_SERVICE_TOKEN: test-service-token
+  BASTION_SIGIL_ME: https://bastion.test
   SPRING_PG_HOST: localhost
   SPRING_PG_PORT: "5432"
   SPRING_PG_DB: bastion

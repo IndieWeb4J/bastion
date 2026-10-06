@@ -1,36 +1,42 @@
 package dev.jacobandersen.bastion.micropub.security
 
-import dev.jacobandersen.bastion.indieauth.service.AccessTokenService
+import dev.jacobandersen.bastion.sigil.SigilIntrospectionClient
+import dev.jacobandersen.bastion.sigil.SigilProperties
 import dev.jacobandersen.bastion.url.UrlNormalizer
 import io.github.oshai.kotlinlogging.KotlinLogging
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 
 private val logger = KotlinLogging.logger {}
 
 /**
- * Validates a Micropub bearer token against the access tokens Bastion itself
- * issued (via the IndieAuth token endpoint). Bastion is now its own IndieAuth
- * provider, so validation is a local, hash-based lookup of issued tokens rather
- * than a call to an external token endpoint.
+ * Validates a Micropub bearer token against the Sigil IndieAuth service. Sigil
+ * is the source of truth for issued access tokens, so validation is a remote
+ * introspection call (cached briefly by [SigilIntrospectionClient]) rather than
+ * a local lookup.
  */
 @Component
 class MicropubTokenValidator(
-    private val accessTokenService: AccessTokenService,
-    @Value("\${bastion.indieauth.me}") private val expectedMe: String,
+    private val sigilIntrospectionClient: SigilIntrospectionClient,
+    private val sigilProperties: SigilProperties,
 ) {
     fun validateToken(rawToken: String): MicropubAuthentication {
         val issued =
-            accessTokenService.resolve(rawToken)
+            sigilIntrospectionClient.introspect(rawToken)
                 ?: throw IllegalArgumentException("Access token is not valid")
 
-        if (!sameIdentity(expectedMe, issued.me)) {
-            logger.warn { "Token belongs to a different identity (expected $expectedMe, got ${issued.me})" }
+        if (!sameIdentity(sigilProperties.me, issued.me)) {
+            logger.warn {
+                "Token belongs to a different identity (expected ${sigilProperties.me}, got ${issued.me})"
+            }
             throw IllegalArgumentException("Token is not for the expected identity")
         }
 
-        val scopes = issued.scope.mapNotNull { MicropubTokenScope.fromStringOrNull(it) }
-        val token = MicropubToken(issued.me, issued.clientId, scopes)
+        val scopes =
+            issued.scope
+                .orEmpty()
+                .split(' ')
+                .mapNotNull { MicropubTokenScope.fromStringOrNull(it) }
+        val token = MicropubToken(issued.me ?: sigilProperties.me, issued.clientId.orEmpty(), scopes)
 
         return MicropubAuthentication(rawToken, token, true)
     }
@@ -42,8 +48,9 @@ class MicropubTokenValidator(
      */
     private fun sameIdentity(
         expected: String,
-        actual: String,
+        actual: String?,
     ): Boolean {
+        if (actual == null) return false
         val normalizedExpected = UrlNormalizer.identity(expected) ?: return false
         val normalizedActual = UrlNormalizer.identity(actual) ?: return false
         return normalizedExpected == normalizedActual

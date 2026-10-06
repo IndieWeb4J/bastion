@@ -19,14 +19,10 @@ bastion:
     exposed-headers: ${BASTION_CORS_EXPOSED_HEADERS:}
     allow-credentials: ${BASTION_CORS_ALLOW_CREDENTIALS:false}
     max-age: ${BASTION_CORS_MAX_AGE:3600}
-  indieauth:
-    me: ${BASTION_INDIEAUTH_ME:https://bastion.test}
-    herald:
-      base-url: ${BASTION_INDIEAUTH_HERALD_BASE_URL:https://herald.test}
-      authorize-path: ${BASTION_INDIEAUTH_HERALD_AUTHORIZE_PATH:/auth}
-    github:
-      client-id: ${BASTION_INDIEAUTH_GITHUB_CLIENT_ID:test-client-id}
-      client-secret: ${BASTION_INDIEAUTH_GITHUB_CLIENT_SECRET:test-client-secret}
+  sigil:
+    base-url: ${BASTION_SIGIL_BASE_URL:https://sigil.test}
+    service-token: ${BASTION_SIGIL_SERVICE_TOKEN:test-service-token}
+    me: ${BASTION_SIGIL_ME:https://bastion.test}
 
 logging:
   level:
