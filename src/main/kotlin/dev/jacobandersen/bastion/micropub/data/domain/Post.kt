@@ -16,6 +16,7 @@ data class Post(
     val deleted: Boolean = false,
     val h: String,
     val type: String? = null,
+    val version: Long = 0,
     val post: Mf2Object,
 ) {
     val publishedAt: OffsetDateTime?

@@ -51,6 +51,8 @@ class PostEntity(
     var createdAtUtc: Instant = Instant.now(),
     @Column(name = "updated_at_utc", nullable = false)
     var updatedAtUtc: Instant = Instant.now(),
+    @Column(name = "version", nullable = false)
+    var version: Long = 0,
 ) {
     /**
      * Convert this PostEntity to the Post domain object. Caller must ensure the
@@ -65,6 +67,7 @@ class PostEntity(
             deleted = deleted,
             h = h,
             type = type,
+            version = version,
             post = post,
         )
 }

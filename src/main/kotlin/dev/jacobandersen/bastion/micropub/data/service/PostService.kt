@@ -84,6 +84,7 @@ class PostService(
         entity.visibility = post.visibility
         entity.deleted = post.deleted
         entity.post = stamped
+        entity.version = entity.version + 1
         applyDerived(entity)
 
         return repository.saveAndFlush(entity).toDomain()

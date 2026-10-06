@@ -38,10 +38,19 @@ repositories {
             password = project.findProperty("gpr.token") as String?
         }
     }
+    maven {
+        name = "ContentClientGitHubPackages"
+        url = uri("https://maven.pkg.github.com/jacobsandersen/content-client")
+        credentials {
+            username = project.findProperty("gpr.user") as String?
+            password = project.findProperty("gpr.token") as String?
+        }
+    }
 }
 
 extra["sigilVersion"] = "0.2.0"
 extra["mf24jVersion"] = "0.1.0"
+extra["contentClientVersion"] = "0.1.0"
 
 dependencyManagement {
     imports {
@@ -60,6 +69,7 @@ dependencies {
     implementation("org.jobrunr:jobrunr-spring-boot-4-starter:8.7.0")
     implementation("dev.jacobandersen:sigil-client:${property("sigilVersion")}")
     implementation("dev.jacobandersen:mf24j:${property("mf24jVersion")}")
+    implementation("dev.jacobandersen:content-client:${property("contentClientVersion")}")
     implementation("tools.jackson.module:jackson-module-kotlin")
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.apache.logging.log4j:log4j-api")

@@ -41,13 +41,13 @@ alter table posts rename column categories_new to categories;
 alter table posts rename column created_at_utc_new to created_at_utc;
 alter table posts rename column updated_at_utc_new to updated_at_utc;
 
-create index idx_post_h on posts (h);
-create index idx_post_type on posts (type);
-create index idx_post_created_at_utc on posts (created_at_utc);
-create index idx_post_updated_at_utc on posts (updated_at_utc);
-create index idx_post_status_visibility_deleted on posts (status, visibility, deleted);
-create index idx_post_categories_gin on posts using gin (categories);
-create index idx_posts_untagged
+create index if not exists idx_post_h on posts (h);
+create index if not exists idx_post_type on posts (type);
+create index if not exists idx_post_created_at_utc on posts (created_at_utc);
+create index if not exists idx_post_updated_at_utc on posts (updated_at_utc);
+create index if not exists idx_post_status_visibility_deleted on posts (status, visibility, deleted);
+create index if not exists idx_post_categories_gin on posts using gin (categories);
+create index if not exists idx_posts_untagged
     on posts (created_at_utc desc)
     where status = 'PUBLISHED'
       and visibility = 'PUBLIC'
@@ -66,5 +66,5 @@ drop function if exists jsonb_element_url(jsonb);
 drop function if exists jsonb_element_text(jsonb);
 drop function if exists iso8601_ts(text);
 drop function if exists is_valid_url(text);
-drop function if exists categories_overlap(text[], text[]);
-drop function if exists categories_empty(text[]);
+-- categories_overlap(text[], text[]) and categories_empty(text[]) are retained:
+-- they back the feed tag filter predicates in PostService.
