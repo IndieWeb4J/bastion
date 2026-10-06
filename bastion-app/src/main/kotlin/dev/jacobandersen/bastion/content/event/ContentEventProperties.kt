@@ -12,6 +12,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 @ConfigurationProperties(prefix = "bastion.content.events")
 data class ContentEventProperties(
     val nats: Nats = Nats(),
+    val outbox: Outbox = Outbox(),
 ) {
     data class Nats(
         val enabled: Boolean = false,
@@ -30,5 +31,17 @@ data class ContentEventProperties(
         val syndicationStream: String = "SYNDICATION",
         val syndicationSubject: String = "syndication.>",
         val syndicationConsumer: String = "bastion-syndication-projection",
+    )
+
+    data class Outbox(
+        /**
+         * Safety-net sweep interval. Normal drains run immediately after a
+         * content write commits; this recurring pass only republishes rows
+         * stranded by a crash or a failed relay. Keep it well above JobRunr's
+         * scheduler poll interval
+         * (`jobrunr.background-job-server.poll-interval-in-seconds`, 15s by
+         * default) so the scheduler never catches up in bursts.
+         */
+        val sweepIntervalSeconds: Long = 900,
     )
 }

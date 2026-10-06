@@ -10,10 +10,13 @@ import org.testcontainers.utility.DockerImageName
 import java.time.Duration
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 
 /**
  * Verifies the NATS JetStream publisher against a real broker: the stream is
- * created on demand and a published content event is delivered to a consumer.
+ * created on demand, a published content event is delivered, a republish under
+ * the same message id is deduplicated, and a distinct event for the same post
+ * still gets through.
  */
 @Testcontainers
 class NatsContentEventPublisherTest {
@@ -27,7 +30,7 @@ class NatsContentEventPublisherTest {
     }
 
     @Test
-    fun `creates the stream and delivers a published content event`() {
+    fun `creates the stream, delivers an event, and dedupes per message id`() {
         val url = "nats://${nats.host}:${nats.getMappedPort(4222)}"
         Nats.connect(Options.builder().server(url).build()).use { connection ->
             val publisher = NatsContentEventPublisher(connection, "CONTENT", "content.>")
@@ -36,12 +39,23 @@ class NatsContentEventPublisherTest {
             assertEquals("CONTENT", stream.configuration.name)
 
             val subscription = connection.jetStream().subscribe("content.>")
-            publisher.publish("content.post.created", "post-1", """{"id":"post-1","version":1}""")
+            publisher.publish("content.post.created", "post-1:1", """{"id":"post-1","version":1}""")
 
-            val message = subscription.nextMessage(Duration.ofSeconds(10))
-            assertNotNull(message)
-            assertEquals("content.post.created", message.subject)
-            assertEquals("""{"id":"post-1","version":1}""", String(message.data))
+            val first = subscription.nextMessage(Duration.ofSeconds(10))
+            assertNotNull(first)
+            assertEquals("content.post.created", first.subject)
+            assertEquals("""{"id":"post-1","version":1}""", String(first.data))
+            assertEquals("post-1:1", first.headers?.getFirst("Nats-Msg-Id"))
+
+            // republishing the same event id is dropped by JetStream's dedup window
+            publisher.publish("content.post.created", "post-1:1", """{"id":"post-1","version":1}""")
+            assertNull(subscription.nextMessage(Duration.ofSeconds(2)))
+
+            // a later event for the same post carries a new id and is delivered
+            publisher.publish("content.post.updated", "post-1:2", """{"id":"post-1","version":2}""")
+            val second = subscription.nextMessage(Duration.ofSeconds(10))
+            assertNotNull(second)
+            assertEquals("content.post.updated", second.subject)
         }
     }
 }
