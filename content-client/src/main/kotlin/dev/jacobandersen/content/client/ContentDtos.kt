@@ -70,6 +70,8 @@ data class PostDto(
     val version: Long,
     /** The canonical mf2 document. */
     val post: Mf2Object,
+    /** Requested syndication target uids (desired state, from `mp-syndicate-to`). */
+    val desiredSyndicationTargets: List<String> = emptyList(),
     val webmentionCounts: WebmentionCountsDto = WebmentionCountsDto(),
     val syndications: List<SyndicationDto> = emptyList(),
 )

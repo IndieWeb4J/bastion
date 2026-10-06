@@ -36,9 +36,19 @@ class PostService(
         visibility: PostVisibility,
         deleted: Boolean,
         post: Mf2Object,
+        syndicationTargets: List<String> = emptyList(),
     ): Post {
         val stamped = postTimeService.applyCreateTimestamps(post)
-        val entity = PostEntity(slug = slug, status = status, visibility = visibility, deleted = deleted, post = stamped, version = 1)
+        val entity =
+            PostEntity(
+                slug = slug,
+                status = status,
+                visibility = visibility,
+                deleted = deleted,
+                post = stamped,
+                version = 1,
+                syndicationTargets = syndicationTargets.toTypedArray(),
+            )
         applyDerived(entity)
         return repository.saveAndFlush(entity).toDomain()
     }
@@ -113,6 +123,7 @@ class PostService(
         entity.deleted = post.deleted
         entity.post = stamped
         entity.version = entity.version + 1
+        entity.syndicationTargets = post.syndicationTargets.toTypedArray()
         applyDerived(entity)
 
         return repository.saveAndFlush(entity).toDomain()

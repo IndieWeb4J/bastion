@@ -53,6 +53,9 @@ class PostEntity(
     var updatedAtUtc: Instant = Instant.now(),
     @Column(name = "version", nullable = false)
     var version: Long = 0,
+    @Column(name = "syndication_targets", nullable = false)
+    @JdbcTypeCode(SqlTypes.ARRAY)
+    var syndicationTargets: Array<String> = emptyArray(),
 ) {
     /**
      * Convert this PostEntity to the Post domain object. Caller must ensure the
@@ -68,6 +71,7 @@ class PostEntity(
             h = h,
             type = type,
             version = version,
+            syndicationTargets = syndicationTargets.toList(),
             post = post,
         )
 }

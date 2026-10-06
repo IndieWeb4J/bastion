@@ -22,6 +22,9 @@ bastion:
       endpoint: ${BASTION_MEDIA_S3_ENDPOINT}
       region: ${BASTION_MEDIA_S3_REGION}
       bucket: ${BASTION_MEDIA_S3_BUCKET}
+    orphan-sweep:
+      enabled: ${BASTION_MEDIA_ORPHAN_SWEEP_ENABLED:false}
+      ttl-hours: ${BASTION_MEDIA_ORPHAN_SWEEP_TTL_HOURS:168}
   cors:
     allowed-origins: ${BASTION_CORS_ALLOWED_ORIGINS:}
     allowed-methods: ${BASTION_CORS_ALLOWED_METHODS:GET,POST,PUT,PATCH,DELETE,OPTIONS}

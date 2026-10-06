@@ -36,7 +36,15 @@ class InternalContentService(
         val status = command.status?.let(PostStatus::fromString) ?: PostStatus.PUBLISHED
         val visibility = command.visibility?.let(PostVisibility::fromString) ?: PostVisibility.PUBLIC
         val slug = postService.deduplicateSlug(command.slugHint ?: UUID.randomUUID().toString())
-        val post = postService.create(slug, status, visibility, deleted = false, post = command.post)
+        val post =
+            postService.create(
+                slug,
+                status,
+                visibility,
+                deleted = false,
+                post = command.post,
+                syndicationTargets = command.syndicationTargets,
+            )
         outbox.enqueue(ContentPostEventType.CREATED, post, previousUrl = null, syndicationTargets = command.syndicationTargets)
         return result(post)
     }
@@ -51,7 +59,16 @@ class InternalContentService(
         val status = command.status?.let(PostStatus::fromString) ?: current.status
         val visibility = command.visibility?.let(PostVisibility::fromString) ?: current.visibility
         val slug = postService.deduplicateSlug(command.slugHint ?: current.slug, current.slug)
-        val updated = postService.updatePost(current.copy(slug = slug, status = status, visibility = visibility), command.post)
+        val updated =
+            postService.updatePost(
+                current.copy(
+                    slug = slug,
+                    status = status,
+                    visibility = visibility,
+                    syndicationTargets = command.syndicationTargets ?: current.syndicationTargets,
+                ),
+                command.post,
+            )
         outbox.enqueue(ContentPostEventType.UPDATED, updated, previousUrl = previousUrl, syndicationTargets = command.syndicationTargets)
         return result(updated)
     }
@@ -85,6 +102,7 @@ class InternalContentService(
             updated = post.post.firstText("updated"),
             version = post.version,
             post = post.post,
+            desiredSyndicationTargets = post.syndicationTargets,
             webmentionCounts = WebmentionCountsDto(),
         )
 
