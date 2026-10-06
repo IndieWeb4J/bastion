@@ -5,8 +5,6 @@ import dev.jacobandersen.bastion.api.post.dto.FeedResponse
 import dev.jacobandersen.bastion.api.post.dto.PostGoneResponse
 import dev.jacobandersen.bastion.api.post.dto.PostLookupResult
 import dev.jacobandersen.bastion.api.post.dto.PostResponse
-import dev.jacobandersen.bastion.api.post.dto.SyndicationDto
-import dev.jacobandersen.bastion.api.post.dto.WebmentionCounts
 import dev.jacobandersen.bastion.api.post.dto.WebmentionDto
 import dev.jacobandersen.bastion.content.Post
 import dev.jacobandersen.bastion.content.PostMf2Type
@@ -15,7 +13,14 @@ import dev.jacobandersen.bastion.content.PostTypesRegistry
 import dev.jacobandersen.bastion.content.projection.SyndicationProjectionService
 import dev.jacobandersen.bastion.content.projection.WebmentionProjectionService
 import dev.jacobandersen.bastion.content.url.UrlService
+import dev.jacobandersen.beacon.WebmentionInteraction.BOOKMARK
+import dev.jacobandersen.beacon.WebmentionInteraction.LIKE
 import dev.jacobandersen.beacon.WebmentionInteraction.MENTION
+import dev.jacobandersen.beacon.WebmentionInteraction.REPLY
+import dev.jacobandersen.beacon.WebmentionInteraction.REPOST
+import dev.jacobandersen.beacon.WebmentionInteraction.RSVP
+import dev.jacobandersen.content.client.SyndicationDto
+import dev.jacobandersen.content.client.WebmentionCountsDto
 import dev.jacobandersen.mf24j.firstText
 import dev.jacobandersen.mf24j.htmls
 import dev.jacobandersen.mf24j.texts
@@ -54,7 +59,7 @@ class PublicPostController(
         val parsedTags = parseTags(tag)
         val posts = queryService.feed(parsedHs, parsedTypes, limit, offset, year, month, day, parsedTags)
         val webmentionCounts = countsByPost(posts)
-        val items = posts.map { post -> toResponse(post, webmentionCounts[post.id] ?: WebmentionCounts.EMPTY, webmentions = null) }
+        val items = posts.map { post -> toResponse(post, webmentionCounts[post.id] ?: WebmentionCountsDto(), webmentions = null) }
         val effectiveLimit = limit ?: 10
         val effectiveOffset = offset ?: 0
         return FeedResponse(
@@ -105,7 +110,7 @@ class PublicPostController(
 
     private fun toResponse(
         post: Post,
-        counts: WebmentionCounts,
+        counts: WebmentionCountsDto,
         webmentions: List<WebmentionDto>?,
         syndications: List<SyndicationDto>? = null,
     ): PostResponse =
@@ -134,27 +139,32 @@ class PublicPostController(
             .map { SyndicationDto(uid = it.targetUid, name = it.name ?: it.targetUid, url = it.url) }
             .sortedBy { it.uid }
 
-    private fun countForPost(post: Post): WebmentionCounts {
-        val byInteraction =
+    private fun countForPost(post: Post): WebmentionCountsDto =
+        countsOf(
             webmentionProjection
                 .byPost(post.id)
                 .groupingBy { it.interaction ?: MENTION }
-                .eachCount()
-        return WebmentionCounts.of(byInteraction)
-    }
+                .eachCount(),
+        )
 
-    private fun countsByPost(posts: List<Post>): Map<UUID, WebmentionCounts> {
+    private fun countsByPost(posts: List<Post>): Map<UUID, WebmentionCountsDto> {
         if (posts.isEmpty()) return emptyMap()
         val byPost = webmentionProjection.byPosts(posts.map { it.id }).groupBy { it.postId }
         return posts.associate { post ->
-            val counts =
-                byPost[post.id]
-                    ?.groupingBy { it.interaction ?: MENTION }
-                    ?.eachCount()
-                    ?: emptyMap()
-            post.id to WebmentionCounts.of(counts)
+            post.id to countsOf(byPost[post.id]?.groupingBy { it.interaction ?: MENTION }?.eachCount() ?: emptyMap())
         }
     }
+
+    private fun countsOf(byInteraction: Map<dev.jacobandersen.beacon.WebmentionInteraction, Int>): WebmentionCountsDto =
+        WebmentionCountsDto(
+            total = byInteraction.values.sum(),
+            reply = byInteraction[REPLY] ?: 0,
+            like = byInteraction[LIKE] ?: 0,
+            repost = byInteraction[REPOST] ?: 0,
+            bookmark = byInteraction[BOOKMARK] ?: 0,
+            rsvp = byInteraction[RSVP] ?: 0,
+            mention = byInteraction[MENTION] ?: 0,
+        )
 
     private fun <T> parseCsv(
         raw: List<String>?,

@@ -1,5 +1,7 @@
 package dev.jacobandersen.bastion.api.post.dto
 
+import dev.jacobandersen.content.client.SyndicationDto
+import dev.jacobandersen.content.client.WebmentionCountsDto
 import dev.jacobandersen.mf24j.Mf2Value
 
 data class PostResponse(
@@ -16,7 +18,7 @@ data class PostResponse(
     val contentHtml: List<String>,
     val category: List<String>,
     val properties: Map<String, List<Mf2Value>>,
-    val webmentionCounts: WebmentionCounts,
+    val webmentionCounts: WebmentionCountsDto,
     val webmentions: List<WebmentionDto>? = null,
     val syndications: List<SyndicationDto>? = null,
 )
