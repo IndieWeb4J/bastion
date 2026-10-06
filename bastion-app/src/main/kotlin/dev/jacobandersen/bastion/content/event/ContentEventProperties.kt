@@ -16,6 +16,8 @@ data class ContentEventProperties(
     data class Nats(
         val enabled: Boolean = false,
         val url: String = "nats://localhost:4222",
+        /** JetStream replica count for streams this service creates (1 dev, 3 prod). */
+        val replicas: Int = 1,
         /** The JetStream stream content events are published to. */
         val contentStream: String = "CONTENT",
         /** The subject filter the content stream captures. */
