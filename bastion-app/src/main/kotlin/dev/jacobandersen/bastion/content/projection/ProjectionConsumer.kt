@@ -103,6 +103,7 @@ class ProjectionConsumer(
                     .name(stream)
                     .subjects(subject)
                     .storageType(StorageType.File)
+                    .replicas(properties.nats.replicas)
                     .build(),
             )
         } else if (subject !in existing.configuration.subjects) {

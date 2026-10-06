@@ -19,6 +19,7 @@ class NatsContentEventPublisher(
     private val connection: Connection,
     private val streamName: String,
     private val subjectFilter: String,
+    private val replicas: Int = 1,
 ) : ContentEventPublisher,
     AutoCloseable {
     private val jetStream: JetStream = connection.jetStream()
@@ -58,6 +59,7 @@ class NatsContentEventPublisher(
                     .name(streamName)
                     .subjects(subjectFilter)
                     .storageType(StorageType.File)
+                    .replicas(replicas)
                     .build(),
             )
         }

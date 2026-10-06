@@ -33,7 +33,13 @@ class ContentEventConfig {
     fun natsContentEventPublisher(
         connection: Connection,
         properties: ContentEventProperties,
-    ): ContentEventPublisher = NatsContentEventPublisher(connection, properties.nats.contentStream, properties.nats.contentSubject)
+    ): ContentEventPublisher =
+        NatsContentEventPublisher(
+            connection,
+            properties.nats.contentStream,
+            properties.nats.contentSubject,
+            properties.nats.replicas,
+        )
 
     @Bean
     @ConditionalOnMissingBean(ContentEventPublisher::class)
