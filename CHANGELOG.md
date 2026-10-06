@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.2](https://github.com/Marchland/bastion/compare/v2.0.1...v2.0.2) (2026-10-06)
+
+
+### Build System
+
+* bump microformats2 to 0.1.2 ([#83](https://github.com/Marchland/bastion/issues/83)) ([25392b3](https://github.com/Marchland/bastion/commit/25392b38071835948c02cac562c985bd076d9a0a))
+
 ## [2.0.1](https://github.com/Marchland/bastion/compare/v2.0.0...v2.0.1) (2026-10-06)
 
 
