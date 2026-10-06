@@ -38,7 +38,7 @@ class PostService(
         post: Mf2Object,
     ): Post {
         val stamped = postTimeService.applyCreateTimestamps(post)
-        val entity = PostEntity(slug = slug, status = status, visibility = visibility, deleted = deleted, post = stamped)
+        val entity = PostEntity(slug = slug, status = status, visibility = visibility, deleted = deleted, post = stamped, version = 1)
         applyDerived(entity)
         return repository.saveAndFlush(entity).toDomain()
     }
@@ -48,6 +48,34 @@ class PostService(
 
     @Transactional(readOnly = true)
     fun findById(id: UUID): Post? = repository.findById(id).orElse(null)?.toDomain()
+
+    /**
+     * Posts changed since an opaque cursor (epoch millis, null = from the
+     * beginning), oldest first, paired with their `updated_at_utc` and a cursor
+     * for the next page (null when there are no more). Feeds consumer
+     * reconciliation.
+     */
+    @Transactional(readOnly = true)
+    fun changedSince(
+        cursor: String?,
+        limit: Int,
+    ): Pair<List<Pair<Post, Instant>>, String?> {
+        val size = limit.coerceIn(1, MAX_PAGE_SIZE)
+        val from = cursor?.let { runCatching { Instant.ofEpochMilli(it.toLong()) }.getOrNull() } ?: Instant.EPOCH
+        val page = repository.findByUpdatedAtUtcAfterOrderByUpdatedAtUtcAsc(from, PageRequest.of(0, size))
+        val items = page.content.map { it.toDomain() to it.updatedAtUtc }
+        val next =
+            if (page.hasNext()) {
+                items
+                    .lastOrNull()
+                    ?.second
+                    ?.toEpochMilli()
+                    ?.toString()
+            } else {
+                null
+            }
+        return items to next
+    }
 
     @Transactional(readOnly = true)
     fun doesExistBySlug(slug: String): Boolean = repository.existsBySlug(slug)

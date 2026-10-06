@@ -21,6 +21,11 @@ interface PostRepository :
 
     fun findBySlug(slug: String): PostEntity?
 
+    fun findByUpdatedAtUtcAfterOrderByUpdatedAtUtcAsc(
+        updatedAtUtc: Instant,
+        page: Pageable,
+    ): Page<PostEntity>
+
     fun findByStatusAndVisibilityAndDeletedFalse(
         status: PostStatus,
         visibility: PostVisibility,
