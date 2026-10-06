@@ -48,11 +48,14 @@ jobs:
       - name: Run full integration tests
         run: ./gradlew test
 
+      - name: Publish content-client to GitHub Packages
+        run: ./gradlew :content-client:publish
+
       - name: Build application jar
-        run: ./gradlew bootJar
+        run: ./gradlew :bastion-app:bootJar
 
       - name: Stage jar for docker
-        run: cp build/libs/bastion.jar ./bastion.jar
+        run: cp bastion-app/build/libs/bastion.jar ./bastion.jar
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
