@@ -7,7 +7,7 @@ import org.springframework.security.config.http.SessionCreationPolicy
  * Shared baseline applied to every SecurityFilterChain.
  *
  * Ordering contract for future path-scoped chains:
- * - Order 1 .. n for chains with a securityMatcher (e.g. /micropub)
+ * - Order 1 .. n for chains with a securityMatcher (e.g. /internal)
  * - Ordered.LOWEST_PRECEDENCE for the catch-all chain with no matcher
  *   (GlobalSecurityConfig.defaultSecurityFilterChain)
  *

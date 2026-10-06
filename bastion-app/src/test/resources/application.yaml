@@ -19,20 +19,13 @@ bastion:
     exposed-headers: ${BASTION_CORS_EXPOSED_HEADERS:}
     allow-credentials: ${BASTION_CORS_ALLOW_CREDENTIALS:false}
     max-age: ${BASTION_CORS_MAX_AGE:3600}
-  sigil:
-    me: ${BASTION_SIGIL_ME:https://bastion.test}
-
-sigil:
-  client:
-    base-url: ${SIGIL_CLIENT_BASE_URL:https://sigil.test}
-
 logging:
   level:
     root: info
 
 spring:
   config:
-    import: classpath:post-types.yaml,classpath:properties.yaml
+    import: classpath:post-types.yaml
   application:
     name: bastion
   jackson:

@@ -1,6 +1,6 @@
 package dev.jacobandersen.bastion.api.post.dto
 
-import dev.jacobandersen.bastion.micropub.data.domain.Post
+import dev.jacobandersen.bastion.content.Post
 
 sealed interface PostLookupResult {
     data class Found(

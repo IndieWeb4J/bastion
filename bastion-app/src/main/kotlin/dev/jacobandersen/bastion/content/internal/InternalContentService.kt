@@ -1,12 +1,12 @@
 package dev.jacobandersen.bastion.content.internal
 
-import dev.jacobandersen.bastion.micropub.data.domain.Post
-import dev.jacobandersen.bastion.micropub.data.service.PostService
-import dev.jacobandersen.bastion.micropub.type.PostStatus
-import dev.jacobandersen.bastion.micropub.type.PostVisibility
-import dev.jacobandersen.bastion.post.PostTypeDiscovery
-import dev.jacobandersen.bastion.post.PostTypesRegistry
-import dev.jacobandersen.bastion.url.UrlService
+import dev.jacobandersen.bastion.content.Post
+import dev.jacobandersen.bastion.content.PostService
+import dev.jacobandersen.bastion.content.PostStatus
+import dev.jacobandersen.bastion.content.PostTypeDiscovery
+import dev.jacobandersen.bastion.content.PostTypesRegistry
+import dev.jacobandersen.bastion.content.PostVisibility
+import dev.jacobandersen.bastion.content.url.UrlService
 import dev.jacobandersen.content.client.CreatePostCommand
 import dev.jacobandersen.content.client.PostDto
 import dev.jacobandersen.content.client.UpdatePostCommand

@@ -36,7 +36,7 @@ logging:
 
 spring:
   config:
-    import: file:${BASTION_POST_TYPES_CONFIG_FILE:/etc/config/post-types.yaml},file:${BASTION_PROPERTIES_CONFIG_FILE:/etc/config/properties.yaml}
+    import: file:${BASTION_POST_TYPES_CONFIG_FILE:/etc/config/post-types.yaml}
   application:
     name: bastion
   jackson:

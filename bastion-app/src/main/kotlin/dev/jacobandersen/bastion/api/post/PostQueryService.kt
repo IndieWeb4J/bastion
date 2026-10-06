@@ -1,11 +1,11 @@
 package dev.jacobandersen.bastion.api.post
 
 import dev.jacobandersen.bastion.api.post.dto.PostLookupResult
-import dev.jacobandersen.bastion.micropub.data.domain.Post
-import dev.jacobandersen.bastion.micropub.data.service.PostService
-import dev.jacobandersen.bastion.micropub.type.PostMf2Type
-import dev.jacobandersen.bastion.micropub.type.PostTagFilter
-import dev.jacobandersen.bastion.url.UrlService
+import dev.jacobandersen.bastion.content.Post
+import dev.jacobandersen.bastion.content.PostMf2Type
+import dev.jacobandersen.bastion.content.PostService
+import dev.jacobandersen.bastion.content.PostTagFilter
+import dev.jacobandersen.bastion.content.url.UrlService
 import dev.jacobandersen.mf24j.firstText
 import org.springframework.stereotype.Service
 import java.time.Instant
@@ -17,7 +17,7 @@ import java.time.ZonedDateTime
  * Read queries over published posts for public (unauthenticated) REST use.
  * Lists return only PUBLIC posts; direct lookups additionally allow UNLISTED.
  * PRIVATE and DRAFT posts are never returned here (private is only reachable
- * through the authenticated Micropub source query). A post that was publicly
+ * through the internal read API used by Forge). A post that was publicly
  * reachable and is now soft-deleted surfaces as [dev.jacobandersen.bastion.api.post.dto.PostLookupResult.Gone].
  */
 @Service

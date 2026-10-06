@@ -5,7 +5,6 @@ plugins {
     id("io.spring.dependency-management")
     id("org.hibernate.orm")
     kotlin("plugin.jpa")
-    kotlin("plugin.serialization")
     id("org.jlleitschuh.gradle.ktlint")
 }
 
@@ -35,7 +34,6 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-webmvc")
     implementation("org.flywaydb:flyway-database-postgresql")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json")
     implementation("org.jobrunr:jobrunr-spring-boot-4-starter:8.7.0")
     implementation("dev.jacobandersen:mf24j:${property("mf24jVersion")}")
     implementation("dev.jacobandersen:beacon-client:0.1.0")
@@ -53,8 +51,6 @@ dependencies {
         }
     }
     implementation("software.amazon.awssdk:s3:2.10.53")
-    implementation("org.nibor.autolink:autolink:0.12.0")
-    implementation("org.jsoup:jsoup:1.23.2")
     testImplementation("org.springframework.security:spring-security-test")
     testImplementation("org.mockito.kotlin:mockito-kotlin:6.2.0")
     developmentOnly("org.springframework.boot:spring-boot-devtools")

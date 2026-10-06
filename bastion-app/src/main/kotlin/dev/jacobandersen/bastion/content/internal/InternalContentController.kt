@@ -1,8 +1,8 @@
 package dev.jacobandersen.bastion.content.internal
 
-import dev.jacobandersen.bastion.micropub.data.service.PostService
-import dev.jacobandersen.bastion.micropub.media.FileUploadResult
-import dev.jacobandersen.bastion.micropub.media.FileUploadService
+import dev.jacobandersen.bastion.content.PostService
+import dev.jacobandersen.bastion.content.media.FileUploadResult
+import dev.jacobandersen.bastion.content.media.FileUploadService
 import dev.jacobandersen.content.client.ChangedPostsPage
 import dev.jacobandersen.content.client.CreatePostCommand
 import dev.jacobandersen.content.client.MediaUploadResult

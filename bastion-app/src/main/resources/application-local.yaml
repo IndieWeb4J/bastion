@@ -12,20 +12,6 @@ bastion:
       endpoint: https://081d98e661c3c16878a0a8ac068422ec.r2.cloudflarestorage.com
       region: us-east-1
       bucket: jacobandersendev-media-staging
-  sigil:
-    me: https://ea2c-2a09-bac1-5ae0-1318-00-4d-20.ngrok-free.app
-  webmention:
-    retry-interval-minutes: 30
-    max-attempts: 5
-    backoff-base-seconds: 1800
-    backoff-max-seconds: 86400
-    connect-timeout-seconds: 10
-    read-timeout-seconds: 10
-  websub:
-    hubs: ""
-    topic-url: ""
-    connect-timeout-seconds: 10
-    read-timeout-seconds: 10
   cors:
     allowed-origins: http://localho.st:8080
     allowed-methods: GET,POST,PUT,PATCH,DELETE,OPTIONS
@@ -33,21 +19,6 @@ bastion:
     exposed-headers: [ ]
     allow-credentials: false
     max-age: 3600
-  micropub:
-    syndication:
-      targets:
-        - uid: test-bridgy
-          name: Test Bridgy
-          endpoint: https://example.org/micropub
-          token: ""
-          actions:
-            - CREATE
-            - DELETE
-
-sigil:
-  client:
-    base-url: https://ea2c-2a09-bac1-5ae0-1318-00-4d-20.ngrok-free.app
-
 logging:
   level:
     root: info
@@ -62,12 +33,6 @@ spring:
     username: postgres
     password: password
     driver-class-name: org.postgresql.Driver
-  graphql:
-    schema:
-      inspection:
-        enabled: true
-      introspection:
-        enabled: true
   jpa:
     hibernate:
       ddl-auto: validate

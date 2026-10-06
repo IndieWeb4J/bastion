@@ -1,8 +1,8 @@
 package dev.jacobandersen.bastion.content.internal
 
-import dev.jacobandersen.bastion.micropub.data.domain.Post
-import dev.jacobandersen.bastion.post.PostTypeDiscovery
-import dev.jacobandersen.bastion.url.UrlService
+import dev.jacobandersen.bastion.content.Post
+import dev.jacobandersen.bastion.content.PostTypeDiscovery
+import dev.jacobandersen.bastion.content.url.UrlService
 import dev.jacobandersen.content.event.ContentEventSubjects
 import dev.jacobandersen.content.event.ContentPostEvent
 import dev.jacobandersen.content.event.ContentPostEventType

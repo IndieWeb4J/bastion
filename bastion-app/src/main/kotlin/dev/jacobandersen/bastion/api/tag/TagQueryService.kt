@@ -3,8 +3,8 @@ package dev.jacobandersen.bastion.api.tag
 import dev.jacobandersen.bastion.api.dto.Pagination
 import dev.jacobandersen.bastion.api.tag.dto.TagListResponse
 import dev.jacobandersen.bastion.api.tag.dto.TagResponse
-import dev.jacobandersen.bastion.micropub.data.repository.PostRepository
-import dev.jacobandersen.bastion.micropub.data.service.PostService
+import dev.jacobandersen.bastion.content.PostRepository
+import dev.jacobandersen.bastion.content.PostService
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 

@@ -5,7 +5,6 @@ plugins {
     id("io.spring.dependency-management") version "1.1.7" apply false
     id("org.hibernate.orm") version "7.4.5.Final" apply false
     kotlin("plugin.jpa") version "2.3.21" apply false
-    kotlin("plugin.serialization") version "2.3.21" apply false
     id("org.jlleitschuh.gradle.ktlint") version "12.2.0" apply false
 }
 

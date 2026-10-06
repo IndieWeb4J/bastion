@@ -44,8 +44,10 @@ concerns were extracted and are no longer here:
 - **Webmention** -> Beacon.
 - **WebSub + syndication** -> Conduit.
 
-The `micropub/` package now holds only the post domain (`data/`, `media/`,
-`type/`); the protocol code was removed in `25fb780`.
+The content domain lives under `content/` (`Post`, `PostService`, `media/`,
+`PostTypeDiscovery`, `PostTypesRegistry`, the internal API, events, projections);
+the old `micropub/`, `post/` and `url/` packages were folded into it in `25fb780`
+and the follow-up cleanup.
 
 ## Read model (projections)
 
