@@ -19,16 +19,24 @@ subprojects {
         mavenCentral()
         mavenLocal()
         maven {
-            name = "SigilGitHubPackages"
-            url = uri("https://maven.pkg.github.com/jacobsandersen/sigil")
+            name = "Mf24jGitHubPackages"
+            url = uri("https://maven.pkg.github.com/jacobsandersen/mf24j")
             credentials {
                 username = System.getenv("GITHUB_ACTOR") ?: (project.findProperty("gpr.user") as String?)
                 password = System.getenv("GITHUB_TOKEN") ?: (project.findProperty("gpr.token") as String?)
             }
         }
         maven {
-            name = "Mf24jGitHubPackages"
-            url = uri("https://maven.pkg.github.com/jacobsandersen/mf24j")
+            name = "BeaconGitHubPackages"
+            url = uri("https://maven.pkg.github.com/jacobsandersen/beacon")
+            credentials {
+                username = System.getenv("GITHUB_ACTOR") ?: (project.findProperty("gpr.user") as String?)
+                password = System.getenv("GITHUB_TOKEN") ?: (project.findProperty("gpr.token") as String?)
+            }
+        }
+        maven {
+            name = "ConduitGitHubPackages"
+            url = uri("https://maven.pkg.github.com/jacobsandersen/conduit")
             credentials {
                 username = System.getenv("GITHUB_ACTOR") ?: (project.findProperty("gpr.user") as String?)
                 password = System.getenv("GITHUB_TOKEN") ?: (project.findProperty("gpr.token") as String?)

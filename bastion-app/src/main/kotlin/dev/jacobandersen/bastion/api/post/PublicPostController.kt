@@ -8,15 +8,14 @@ import dev.jacobandersen.bastion.api.post.dto.PostResponse
 import dev.jacobandersen.bastion.api.post.dto.SyndicationDto
 import dev.jacobandersen.bastion.api.post.dto.WebmentionCounts
 import dev.jacobandersen.bastion.api.post.dto.WebmentionDto
+import dev.jacobandersen.bastion.content.projection.SyndicationProjectionService
+import dev.jacobandersen.bastion.content.projection.WebmentionProjectionService
 import dev.jacobandersen.bastion.micropub.data.domain.Post
-import dev.jacobandersen.bastion.micropub.data.service.PostSyndicationService
-import dev.jacobandersen.bastion.micropub.syndication.SyndicationConfig
 import dev.jacobandersen.bastion.micropub.type.PostMf2Type
 import dev.jacobandersen.bastion.micropub.type.PostTagFilter
 import dev.jacobandersen.bastion.post.PostTypesRegistry
 import dev.jacobandersen.bastion.url.UrlService
-import dev.jacobandersen.bastion.webmention.data.domain.WebmentionInteraction.MENTION
-import dev.jacobandersen.bastion.webmention.data.service.ReceivedWebmentionService
+import dev.jacobandersen.beacon.WebmentionInteraction.MENTION
 import dev.jacobandersen.mf24j.firstText
 import dev.jacobandersen.mf24j.htmls
 import dev.jacobandersen.mf24j.texts
@@ -35,9 +34,8 @@ import java.util.UUID
 class PublicPostController(
     private val queryService: PostQueryService,
     private val urlService: UrlService,
-    private val webmentionService: ReceivedWebmentionService,
-    private val syndicationService: PostSyndicationService,
-    private val syndicationConfig: SyndicationConfig,
+    private val webmentionProjection: WebmentionProjectionService,
+    private val syndicationProjection: SyndicationProjectionService,
     private val postTypesRegistry: PostTypesRegistry,
 ) {
     @GetMapping
@@ -100,8 +98,7 @@ class PublicPostController(
             is PostLookupResult.Found -> {
                 val post = result.post
                 val counts = countForPost(post)
-                val webmentions =
-                    webmentionService.verifiedByPost(post.id).sortedBy { it.firstSeenAt }.map(WebmentionDto.Companion::from)
+                val webmentions = webmentionProjection.byPost(post.id).map(WebmentionDto.Companion::from)
                 ResponseEntity.ok(toResponse(post, counts, webmentions, syndicationsFor(post.id)))
             }
         }
@@ -131,23 +128,16 @@ class PublicPostController(
             syndications = syndications,
         )
 
-    private fun syndicationsFor(postId: UUID): List<SyndicationDto> {
-        val order = syndicationConfig.targets.mapIndexed { index, target -> target.uid to index }.toMap()
-        return syndicationService
-            .findByPostId(postId)
-            .mapNotNull { record ->
-                val url = record.syndicatedUrl ?: return@mapNotNull null
-                val target = syndicationConfig.targetByUid(record.targetUid) ?: return@mapNotNull null
-                SyndicationDto(uid = target.uid, name = target.name, url = url) to
-                    (order[target.uid] ?: Int.MAX_VALUE)
-            }.sortedBy { it.second }
-            .map { it.first }
-    }
+    private fun syndicationsFor(postId: UUID): List<SyndicationDto> =
+        syndicationProjection
+            .byPost(postId)
+            .map { SyndicationDto(uid = it.targetUid, name = it.name ?: it.targetUid, url = it.url) }
+            .sortedBy { it.uid }
 
     private fun countForPost(post: Post): WebmentionCounts {
         val byInteraction =
-            webmentionService
-                .verifiedByPost(post.id)
+            webmentionProjection
+                .byPost(post.id)
                 .groupingBy { it.interaction ?: MENTION }
                 .eachCount()
         return WebmentionCounts.of(byInteraction)
@@ -155,7 +145,7 @@ class PublicPostController(
 
     private fun countsByPost(posts: List<Post>): Map<UUID, WebmentionCounts> {
         if (posts.isEmpty()) return emptyMap()
-        val byPost = webmentionService.verifiedByPostIds(posts.map { it.id }).groupBy { it.postId }
+        val byPost = webmentionProjection.byPosts(posts.map { it.id }).groupBy { it.postId }
         return posts.associate { post ->
             val counts =
                 byPost[post.id]

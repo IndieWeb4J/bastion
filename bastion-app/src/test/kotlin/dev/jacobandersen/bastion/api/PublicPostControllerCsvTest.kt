@@ -3,12 +3,13 @@ package dev.jacobandersen.bastion.api
 import dev.jacobandersen.bastion.api.post.PostQueryService
 import dev.jacobandersen.bastion.api.post.PublicPostController
 import dev.jacobandersen.bastion.api.post.dto.FeedResponse
+import dev.jacobandersen.bastion.content.projection.SyndicationProjectionService
+import dev.jacobandersen.bastion.content.projection.WebmentionProjectionService
 import dev.jacobandersen.bastion.micropub.type.PostMf2Type
 import dev.jacobandersen.bastion.micropub.type.PostTagFilter
 import dev.jacobandersen.bastion.post.PostTypesConfig
 import dev.jacobandersen.bastion.post.PostTypesRegistry
 import dev.jacobandersen.bastion.url.UrlService
-import dev.jacobandersen.bastion.webmention.data.service.ReceivedWebmentionService
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
@@ -35,9 +36,9 @@ class PublicPostControllerCsvTest {
 
     private fun controllerWith(queryService: PostQueryService): PublicPostController {
         val urlService: UrlService = mock()
-        val webmentionService: ReceivedWebmentionService = mock()
-        whenever(webmentionService.verifiedByPostIds(any())).thenReturn(emptyList())
-        return PublicPostController(queryService, urlService, webmentionService, mock(), mock(), registry)
+        val webmentionProjection: WebmentionProjectionService = mock()
+        whenever(webmentionProjection.byPosts(any())).thenReturn(emptyList())
+        return PublicPostController(queryService, urlService, webmentionProjection, mock<SyndicationProjectionService>(), registry)
     }
 
     private fun mockFeed(): PostQueryService {

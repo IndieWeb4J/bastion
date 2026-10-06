@@ -6,6 +6,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties
  * Content event transport configuration. Events go onto NATS JetStream when
  * [Nats.enabled] is set; otherwise a no-op publisher is used so local runs and
  * tests work without a broker (the Postgres outbox is the durable source).
+ * The same connection is used to consume the distribution streams Bastion
+ * projects into its read model.
  */
 @ConfigurationProperties(prefix = "bastion.content.events")
 data class ContentEventProperties(
@@ -16,7 +18,15 @@ data class ContentEventProperties(
         val url: String = "nats://localhost:4222",
         /** The JetStream stream content events are published to. */
         val contentStream: String = "CONTENT",
-        /** The subject filter the stream captures. */
+        /** The subject filter the content stream captures. */
         val contentSubject: String = "content.>",
+        /** Beacon's stream/subject Bastion projects webmentions from. */
+        val webmentionStream: String = "WEBMENTION",
+        val webmentionSubject: String = "webmention.>",
+        val webmentionConsumer: String = "bastion-webmention-projection",
+        /** Conduit's stream/subject Bastion projects syndications from. */
+        val syndicationStream: String = "SYNDICATION",
+        val syndicationSubject: String = "syndication.>",
+        val syndicationConsumer: String = "bastion-syndication-projection",
     )
 }

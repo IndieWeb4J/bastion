@@ -12,6 +12,8 @@ bastion:
         url: ${BASTION_CONTENT_EVENTS_NATS_URL:nats://localhost:4222}
         content-stream: ${BASTION_CONTENT_EVENTS_NATS_STREAM:CONTENT}
         content-subject: ${BASTION_CONTENT_EVENTS_NATS_SUBJECT:content.>}
+        webmention-stream: ${BASTION_CONTENT_EVENTS_NATS_WEBMENTION_STREAM:WEBMENTION}
+        syndication-stream: ${BASTION_CONTENT_EVENTS_NATS_SYNDICATION_STREAM:SYNDICATION}
   media:
     base-url: ${BASTION_MEDIA_BASE_URL}
     s3:
@@ -20,20 +22,6 @@ bastion:
       endpoint: ${BASTION_MEDIA_S3_ENDPOINT}
       region: ${BASTION_MEDIA_S3_REGION}
       bucket: ${BASTION_MEDIA_S3_BUCKET}
-  sigil:
-    me: ${BASTION_SIGIL_ME:}
-  webmention:
-    retry-interval-minutes: ${BASTION_WEBMENTION_RETRY_INTERVAL_MINUTES:30}
-    max-attempts: ${BASTION_WEBMENTION_MAX_ATTEMPTS:5}
-    backoff-base-seconds: ${BASTION_WEBMENTION_BACKOFF_BASE_SECONDS:1800}
-    backoff-max-seconds: ${BASTION_WEBMENTION_BACKOFF_MAX_SECONDS:86400}
-    connect-timeout-seconds: ${BASTION_WEBMENTION_CONNECT_TIMEOUT_SECONDS:10}
-    read-timeout-seconds: ${BASTION_WEBMENTION_READ_TIMEOUT_SECONDS:10}
-  websub:
-    hubs: ${BASTION_WEBSUB_HUBS:}
-    topic-url: ${BASTION_WEBSUB_TOPIC_URL:}
-    connect-timeout-seconds: ${BASTION_WEBSUB_CONNECT_TIMEOUT_SECONDS:10}
-    read-timeout-seconds: ${BASTION_WEBSUB_READ_TIMEOUT_SECONDS:10}
   cors:
     allowed-origins: ${BASTION_CORS_ALLOWED_ORIGINS:}
     allowed-methods: ${BASTION_CORS_ALLOWED_METHODS:GET,POST,PUT,PATCH,DELETE,OPTIONS}
@@ -41,14 +29,6 @@ bastion:
     exposed-headers: ${BASTION_CORS_EXPOSED_HEADERS:}
     allow-credentials: ${BASTION_CORS_ALLOW_CREDENTIALS:false}
     max-age: ${BASTION_CORS_MAX_AGE:3600}
-  micropub:
-    syndication:
-      targets: [ ]
-
-sigil:
-  client:
-    base-url: ${SIGIL_CLIENT_BASE_URL:}
-    introspection-cache-ttl: ${SIGIL_CLIENT_INTROSPECTION_CACHE_TTL:30s}
 
 logging:
   level:
@@ -56,7 +36,7 @@ logging:
 
 spring:
   config:
-    import: optional:file:/etc/config/micropub.yml,file:${BASTION_POST_TYPES_CONFIG_FILE:/etc/config/post-types.yaml},file:${BASTION_PROPERTIES_CONFIG_FILE:/etc/config/properties.yaml}
+    import: file:${BASTION_POST_TYPES_CONFIG_FILE:/etc/config/post-types.yaml},file:${BASTION_PROPERTIES_CONFIG_FILE:/etc/config/properties.yaml}
   application:
     name: bastion
   jackson:

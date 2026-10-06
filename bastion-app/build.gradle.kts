@@ -17,7 +17,6 @@ java {
     }
 }
 
-extra["sigilVersion"] = "0.2.0"
 extra["mf24jVersion"] = "0.1.0"
 
 dependencyManagement {
@@ -38,8 +37,9 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json")
     implementation("org.jobrunr:jobrunr-spring-boot-4-starter:8.7.0")
-    implementation("dev.jacobandersen:sigil-client:${property("sigilVersion")}")
     implementation("dev.jacobandersen:mf24j:${property("mf24jVersion")}")
+    implementation("dev.jacobandersen:beacon-client:0.1.0")
+    implementation("dev.jacobandersen:conduit-client:0.1.0")
     implementation("tools.jackson.module:jackson-module-kotlin")
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.apache.logging.log4j:log4j-api")

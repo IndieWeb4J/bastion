@@ -4,25 +4,26 @@ import dev.jacobandersen.bastion.api.post.PostQueryService
 import dev.jacobandersen.bastion.api.post.PublicPostController
 import dev.jacobandersen.bastion.api.post.dto.PostLookupResult
 import dev.jacobandersen.bastion.api.post.dto.PostResponse
+import dev.jacobandersen.bastion.content.projection.ProjectedSyndicationEntity
+import dev.jacobandersen.bastion.content.projection.SyndicationProjectionService
+import dev.jacobandersen.bastion.content.projection.WebmentionProjectionService
 import dev.jacobandersen.bastion.micropub.data.domain.Post
-import dev.jacobandersen.bastion.micropub.data.entity.PostSyndicationEntity
-import dev.jacobandersen.bastion.micropub.data.service.PostSyndicationService
-import dev.jacobandersen.bastion.micropub.syndication.SyndicationConfig
 import dev.jacobandersen.bastion.micropub.type.PostStatus
 import dev.jacobandersen.bastion.micropub.type.PostVisibility
 import dev.jacobandersen.bastion.post.PostTypesConfig
 import dev.jacobandersen.bastion.post.PostTypesRegistry
 import dev.jacobandersen.bastion.url.UrlService
-import dev.jacobandersen.bastion.webmention.data.service.ReceivedWebmentionService
 import dev.jacobandersen.mf24j.Mf2Object
 import dev.jacobandersen.mf24j.Mf2Value
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
+import org.mockito.kotlin.any
 import org.mockito.kotlin.anyOrNull
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 import org.springframework.http.HttpStatus
+import java.time.Instant
 import java.util.UUID
 
 class PublicPostControllerSyndicationsTest {
@@ -45,33 +46,19 @@ class PublicPostControllerSyndicationsTest {
                 ),
         )
 
-    private fun controller(
-        records: List<PostSyndicationEntity>,
-        targets: List<SyndicationConfig.Target>,
-    ): PublicPostController {
+    private val registry =
+        PostTypesRegistry(PostTypesConfig(postTypes = listOf(PostTypesConfig.PostTypeDefinition(type = "note"))))
+
+    private fun controller(records: List<ProjectedSyndicationEntity>): PublicPostController {
         val queryService: PostQueryService = mock()
         val urlService: UrlService = mock()
-        val webmentionService: ReceivedWebmentionService = mock()
-        val syndicationService: PostSyndicationService = mock()
+        val webmentionProjection: WebmentionProjectionService = mock()
+        val syndicationProjection: SyndicationProjectionService = mock()
         whenever(queryService.postBySlug("slug")).thenReturn(PostLookupResult.Found(post))
         whenever(urlService.generatePostUrl(post)).thenReturn("https://bastion.test/2026/01/01/slug")
-        whenever(webmentionService.verifiedByPost(postId)).thenReturn(emptyList())
-        whenever(syndicationService.findByPostId(postId)).thenReturn(records)
-        return PublicPostController(
-            queryService,
-            urlService,
-            webmentionService,
-            syndicationService,
-            SyndicationConfig(targets = targets),
-            PostTypesRegistry(
-                PostTypesConfig(
-                    postTypes =
-                        listOf(
-                            PostTypesConfig.PostTypeDefinition(type = "note"),
-                        ),
-                ),
-            ),
-        )
+        whenever(webmentionProjection.byPost(postId)).thenReturn(emptyList())
+        whenever(syndicationProjection.byPost(postId)).thenReturn(records)
+        return PublicPostController(queryService, urlService, webmentionProjection, syndicationProjection, registry)
     }
 
     private fun body(controller: PublicPostController): PostResponse {
@@ -86,11 +73,13 @@ class PublicPostControllerSyndicationsTest {
             controller(
                 records =
                     listOf(
-                        PostSyndicationEntity(postId = postId, targetUid = "bridgy", syndicatedUrl = "https://brid.gy/copy/1"),
-                    ),
-                targets =
-                    listOf(
-                        SyndicationConfig.Target(uid = "bridgy", name = "Bridgy", endpoint = "https://example.test"),
+                        ProjectedSyndicationEntity(
+                            postId = postId,
+                            targetUid = "bridgy",
+                            name = "Bridgy",
+                            url = "https://brid.gy/copy/1",
+                            updatedAtUtc = Instant.now(),
+                        ),
                     ),
             )
         val syndications = body(c).syndications
@@ -101,32 +90,11 @@ class PublicPostControllerSyndicationsTest {
     }
 
     @Test
-    fun `pending copies and unknown targets are excluded`() {
-        val c =
-            controller(
-                records =
-                    listOf(
-                        PostSyndicationEntity(postId = postId, targetUid = "bridgy", syndicatedUrl = null),
-                        PostSyndicationEntity(postId = postId, targetUid = "stale", syndicatedUrl = "https://stale.test/1"),
-                        PostSyndicationEntity(postId = postId, targetUid = "other", syndicatedUrl = "https://other.test/1"),
-                    ),
-                targets =
-                    listOf(
-                        SyndicationConfig.Target(uid = "bridgy", name = "Bridgy", endpoint = "https://example.test"),
-                        SyndicationConfig.Target(uid = "other", name = "Other", endpoint = "https://other.test"),
-                    ),
-            )
-        val syndications = body(c).syndications
-        assertEquals(1, syndications?.size)
-        assertEquals("other", syndications?.first()?.uid)
-    }
-
-    @Test
     fun `feed leaves syndications null`() {
         val queryService: PostQueryService = mock()
         val urlService: UrlService = mock()
-        val webmentionService: ReceivedWebmentionService = mock()
-        val syndicationService: PostSyndicationService = mock()
+        val webmentionProjection: WebmentionProjectionService = mock()
+        val syndicationProjection: SyndicationProjectionService = mock()
         whenever(
             queryService.feed(
                 anyOrNull(),
@@ -140,20 +108,9 @@ class PublicPostControllerSyndicationsTest {
             ),
         ).thenReturn(listOf(post))
         whenever(urlService.generatePostUrl(post)).thenReturn("https://bastion.test/2026/01/01/slug")
-        whenever(webmentionService.verifiedByPostIds(anyOrNull())).thenReturn(emptyList())
+        whenever(webmentionProjection.byPosts(any())).thenReturn(emptyList())
         val controller =
-            PublicPostController(
-                queryService,
-                urlService,
-                webmentionService,
-                syndicationService,
-                SyndicationConfig(),
-                PostTypesRegistry(
-                    PostTypesConfig(
-                        postTypes = listOf(PostTypesConfig.PostTypeDefinition(type = "note")),
-                    ),
-                ),
-            )
+            PublicPostController(queryService, urlService, webmentionProjection, syndicationProjection, registry)
         val feed =
             controller.feed(null, null, null, limit = null, offset = null, year = null, month = null, day = null)
         assertEquals(1, feed.items.size)

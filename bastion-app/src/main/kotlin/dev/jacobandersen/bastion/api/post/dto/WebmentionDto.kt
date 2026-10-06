@@ -1,7 +1,7 @@
 package dev.jacobandersen.bastion.api.post.dto
 
-import dev.jacobandersen.bastion.webmention.data.domain.ReceivedWebmention
-import dev.jacobandersen.bastion.webmention.data.domain.WebmentionInteraction
+import dev.jacobandersen.bastion.content.projection.ProjectedWebmentionEntity
+import dev.jacobandersen.beacon.WebmentionInteraction
 
 data class WebmentionDto(
     val sourceUrl: String,
@@ -16,7 +16,7 @@ data class WebmentionDto(
     val verifiedAt: String,
 ) {
     companion object {
-        fun from(entity: ReceivedWebmention): WebmentionDto =
+        fun from(entity: ProjectedWebmentionEntity): WebmentionDto =
             WebmentionDto(
                 sourceUrl = entity.sourceUrl,
                 targetUrl = entity.targetUrl,
@@ -24,10 +24,10 @@ data class WebmentionDto(
                 authorName = entity.authorName,
                 authorUrl = entity.authorUrl,
                 authorPhoto = entity.authorPhoto,
-                contentText = entity.contentText,
-                contentHtml = entity.contentHtml,
+                contentText = entity.contentText ?: emptyList(),
+                contentHtml = entity.contentHtml ?: emptyList(),
                 firstSeenAt = entity.firstSeenAt.toString(),
-                verifiedAt = requireNotNull(entity.verifiedAt) { "verified webmention ${entity.id} missing verifiedAt" }.toString(),
+                verifiedAt = requireNotNull(entity.verifiedAt) { "projected webmention ${entity.id} missing verifiedAt" }.toString(),
             )
     }
 }

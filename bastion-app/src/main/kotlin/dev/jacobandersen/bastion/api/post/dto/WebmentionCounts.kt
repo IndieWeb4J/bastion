@@ -1,6 +1,6 @@
 package dev.jacobandersen.bastion.api.post.dto
 
-import dev.jacobandersen.bastion.webmention.data.domain.WebmentionInteraction
+import dev.jacobandersen.beacon.WebmentionInteraction
 
 /** Per-post counts of verified webmentions by interaction type. */
 data class WebmentionCounts(
