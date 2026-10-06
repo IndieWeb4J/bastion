@@ -1,0 +1,54 @@
+bastion:
+  timezone: Asia/Manila
+  public-url: https://nonfallacious-disintegrative-donny.ngrok-free.dev
+  content:
+    base-url: https://herald-staging.jacobandersen.dev
+    path-pattern: "{year}/{month}/{day}/{slug}"
+  media:
+    base-url: https://media-staging.jacobandersen.dev
+    s3:
+      access-key-id: e000b5d4639a1f81d829b8a52a3dbe73
+      secret-access-key: 3497410a23139f41add0b849ae196faac7ea786a54f8f69188ee598ad3857e89
+      endpoint: https://081d98e661c3c16878a0a8ac068422ec.r2.cloudflarestorage.com
+      region: us-east-1
+      bucket: jacobandersendev-media-staging
+  cors:
+    allowed-origins: http://localho.st:8080
+    allowed-methods: GET,POST,PUT,PATCH,DELETE,OPTIONS
+    allowed-headers: "*"
+    exposed-headers: [ ]
+    allow-credentials: false
+    max-age: 3600
+logging:
+  level:
+    root: info
+
+spring:
+  application:
+    name: bastion
+  jackson:
+    default-property-inclusion: non_null
+  datasource:
+    url: jdbc:postgresql://localhost:5432/bastion
+    username: postgres
+    password: password
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  flyway:
+    baseline-version: 0
+    baseline-on-migrate: true
+    clean-disabled: false
+
+jobrunr:
+  background-job-server:
+    enabled: true
+  dashboard:
+    enabled: true
+  database:
+    type: sql
