@@ -4,6 +4,14 @@ bastion:
   content:
     base-url: ${BASTION_CONTENT_BASE_URL}
     path-pattern: ${BASTION_PATH_PATTERN}
+    internal:
+      token: ${BASTION_CONTENT_INTERNAL_TOKEN:}
+    events:
+      nats:
+        enabled: ${BASTION_CONTENT_EVENTS_NATS_ENABLED:false}
+        url: ${BASTION_CONTENT_EVENTS_NATS_URL:nats://localhost:4222}
+        content-stream: ${BASTION_CONTENT_EVENTS_NATS_STREAM:CONTENT}
+        content-subject: ${BASTION_CONTENT_EVENTS_NATS_SUBJECT:content.>}
   media:
     base-url: ${BASTION_MEDIA_BASE_URL}
     s3:

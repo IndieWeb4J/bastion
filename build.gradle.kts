@@ -75,6 +75,7 @@ dependencies {
     implementation("org.apache.logging.log4j:log4j-api")
     implementation("org.apache.logging.log4j:log4j-core")
     implementation("io.github.oshai:kotlin-logging-jvm:7.0.3")
+    implementation("io.nats:jnats:2.26.4")
     implementation("com.github.slugify:slugify:4.0.1")
     runtimeOnly("com.github.slugify:slugify") {
         capabilities {
