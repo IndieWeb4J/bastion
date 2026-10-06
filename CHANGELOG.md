@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.1](https://github.com/Marchland/bastion/compare/v2.0.0...v2.0.1) (2026-10-06)
+
+
+### Miscellaneous Chores
+
+* move packages to Marchland and rename mf24j -&gt; microformats2 ([#81](https://github.com/Marchland/bastion/issues/81)) ([7e8c473](https://github.com/Marchland/bastion/commit/7e8c473dc56caca58021ffed2ff35ca6ed5c3569))
+
 ## [2.0.0](https://github.com/jacobsandersen/bastion/compare/v1.3.33...v2.0.0) (2026-10-06)
 
 
