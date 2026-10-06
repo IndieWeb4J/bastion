@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.0](https://github.com/Marchland/bastion/compare/v2.0.2...v2.1.0) (2026-10-06)
+
+
+### Features
+
+* **content:** relay the outbox on commit and dedupe events per id ([#85](https://github.com/Marchland/bastion/issues/85)) ([24daae5](https://github.com/Marchland/bastion/commit/24daae53d2c68b0298a1867e59712fb070aef412))
+
 ## [2.0.2](https://github.com/Marchland/bastion/compare/v2.0.1...v2.0.2) (2026-10-06)
 
 
