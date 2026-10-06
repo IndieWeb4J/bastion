@@ -7,20 +7,24 @@ import dev.jacobandersen.content.event.ContentEventSubjects
 import dev.jacobandersen.content.event.ContentPostEvent
 import dev.jacobandersen.content.event.ContentPostEventType
 import dev.jacobandersen.microformats2.firstText
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 import tools.jackson.databind.ObjectMapper
 
 /**
  * Writes content events to a local outbox table in the same transaction as the
- * post write. A separate drainer ([ContentOutboxDrainer]) publishes them to the
- * bus, so an event is never lost between the DB commit and the broker.
+ * post write. A drainer ([ContentOutboxDrainer]) publishes them to the bus, so
+ * an event is never lost between the DB commit and the broker. Once the write
+ * commits, [ContentOutboxWritten] triggers an immediate drain through
+ * [ContentOutboxRelay].
  */
 @Component
 class ContentOutbox(
     private val repository: ContentOutboxRepository,
     private val objectMapper: ObjectMapper,
     private val urlService: UrlService,
+    private val events: ApplicationEventPublisher,
 ) {
     @Transactional
     fun enqueue(
@@ -55,5 +59,13 @@ class ContentOutbox(
                 payload = objectMapper.writeValueAsString(event),
             ),
         )
+        events.publishEvent(ContentOutboxWritten)
     }
 }
+
+/**
+ * Published inside the write transaction once an outbox row exists. The relay
+ * drains on commit so a committed post publishes its event without waiting for
+ * a poll.
+ */
+object ContentOutboxWritten

@@ -31,15 +31,14 @@ class NatsContentEventPublisher(
 
     override fun publish(
         subject: String,
-        partitionKey: String?,
+        messageId: String,
         payload: String,
     ) {
         val headers = Headers()
-        // Carrying the partition key as the message id lets JetStream dedupe
-        // duplicate publishes within its window; the key also scopes ordering.
-        if (!partitionKey.isNullOrBlank()) {
-            headers.add("Nats-Msg-Id", partitionKey)
-        }
+        // A per-event id (the outbox row id) lets JetStream dedupe redeliveries
+        // of the same event within its duplicate window; a per-post id would
+        // instead collapse distinct events for the same post.
+        headers.add("Nats-Msg-Id", messageId)
         val ack = jetStream.publish(subject, headers, payload.toByteArray(Charsets.UTF_8))
         logger.debug { "Published $subject (stream=$streamName, seq=${ack.seqno})" }
     }

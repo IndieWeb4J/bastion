@@ -1,5 +1,6 @@
 package dev.jacobandersen.bastion.content.internal
 
+import dev.jacobandersen.bastion.content.event.ContentEventProperties
 import dev.jacobandersen.bastion.content.event.ContentEventPublisher
 import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.annotation.PostConstruct
@@ -15,17 +16,22 @@ private val logger = KotlinLogging.logger {}
  * Publishes the content outbox to the bus, then marks each row published. Runs
  * transactionally per batch; a crash between publish and mark yields an
  * at-most-once redelivery which consumers absorb via the per-post version
- * guard. Scheduled recurrently through JobRunr.
+ * guard.
+ *
+ * The common path is the after-commit relay ([ContentOutboxRelay]); the JobRunr
+ * recurring job scheduled here is only a safety net that republishes rows
+ * stranded by a crash or a failed relay.
  */
 @Service
 class ContentOutboxDrainer(
     private val repository: ContentOutboxRepository,
     private val publisher: ContentEventPublisher,
     private val jobScheduler: JobScheduler,
+    private val properties: ContentEventProperties,
 ) {
     @PostConstruct
-    fun schedule() {
-        jobScheduler.scheduleRecurrently(RECURRING_JOB_ID, Duration.ofSeconds(INTERVAL_SECONDS)) {
+    fun scheduleSweep() {
+        jobScheduler.scheduleRecurrently(RECURRING_JOB_ID, Duration.ofSeconds(properties.outbox.sweepIntervalSeconds)) {
             drain()
         }
     }
@@ -35,7 +41,7 @@ class ContentOutboxDrainer(
         val pending = repository.findTop100ByPublishedAtUtcIsNullOrderByCreatedAtUtcAsc()
         if (pending.isEmpty()) return
         for (row in pending) {
-            publisher.publish(row.subject, row.partitionKey, row.payload)
+            publisher.publish(row.subject, row.id.toString(), row.payload)
             row.publishedAtUtc = Instant.now()
             repository.save(row)
         }
@@ -44,6 +50,5 @@ class ContentOutboxDrainer(
 
     companion object {
         const val RECURRING_JOB_ID = "content-outbox-drainer"
-        const val INTERVAL_SECONDS = 5L
     }
 }

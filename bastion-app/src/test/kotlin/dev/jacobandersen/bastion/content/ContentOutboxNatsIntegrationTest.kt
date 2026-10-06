@@ -1,7 +1,6 @@
 package dev.jacobandersen.bastion.content
 
 import dev.jacobandersen.bastion.TestcontainersConfiguration
-import dev.jacobandersen.bastion.content.internal.ContentOutboxDrainer
 import dev.jacobandersen.bastion.content.internal.InternalContentService
 import dev.jacobandersen.content.client.CreatePostCommand
 import dev.jacobandersen.microformats2.Mf2Object
@@ -25,8 +24,9 @@ import kotlin.test.assertTrue
 
 /**
  * End-to-end content event flow: a write through the internal API lands in the
- * Postgres outbox, the drainer publishes it, and a NATS JetStream consumer
- * receives the `content.post.created` event. Real Postgres + NATS containers.
+ * Postgres outbox and its commit relay drains it, so a NATS JetStream consumer
+ * receives the `content.post.created` event without any manual kick. Real
+ * Postgres + NATS containers.
  */
 @Testcontainers
 @Import(TestcontainersConfiguration::class)
@@ -56,9 +56,6 @@ class ContentOutboxNatsIntegrationTest {
     @Autowired
     private lateinit var internalContentService: InternalContentService
 
-    @Autowired
-    private lateinit var drainer: ContentOutboxDrainer
-
     @Test
     fun `create publishes a content event consumed from JetStream`() {
         val natsUrl = "nats://${nats.host}:${nats.getMappedPort(4222)}"
@@ -81,8 +78,6 @@ class ContentOutboxNatsIntegrationTest {
                     ),
                 )
             assertEquals(1, created.version)
-
-            drainer.drain()
 
             val message = subscription.nextMessage(Duration.ofSeconds(15))
             assertNotNull(message, "no content event was published")

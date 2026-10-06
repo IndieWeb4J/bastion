@@ -7,6 +7,8 @@ bastion:
     internal:
       token: ${BASTION_CONTENT_INTERNAL_TOKEN:}
     events:
+      outbox:
+        sweep-interval-seconds: ${BASTION_CONTENT_EVENTS_OUTBOX_SWEEP_INTERVAL_SECONDS:900}
       nats:
         enabled: ${BASTION_CONTENT_EVENTS_NATS_ENABLED:false}
         url: ${BASTION_CONTENT_EVENTS_NATS_URL:nats://localhost:4222}
