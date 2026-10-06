@@ -1,4 +1,4 @@
-package dev.jacobandersen.bastion.api.tag.dto
+package dev.jacobandersen.bastion.content.api.tag.dto
 
 data class TagResponse(
     val tag: String,

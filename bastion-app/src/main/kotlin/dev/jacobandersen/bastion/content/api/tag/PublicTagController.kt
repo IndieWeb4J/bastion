@@ -1,6 +1,6 @@
-package dev.jacobandersen.bastion.api.tag
+package dev.jacobandersen.bastion.content.api.tag
 
-import dev.jacobandersen.bastion.api.tag.dto.TagListResponse
+import dev.jacobandersen.bastion.content.api.tag.dto.TagListResponse
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.GetMapping

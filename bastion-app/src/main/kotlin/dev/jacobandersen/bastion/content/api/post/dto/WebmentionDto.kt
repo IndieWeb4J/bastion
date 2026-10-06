@@ -1,4 +1,4 @@
-package dev.jacobandersen.bastion.api.post.dto
+package dev.jacobandersen.bastion.content.api.post.dto
 
 import dev.jacobandersen.bastion.content.projection.ProjectedWebmentionEntity
 import dev.jacobandersen.beacon.WebmentionInteraction

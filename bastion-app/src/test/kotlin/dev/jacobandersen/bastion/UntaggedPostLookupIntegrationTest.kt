@@ -1,11 +1,11 @@
 package dev.jacobandersen.bastion
 
-import dev.jacobandersen.bastion.api.post.PostQueryService
-import dev.jacobandersen.bastion.api.tag.TagQueryService
 import dev.jacobandersen.bastion.content.PostService
 import dev.jacobandersen.bastion.content.PostStatus
 import dev.jacobandersen.bastion.content.PostTagFilter
 import dev.jacobandersen.bastion.content.PostVisibility
+import dev.jacobandersen.bastion.content.api.post.PostQueryService
+import dev.jacobandersen.bastion.content.api.tag.TagQueryService
 import dev.jacobandersen.mf24j.Mf2Object
 import dev.jacobandersen.mf24j.Mf2Value
 import org.junit.jupiter.api.Assertions.assertEquals

@@ -1,12 +1,12 @@
-package dev.jacobandersen.bastion.api
+package dev.jacobandersen.bastion.content.api
 
-import dev.jacobandersen.bastion.api.post.PostQueryService
-import dev.jacobandersen.bastion.api.post.PublicPostController
-import dev.jacobandersen.bastion.api.post.dto.FeedResponse
 import dev.jacobandersen.bastion.content.PostMf2Type
 import dev.jacobandersen.bastion.content.PostTagFilter
 import dev.jacobandersen.bastion.content.PostTypesConfig
 import dev.jacobandersen.bastion.content.PostTypesRegistry
+import dev.jacobandersen.bastion.content.api.post.PostQueryService
+import dev.jacobandersen.bastion.content.api.post.PublicPostController
+import dev.jacobandersen.bastion.content.api.post.dto.FeedResponse
 import dev.jacobandersen.bastion.content.projection.SyndicationProjectionService
 import dev.jacobandersen.bastion.content.projection.WebmentionProjectionService
 import dev.jacobandersen.bastion.content.url.UrlService

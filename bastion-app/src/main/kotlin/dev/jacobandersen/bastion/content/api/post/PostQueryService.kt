@@ -1,10 +1,10 @@
-package dev.jacobandersen.bastion.api.post
+package dev.jacobandersen.bastion.content.api.post
 
-import dev.jacobandersen.bastion.api.post.dto.PostLookupResult
 import dev.jacobandersen.bastion.content.Post
 import dev.jacobandersen.bastion.content.PostMf2Type
 import dev.jacobandersen.bastion.content.PostService
 import dev.jacobandersen.bastion.content.PostTagFilter
+import dev.jacobandersen.bastion.content.api.post.dto.PostLookupResult
 import dev.jacobandersen.bastion.content.url.UrlService
 import dev.jacobandersen.mf24j.firstText
 import org.springframework.stereotype.Service
@@ -18,7 +18,7 @@ import java.time.ZonedDateTime
  * Lists return only PUBLIC posts; direct lookups additionally allow UNLISTED.
  * PRIVATE and DRAFT posts are never returned here (private is only reachable
  * through the internal read API used by Forge). A post that was publicly
- * reachable and is now soft-deleted surfaces as [dev.jacobandersen.bastion.api.post.dto.PostLookupResult.Gone].
+ * reachable and is now soft-deleted surfaces as [dev.jacobandersen.bastion.content.api.post.dto.PostLookupResult.Gone].
  */
 @Service
 class PostQueryService(
@@ -101,7 +101,7 @@ class PostQueryService(
 
     /**
      * Resolves a direct post lookup. Returns null when the post does not exist
-     * or was never publicly reachable (draft/private); [dev.jacobandersen.bastion.api.post.dto.PostLookupResult.Gone]
+     * or was never publicly reachable (draft/private); [dev.jacobandersen.bastion.content.api.post.dto.PostLookupResult.Gone]
      * when the post existed publicly and has since been deleted.
      */
     fun postBySlug(slug: String): PostLookupResult? {
