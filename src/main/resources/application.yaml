@@ -13,10 +13,7 @@ bastion:
       region: ${BASTION_MEDIA_S3_REGION}
       bucket: ${BASTION_MEDIA_S3_BUCKET}
   sigil:
-    base-url: ${BASTION_SIGIL_BASE_URL:}
-    service-token: ${BASTION_SIGIL_SERVICE_TOKEN:}
     me: ${BASTION_SIGIL_ME:}
-    introspection-cache-ttl: ${BASTION_SIGIL_INTROSPECTION_CACHE_TTL:30s}
   webmention:
     retry-interval-minutes: ${BASTION_WEBMENTION_RETRY_INTERVAL_MINUTES:30}
     max-attempts: ${BASTION_WEBMENTION_MAX_ATTEMPTS:5}
@@ -39,6 +36,11 @@ bastion:
   micropub:
     syndication:
       targets: [ ]
+
+sigil:
+  client:
+    base-url: ${SIGIL_CLIENT_BASE_URL:}
+    introspection-cache-ttl: ${SIGIL_CLIENT_INTROSPECTION_CACHE_TTL:30s}
 
 logging:
   level:

@@ -1,8 +1,7 @@
 package dev.jacobandersen.bastion.micropub.security
 
-import dev.jacobandersen.bastion.sigil.SigilIntrospection
-import dev.jacobandersen.bastion.sigil.SigilIntrospectionClient
-import dev.jacobandersen.bastion.sigil.SigilProperties
+import dev.jacobandersen.sigil.client.TokenIntrospector
+import dev.jacobandersen.sigil.protocol.IntrospectionResponse
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
@@ -12,19 +11,18 @@ import org.mockito.Mockito.`when`
 class MicropubTokenValidatorTest {
     private val expectedMe = "https://example.com"
 
-    private val introspectionClient = mock(SigilIntrospectionClient::class.java)
-    private val properties = SigilProperties(me = expectedMe)
-    private val validator = MicropubTokenValidator(introspectionClient, properties)
+    private val tokenIntrospector = mock(TokenIntrospector::class.java)
+    private val validator = MicropubTokenValidator(tokenIntrospector, expectedMe)
 
     private fun active(
         me: String = expectedMe,
         clientId: String = "https://client.example",
         scope: String = "create",
-    ) = SigilIntrospection(active = true, me = me, clientId = clientId, scope = scope)
+    ) = IntrospectionResponse(active = true, me = me, clientId = clientId, scope = scope)
 
     @Test
     fun `resolves a valid token to an authentication with mapped scopes`() {
-        `when`(introspectionClient.introspect("abc")).thenReturn(active(scope = "create media bogus"))
+        `when`(tokenIntrospector.introspect("abc")).thenReturn(active(scope = "create media bogus"))
 
         val auth = validator.validateToken("abc")
 
@@ -36,22 +34,22 @@ class MicropubTokenValidatorTest {
     }
 
     @Test
-    fun `rejects an unknown or inactive token`() {
-        `when`(introspectionClient.introspect("abc")).thenReturn(null)
+    fun `rejects an inactive token`() {
+        `when`(tokenIntrospector.introspect("abc")).thenReturn(IntrospectionResponse(active = false))
 
         assertThrows(IllegalArgumentException::class.java) { validator.validateToken("abc") }
     }
 
     @Test
     fun `rejects a token for another identity`() {
-        `when`(introspectionClient.introspect("abc")).thenReturn(active(me = "https://someone.else"))
+        `when`(tokenIntrospector.introspect("abc")).thenReturn(active(me = "https://someone.else"))
 
         assertThrows(IllegalArgumentException::class.java) { validator.validateToken("abc") }
     }
 
     @Test
     fun `normalization accepts host case trailing slash and fragment differences`() {
-        `when`(introspectionClient.introspect("abc")).thenReturn(active(me = "https://EXAMPLE.com/#frag"))
+        `when`(tokenIntrospector.introspect("abc")).thenReturn(active(me = "https://EXAMPLE.com/#frag"))
 
         org.junit.jupiter.api.Assertions
             .assertDoesNotThrow { validator.validateToken("abc") }

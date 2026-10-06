@@ -26,12 +26,15 @@ When updating this file, preserve this bar for all agents and keep entries conci
 ## IndieAuth
 
 - IndieAuth lives in the standalone **Sigil** service now, not Bastion. Bastion holds no IndieAuth state; it
-  validates Micropub bearer tokens by calling Sigil's RFC 7662 introspection endpoint
-  (`dev.jacobandersen.bastion.sigil.SigilIntrospectionClient`), authenticating with the shared
-  `bastion.sigil.service-token`. `bastion.sigil.me` is the identity a token must have been issued for.
-- Introspection results are cached for `bastion.sigil.introspection-cache-ttl` (default 30s), which is also the
-  upper bound on how long a revoked token may still be accepted (revocation lag). Transport failures fail closed.
+  validates Micropub bearer tokens by calling Sigil's RFC 7662 introspection endpoint through the published
+  `dev.jacobandersen:sigil-client` library (`TokenIntrospector`), wired by its Spring Boot auto-configuration via
+  `sigil.client.base-url`. The library owns the cache and the wire types; the expected identity
+  (`bastion.sigil.me`) is Bastion policy in `MicropubTokenValidator`.
+- Introspection is self-authorized (bearer == subject token), so no service credential is configured.
 - The old `indieauth_*` tables are dropped by `V16__drop_indieauth_tables.sql`; existing tokens are invalidated.
+- Building Bastion needs the Sigil GitHub Packages Maven repo (`packages: read` in CI; a PAT with `read:packages`
+  in `~/.gradle/gradle.properties` for local `.` builds). Pin the `sigilVersion` in `build.gradle.kts` to the
+  released `sigil-client` version; `publishToMavenLocal` in the Sigil repo is the escape hatch during development.
 
 ## Micropub syndication
 

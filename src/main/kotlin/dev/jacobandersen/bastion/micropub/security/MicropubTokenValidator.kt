@@ -1,33 +1,41 @@
 package dev.jacobandersen.bastion.micropub.security
 
-import dev.jacobandersen.bastion.sigil.SigilIntrospectionClient
-import dev.jacobandersen.bastion.sigil.SigilProperties
 import dev.jacobandersen.bastion.url.UrlNormalizer
+import dev.jacobandersen.sigil.client.SigilClientException
+import dev.jacobandersen.sigil.client.TokenIntrospector
 import io.github.oshai.kotlinlogging.KotlinLogging
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 
 private val logger = KotlinLogging.logger {}
 
 /**
- * Validates a Micropub bearer token against the Sigil IndieAuth service. Sigil
- * is the source of truth for issued access tokens, so validation is a remote
- * introspection call (cached briefly by [SigilIntrospectionClient]) rather than
- * a local lookup.
+ * Validates a Micropub bearer token against the Sigil IndieAuth service via the
+ * `sigil-client` `TokenIntrospector`. Sigil is the source of truth for issued
+ * access tokens, so validation is a remote introspection call (cached briefly
+ * by the client) rather than a local lookup. The expected identity is a Bastion
+ * policy, not the library's concern.
  */
 @Component
 class MicropubTokenValidator(
-    private val sigilIntrospectionClient: SigilIntrospectionClient,
-    private val sigilProperties: SigilProperties,
+    private val tokenIntrospector: TokenIntrospector,
+    @Value("\${bastion.sigil.me}") private val expectedMe: String,
 ) {
     fun validateToken(rawToken: String): MicropubAuthentication {
         val issued =
-            sigilIntrospectionClient.introspect(rawToken)
-                ?: throw IllegalArgumentException("Access token is not valid")
-
-        if (!sameIdentity(sigilProperties.me, issued.me)) {
-            logger.warn {
-                "Token belongs to a different identity (expected ${sigilProperties.me}, got ${issued.me})"
+            try {
+                tokenIntrospector.introspect(rawToken)
+            } catch (e: SigilClientException) {
+                logger.warn(e) { "Sigil introspection failed; rejecting token" }
+                throw IllegalArgumentException("Access token is not valid", e)
             }
+
+        if (!issued.active) {
+            throw IllegalArgumentException("Access token is not valid")
+        }
+
+        if (!sameIdentity(expectedMe, issued.me)) {
+            logger.warn { "Token belongs to a different identity (expected $expectedMe, got ${issued.me})" }
             throw IllegalArgumentException("Token is not for the expected identity")
         }
 
@@ -36,7 +44,7 @@ class MicropubTokenValidator(
                 .orEmpty()
                 .split(' ')
                 .mapNotNull { MicropubTokenScope.fromStringOrNull(it) }
-        val token = MicropubToken(issued.me ?: sigilProperties.me, issued.clientId.orEmpty(), scopes)
+        val token = MicropubToken(issued.me ?: expectedMe, issued.clientId.orEmpty(), scopes)
 
         return MicropubAuthentication(rawToken, token, true)
     }
