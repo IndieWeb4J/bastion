@@ -6,7 +6,7 @@ import dev.jacobandersen.bastion.content.PostService
 import dev.jacobandersen.bastion.content.PostTagFilter
 import dev.jacobandersen.bastion.content.api.post.dto.PostLookupResult
 import dev.jacobandersen.bastion.content.url.UrlService
-import dev.jacobandersen.mf24j.firstText
+import dev.jacobandersen.microformats2.firstText
 import org.springframework.stereotype.Service
 import java.time.Instant
 import java.time.YearMonth

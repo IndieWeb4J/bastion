@@ -13,7 +13,7 @@ import dev.jacobandersen.content.client.UpdatePostCommand
 import dev.jacobandersen.content.client.WebmentionCountsDto
 import dev.jacobandersen.content.client.WritePostResult
 import dev.jacobandersen.content.event.ContentPostEventType
-import dev.jacobandersen.mf24j.firstText
+import dev.jacobandersen.microformats2.firstText
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.util.UUID

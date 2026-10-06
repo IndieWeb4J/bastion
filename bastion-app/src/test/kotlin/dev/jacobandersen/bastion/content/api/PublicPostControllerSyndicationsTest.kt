@@ -13,8 +13,8 @@ import dev.jacobandersen.bastion.content.projection.ProjectedSyndicationEntity
 import dev.jacobandersen.bastion.content.projection.SyndicationProjectionService
 import dev.jacobandersen.bastion.content.projection.WebmentionProjectionService
 import dev.jacobandersen.bastion.content.url.UrlService
-import dev.jacobandersen.mf24j.Mf2Object
-import dev.jacobandersen.mf24j.Mf2Value
+import dev.jacobandersen.microformats2.Mf2Object
+import dev.jacobandersen.microformats2.Mf2Value
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test

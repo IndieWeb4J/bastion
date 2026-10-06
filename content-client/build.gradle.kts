@@ -21,11 +21,11 @@ dependencyManagement {
     }
 }
 
-extra["mf24jVersion"] = "0.1.0"
+extra["microformats2Version"] = "0.1.1"
 
 dependencies {
-    // Exposed API: the write/read boundary is mf2, so mf24j types appear in DTOs.
-    api("dev.jacobandersen:mf24j:${property("mf24jVersion")}")
+    // Exposed API: the write/read boundary is mf2, so microformats2 types appear in DTOs.
+    api("dev.jacobandersen:microformats2:${property("microformats2Version")}")
     api("org.springframework:spring-web")
 
     implementation("org.jetbrains.kotlin:kotlin-reflect")
@@ -64,7 +64,7 @@ publishing {
     repositories {
         maven {
             name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/jacobsandersen/bastion")
+            url = uri("https://maven.pkg.github.com/marchland/bastion")
             credentials {
                 username = System.getenv("GITHUB_ACTOR") ?: (project.findProperty("gpr.user") as String?)
                 password = System.getenv("GITHUB_TOKEN") ?: (project.findProperty("gpr.token") as String?)

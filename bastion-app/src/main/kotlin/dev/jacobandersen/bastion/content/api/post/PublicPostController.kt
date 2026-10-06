@@ -21,9 +21,9 @@ import dev.jacobandersen.beacon.WebmentionInteraction.REPOST
 import dev.jacobandersen.beacon.WebmentionInteraction.RSVP
 import dev.jacobandersen.content.client.SyndicationDto
 import dev.jacobandersen.content.client.WebmentionCountsDto
-import dev.jacobandersen.mf24j.firstText
-import dev.jacobandersen.mf24j.htmls
-import dev.jacobandersen.mf24j.texts
+import dev.jacobandersen.microformats2.firstText
+import dev.jacobandersen.microformats2.htmls
+import dev.jacobandersen.microformats2.texts
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.ExceptionHandler

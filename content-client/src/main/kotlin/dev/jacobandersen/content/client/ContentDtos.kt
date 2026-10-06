@@ -1,6 +1,6 @@
 package dev.jacobandersen.content.client
 
-import dev.jacobandersen.mf24j.Mf2Object
+import dev.jacobandersen.microformats2.Mf2Object
 
 /**
  * The command Bastion accepts at `POST /internal/posts` to create a post. The

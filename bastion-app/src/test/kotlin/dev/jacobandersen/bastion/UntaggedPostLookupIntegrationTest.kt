@@ -6,8 +6,8 @@ import dev.jacobandersen.bastion.content.PostTagFilter
 import dev.jacobandersen.bastion.content.PostVisibility
 import dev.jacobandersen.bastion.content.api.post.PostQueryService
 import dev.jacobandersen.bastion.content.api.tag.TagQueryService
-import dev.jacobandersen.mf24j.Mf2Object
-import dev.jacobandersen.mf24j.Mf2Value
+import dev.jacobandersen.microformats2.Mf2Object
+import dev.jacobandersen.microformats2.Mf2Value
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue

@@ -6,7 +6,7 @@ import dev.jacobandersen.bastion.content.url.UrlService
 import dev.jacobandersen.content.event.ContentEventSubjects
 import dev.jacobandersen.content.event.ContentPostEvent
 import dev.jacobandersen.content.event.ContentPostEventType
-import dev.jacobandersen.mf24j.firstText
+import dev.jacobandersen.microformats2.firstText
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 import tools.jackson.databind.ObjectMapper
