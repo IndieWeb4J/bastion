@@ -7,11 +7,12 @@ bastion:
   media:
     base-url: https://media-staging.jacobandersen.dev
     s3:
-      access-key-id: e000b5d4639a1f81d829b8a52a3dbe73
-      secret-access-key: 3497410a23139f41add0b849ae196faac7ea786a54f8f69188ee598ad3857e89
-      endpoint: https://081d98e661c3c16878a0a8ac068422ec.r2.cloudflarestorage.com
-      region: us-east-1
-      bucket: jacobandersendev-media-staging
+      # Credentials are supplied via the environment; never commit real keys.
+      access-key-id: ${BASTION_MEDIA_S3_ACCESS_KEY_ID:}
+      secret-access-key: ${BASTION_MEDIA_S3_SECRET_ACCESS_KEY:}
+      endpoint: ${BASTION_MEDIA_S3_ENDPOINT:https://081d98e661c3c16878a0a8ac068422ec.r2.cloudflarestorage.com}
+      region: ${BASTION_MEDIA_S3_REGION:us-east-1}
+      bucket: ${BASTION_MEDIA_S3_BUCKET:jacobandersendev-media-staging}
   cors:
     allowed-origins: http://localho.st:8080
     allowed-methods: GET,POST,PUT,PATCH,DELETE,OPTIONS
