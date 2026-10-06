@@ -1,15 +1,15 @@
-package dev.jacobandersen.bastion.api.post
+package dev.jacobandersen.bastion.content.api.post
 
-import dev.jacobandersen.bastion.api.dto.Pagination
-import dev.jacobandersen.bastion.api.post.dto.FeedResponse
-import dev.jacobandersen.bastion.api.post.dto.PostGoneResponse
-import dev.jacobandersen.bastion.api.post.dto.PostLookupResult
-import dev.jacobandersen.bastion.api.post.dto.PostResponse
-import dev.jacobandersen.bastion.api.post.dto.WebmentionDto
 import dev.jacobandersen.bastion.content.Post
 import dev.jacobandersen.bastion.content.PostMf2Type
 import dev.jacobandersen.bastion.content.PostTagFilter
 import dev.jacobandersen.bastion.content.PostTypesRegistry
+import dev.jacobandersen.bastion.content.api.dto.Pagination
+import dev.jacobandersen.bastion.content.api.post.dto.FeedResponse
+import dev.jacobandersen.bastion.content.api.post.dto.PostGoneResponse
+import dev.jacobandersen.bastion.content.api.post.dto.PostLookupResult
+import dev.jacobandersen.bastion.content.api.post.dto.PostResponse
+import dev.jacobandersen.bastion.content.api.post.dto.WebmentionDto
 import dev.jacobandersen.bastion.content.projection.SyndicationProjectionService
 import dev.jacobandersen.bastion.content.projection.WebmentionProjectionService
 import dev.jacobandersen.bastion.content.url.UrlService

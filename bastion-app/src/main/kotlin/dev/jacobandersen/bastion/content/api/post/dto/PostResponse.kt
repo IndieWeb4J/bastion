@@ -1,4 +1,4 @@
-package dev.jacobandersen.bastion.api.post.dto
+package dev.jacobandersen.bastion.content.api.post.dto
 
 import dev.jacobandersen.content.client.SyndicationDto
 import dev.jacobandersen.content.client.WebmentionCountsDto
