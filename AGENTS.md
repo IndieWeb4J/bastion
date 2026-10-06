@@ -33,46 +33,35 @@ not a separate repo. `bastion-app` depends on `project(":content-client")`.
   at registration and replayed on every fire, so never pass a computed time (e.g. `Instant.now()`) through the lambda -
   compute it inside the invoked method, as `IndieAuthRowPurgeService.purge()` does.
 
-## IndieAuth
+## Service boundaries
 
-- IndieAuth lives in the standalone **Sigil** service now, not Bastion. Bastion holds no IndieAuth state; it
-  validates Micropub bearer tokens by calling Sigil's RFC 7662 introspection endpoint through the published
-  `dev.jacobandersen:sigil-client` library (`TokenIntrospector`), wired by its Spring Boot auto-configuration via
-  `sigil.client.base-url`. The library owns the cache and the wire types; the expected identity
-  (`bastion.sigil.me`) is Bastion policy in `MicropubTokenValidator`.
-- Introspection is self-authorized (bearer == subject token), so no service credential is configured.
-- The old `indieauth_*` tables are dropped by `V16__drop_indieauth_tables.sql`; existing tokens are invalidated.
-- Building Bastion needs the Sigil GitHub Packages Maven repo (`packages: read` in CI; a PAT with `read:packages`
-  in `~/.gradle/gradle.properties` for local `.` builds). Pin the `sigilVersion` in `build.gradle.kts` to the
-  released `sigil-client` version; `publishToMavenLocal` in the Sigil repo is the escape hatch during development.
+Bastion is the **content authority** only: it stores posts as mf2, owns media,
+serves the public read API, and emits `content.post.*` events. The protocol
+concerns were extracted and are no longer here:
 
-## Micropub syndication
+- **Micropub** -> Forge (no storage).
+- **IndieAuth** -> Sigil (Bastion no longer validates tokens; no sigil-client).
+- **Webmention** -> Beacon.
+- **WebSub + syndication** -> Conduit.
 
-- Syndication targets are downstream micropub servers (e.g. Bridgy) configured under
-  `bastion.micropub.syndication.targets` (`application.yaml`): each has `uid`, `name`, `endpoint`, optional bearer
-  `token`, and supported `actions` (default CREATE + DELETE). `mp-syndicate-to` values must match a target `uid`, and
-  the configured targets back the `q=syndicate-to` and `q=config` `syndicate-to` responses.
-- Non-public posts are never sent to targets. Requested targets are recorded at create time even for a draft/private
-  post, then dispatched on the later publish transition; the async create/rebase jobs re-check `Post.publiclyReachable`
-  at job time because a post can be demoted or deleted between dispatch and send. A target only holds a copy once
-  `post_syndications.syndicated_url` is recorded.
-- Dispatch and the best-effort `@Job(retries = 0)` jobs live in `micropub/syndication/SyndicationService.kt`.
-  Syndication is fire-and-forget: failures are logged and must never fail the originating create/update/delete request.
-- The downstream copy is an excerpt plus permalink, never full content (`micropub/syndication/SyndicationContentMapper.kt`):
-  notes send `{excerpt}\n\n{url}`, articles (`type == "article"`) send `{name}: {excerpt}\n\n{url}`. The
-  `maxGraphemes` budget covers the total in grapheme clusters (`Graphemes.kt`, Bluesky counts graphemes not chars);
-  the default is 300 via `defaultMaxGraphemes`, overridable per target with `max-graphemes`. The permalink is never
-  dropped; `summary` is overwritten with the same text so full content cannot leak through it.
-- Updates go through the same budget: `runUpdateJob` rewrites `content`/`summary` entries via
-  `SyndicationHttpClient.mapUpdateToExcerpt`, and an article rename without a content change injects a
-  `content` replace so the downstream title does not go stale.
-- `mp-syndicate-to` is honored on update as well as create (`SyndicationService.diffTargets`): a `replace`
-  entry is the desired target set, otherwise `add`/`delete` apply incrementally. Added targets are syndicated
-  (or retained when non-public); removed targets are retracted via `retractTargets` (best-effort delete when a
-  copy is held, then the record is forgotten).
+The `micropub/` package now holds only the post domain (`data/`, `media/`,
+`type/`); the protocol code was removed in `25fb780`.
 
-## Webmention
+## Read model (projections)
 
-- Self-webmentions are suppressed: `UrlService.isOwnContentUrl` (host + port match on `bastion.content.base-url`,
-  lenient on scheme) filters targets in `WebmentionService.targetUrlsOf` plus a guard in `sendWebmention`, and
-  `WebmentionController` rejects sources on the own content domain.
+Bastion projects the distribution services' events so the public read API stays a
+single local query: `ProjectionConsumer` consumes Beacon's `WEBMENTION` stream
+(`webmention.>`) and Conduit's `SYNDICATION` stream (`syndication.>`) into
+`projected_webmentions` / `projected_syndications` (idempotent upserts, keyed by
+source/post and post/target). `PublicPostController` reads those. Streams are
+per-producer; consumers attach durably and share the same NATS connection as the
+content publisher (`bastion.content.events.nats.*`, gate with `...enabled=true`).
+
+## Data moves (V20)
+
+Webmention/syndication tables (`received_webmentions`, `webmention_notifications`,
+`webmention_endpoint_cache`, `post_syndications`) and the Micropub `tokens` table
+are dropped by `V20__decommission_webmention_syndication.sql`; their state lives
+in Beacon/Conduit now, and the projections rebuild from events (or the services'
+reconciliation sweeps). Never drop tables permanently without a backfill plan.
+
