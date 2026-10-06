@@ -16,7 +16,7 @@ java {
     }
 }
 
-extra["mf24jVersion"] = "0.1.0"
+extra["microformats2Version"] = "0.1.1"
 
 dependencyManagement {
     imports {
@@ -35,7 +35,7 @@ dependencies {
     implementation("org.flywaydb:flyway-database-postgresql")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jobrunr:jobrunr-spring-boot-4-starter:8.7.0")
-    implementation("dev.jacobandersen:mf24j:${property("mf24jVersion")}")
+    implementation("dev.jacobandersen:microformats2:${property("microformats2Version")}")
     implementation("dev.jacobandersen:beacon-client:0.1.0")
     implementation("dev.jacobandersen:conduit-client:0.1.0")
     implementation("tools.jackson.module:jackson-module-kotlin")

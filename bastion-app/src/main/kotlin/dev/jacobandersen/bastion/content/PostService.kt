@@ -9,8 +9,8 @@ import dev.jacobandersen.bastion.content.PostTagFilter
 import dev.jacobandersen.bastion.content.PostTypeDiscovery
 import dev.jacobandersen.bastion.content.PostVisibility
 import dev.jacobandersen.bastion.content.mf2Type
-import dev.jacobandersen.mf24j.Mf2Object
-import dev.jacobandersen.mf24j.firstText
+import dev.jacobandersen.microformats2.Mf2Object
+import dev.jacobandersen.microformats2.firstText
 import jakarta.persistence.criteria.Predicate
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort

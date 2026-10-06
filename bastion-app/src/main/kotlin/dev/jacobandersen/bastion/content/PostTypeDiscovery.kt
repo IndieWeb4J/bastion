@@ -1,8 +1,8 @@
 package dev.jacobandersen.bastion.content
 
-import dev.jacobandersen.mf24j.Mf2Object
-import dev.jacobandersen.mf24j.Mf2Value
-import dev.jacobandersen.mf24j.plainTextOrNull
+import dev.jacobandersen.microformats2.Mf2Object
+import dev.jacobandersen.microformats2.Mf2Value
+import dev.jacobandersen.microformats2.plainTextOrNull
 
 /**
  * Post-type discovery (PTD) in Kotlin, replacing the former PL/pgSQL

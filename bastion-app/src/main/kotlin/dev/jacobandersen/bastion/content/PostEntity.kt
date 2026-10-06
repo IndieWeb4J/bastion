@@ -3,7 +3,7 @@ package dev.jacobandersen.bastion.content
 import dev.jacobandersen.bastion.content.Post
 import dev.jacobandersen.bastion.content.PostStatus
 import dev.jacobandersen.bastion.content.PostVisibility
-import dev.jacobandersen.mf24j.Mf2Object
+import dev.jacobandersen.microformats2.Mf2Object
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType

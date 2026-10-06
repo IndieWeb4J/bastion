@@ -4,8 +4,8 @@ import dev.jacobandersen.bastion.TestcontainersConfiguration
 import dev.jacobandersen.bastion.content.internal.ContentOutboxDrainer
 import dev.jacobandersen.bastion.content.internal.InternalContentService
 import dev.jacobandersen.content.client.CreatePostCommand
-import dev.jacobandersen.mf24j.Mf2Object
-import dev.jacobandersen.mf24j.Mf2Value
+import dev.jacobandersen.microformats2.Mf2Object
+import dev.jacobandersen.microformats2.Mf2Value
 import io.nats.client.Nats
 import io.nats.client.Options
 import org.junit.jupiter.api.Test

@@ -2,7 +2,7 @@ package dev.jacobandersen.bastion.content.api.post.dto
 
 import dev.jacobandersen.content.client.SyndicationDto
 import dev.jacobandersen.content.client.WebmentionCountsDto
-import dev.jacobandersen.mf24j.Mf2Value
+import dev.jacobandersen.microformats2.Mf2Value
 
 data class PostResponse(
     val id: String,

@@ -1,8 +1,8 @@
 package dev.jacobandersen.bastion.content.media
 
 import dev.jacobandersen.bastion.content.PostRepository
-import dev.jacobandersen.mf24j.Mf2Object
-import dev.jacobandersen.mf24j.Mf2Value
+import dev.jacobandersen.microformats2.Mf2Object
+import dev.jacobandersen.microformats2.Mf2Value
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional

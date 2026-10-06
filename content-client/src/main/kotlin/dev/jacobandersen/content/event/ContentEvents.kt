@@ -1,6 +1,6 @@
 package dev.jacobandersen.content.event
 
-import dev.jacobandersen.mf24j.Mf2Object
+import dev.jacobandersen.microformats2.Mf2Object
 
 /**
  * The envelope every event carries on the bus. Producer-owned schemas evolve
