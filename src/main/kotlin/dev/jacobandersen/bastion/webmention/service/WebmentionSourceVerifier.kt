@@ -1,9 +1,9 @@
 package dev.jacobandersen.bastion.webmention.service
 
-import dev.jacobandersen.mf24j.Mf2ParseResult
-import dev.jacobandersen.mf24j.Mf2Parser
 import dev.jacobandersen.bastion.webmention.http.SourceFetch
 import dev.jacobandersen.bastion.webmention.util.HttpUtil
+import dev.jacobandersen.mf24j.Mf2ParseResult
+import dev.jacobandersen.mf24j.Mf2Parser
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 

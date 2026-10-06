@@ -8,9 +8,6 @@ import dev.jacobandersen.bastion.api.post.dto.PostResponse
 import dev.jacobandersen.bastion.api.post.dto.SyndicationDto
 import dev.jacobandersen.bastion.api.post.dto.WebmentionCounts
 import dev.jacobandersen.bastion.api.post.dto.WebmentionDto
-import dev.jacobandersen.mf24j.firstText
-import dev.jacobandersen.mf24j.htmls
-import dev.jacobandersen.mf24j.texts
 import dev.jacobandersen.bastion.micropub.data.domain.Post
 import dev.jacobandersen.bastion.micropub.data.service.PostSyndicationService
 import dev.jacobandersen.bastion.micropub.syndication.SyndicationConfig
@@ -20,6 +17,9 @@ import dev.jacobandersen.bastion.post.PostTypesRegistry
 import dev.jacobandersen.bastion.url.UrlService
 import dev.jacobandersen.bastion.webmention.data.domain.WebmentionInteraction.MENTION
 import dev.jacobandersen.bastion.webmention.data.service.ReceivedWebmentionService
+import dev.jacobandersen.mf24j.firstText
+import dev.jacobandersen.mf24j.htmls
+import dev.jacobandersen.mf24j.texts
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.ExceptionHandler

@@ -1,7 +1,5 @@
 package dev.jacobandersen.bastion.webmention.service
 
-import dev.jacobandersen.mf24j.Mf2Object
-import dev.jacobandersen.mf24j.Mf2Value
 import dev.jacobandersen.bastion.url.UrlService
 import dev.jacobandersen.bastion.webmention.config.WebmentionConfig
 import dev.jacobandersen.bastion.webmention.data.domain.WebmentionNotification
@@ -12,6 +10,8 @@ import dev.jacobandersen.bastion.webmention.data.service.WebmentionNotificationS
 import dev.jacobandersen.bastion.webmention.http.EndpointDiscovery
 import dev.jacobandersen.bastion.webmention.http.SendWebmentionResult
 import dev.jacobandersen.bastion.webmention.http.WebmentionHttpClient
+import dev.jacobandersen.mf24j.Mf2Object
+import dev.jacobandersen.mf24j.Mf2Value
 import org.jobrunr.scheduling.JobScheduler
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test

@@ -1,7 +1,5 @@
 package dev.jacobandersen.bastion.micropub.syndication
 
-import dev.jacobandersen.mf24j.Mf2Value
-import dev.jacobandersen.mf24j.plainTextOrNull
 import dev.jacobandersen.bastion.micropub.data.domain.Post
 import dev.jacobandersen.bastion.micropub.data.service.PostService
 import dev.jacobandersen.bastion.micropub.data.service.PostSyndicationService
@@ -9,6 +7,8 @@ import dev.jacobandersen.bastion.micropub.type.MicropubCommand
 import dev.jacobandersen.bastion.micropub.type.req.MicropubUpdatePayload
 import dev.jacobandersen.bastion.url.UrlService
 import dev.jacobandersen.bastion.webmention.util.HttpUtil
+import dev.jacobandersen.mf24j.Mf2Value
+import dev.jacobandersen.mf24j.plainTextOrNull
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jobrunr.jobs.annotations.Job
 import org.jobrunr.scheduling.JobScheduler

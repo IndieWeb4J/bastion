@@ -1,7 +1,5 @@
 package dev.jacobandersen.bastion.webmention.controller
 
-import dev.jacobandersen.mf24j.Mf2Object
-import dev.jacobandersen.mf24j.Mf2Value
 import dev.jacobandersen.bastion.micropub.data.domain.Post
 import dev.jacobandersen.bastion.micropub.data.service.PostService
 import dev.jacobandersen.bastion.micropub.type.PostStatus
@@ -11,6 +9,8 @@ import dev.jacobandersen.bastion.webmention.data.service.ReceivedWebmentionServi
 import dev.jacobandersen.bastion.webmention.http.SourceHostValidator
 import dev.jacobandersen.bastion.webmention.service.WebmentionReceiverService
 import dev.jacobandersen.bastion.webmention.service.WebmentionSubmissionLimiter
+import dev.jacobandersen.mf24j.Mf2Object
+import dev.jacobandersen.mf24j.Mf2Value
 import org.jobrunr.scheduling.JobScheduler
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test

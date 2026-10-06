@@ -1,7 +1,7 @@
 package dev.jacobandersen.bastion.webmention.service
 
-import dev.jacobandersen.mf24j.Mf2ParserImpl
 import dev.jacobandersen.bastion.webmention.http.SourceFetch
+import dev.jacobandersen.mf24j.Mf2ParserImpl
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull

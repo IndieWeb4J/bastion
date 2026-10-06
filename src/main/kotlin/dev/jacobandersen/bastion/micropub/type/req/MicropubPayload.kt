@@ -1,10 +1,10 @@
 package dev.jacobandersen.bastion.micropub.type.req
 
+import dev.jacobandersen.bastion.micropub.util.toMf2Object
 import dev.jacobandersen.mf24j.Mf2Object
 import dev.jacobandersen.mf24j.Mf2Value
 import dev.jacobandersen.mf24j.json.toMf2Object
 import dev.jacobandersen.mf24j.json.toMf2ValueOrNull
-import dev.jacobandersen.bastion.micropub.util.toMf2Object
 import tools.jackson.databind.node.ArrayNode
 import tools.jackson.databind.node.ObjectNode
 

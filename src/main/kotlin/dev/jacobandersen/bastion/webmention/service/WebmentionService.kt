@@ -1,6 +1,5 @@
 package dev.jacobandersen.bastion.webmention.service
 
-import dev.jacobandersen.mf24j.Mf2Object
 import dev.jacobandersen.bastion.url.UrlExtractor
 import dev.jacobandersen.bastion.url.UrlService
 import dev.jacobandersen.bastion.webmention.config.WebmentionConfig
@@ -14,6 +13,7 @@ import dev.jacobandersen.bastion.webmention.http.WebmentionHttpClient
 import dev.jacobandersen.bastion.webmention.util.HttpUtil
 import dev.jacobandersen.bastion.webmention.util.Mf2TextExtractor
 import dev.jacobandersen.bastion.webmention.util.WebmentionUtil
+import dev.jacobandersen.mf24j.Mf2Object
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jobrunr.scheduling.JobScheduler
 import org.springframework.stereotype.Service

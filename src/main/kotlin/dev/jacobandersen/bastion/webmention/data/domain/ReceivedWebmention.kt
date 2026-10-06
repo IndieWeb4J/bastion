@@ -1,7 +1,7 @@
 package dev.jacobandersen.bastion.webmention.data.domain
 
-import dev.jacobandersen.mf24j.Mf2Object
 import dev.jacobandersen.bastion.webmention.data.entity.ReceivedWebmentionEntity
+import dev.jacobandersen.mf24j.Mf2Object
 import java.time.Instant
 import java.util.UUID
 

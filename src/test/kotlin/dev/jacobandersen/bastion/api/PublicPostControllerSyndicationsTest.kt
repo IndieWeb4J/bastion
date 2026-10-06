@@ -4,8 +4,6 @@ import dev.jacobandersen.bastion.api.post.PostQueryService
 import dev.jacobandersen.bastion.api.post.PublicPostController
 import dev.jacobandersen.bastion.api.post.dto.PostLookupResult
 import dev.jacobandersen.bastion.api.post.dto.PostResponse
-import dev.jacobandersen.mf24j.Mf2Object
-import dev.jacobandersen.mf24j.Mf2Value
 import dev.jacobandersen.bastion.micropub.data.domain.Post
 import dev.jacobandersen.bastion.micropub.data.entity.PostSyndicationEntity
 import dev.jacobandersen.bastion.micropub.data.service.PostSyndicationService
@@ -16,6 +14,8 @@ import dev.jacobandersen.bastion.post.PostTypesConfig
 import dev.jacobandersen.bastion.post.PostTypesRegistry
 import dev.jacobandersen.bastion.url.UrlService
 import dev.jacobandersen.bastion.webmention.data.service.ReceivedWebmentionService
+import dev.jacobandersen.mf24j.Mf2Object
+import dev.jacobandersen.mf24j.Mf2Value
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test

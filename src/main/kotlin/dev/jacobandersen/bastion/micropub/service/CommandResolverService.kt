@@ -1,10 +1,10 @@
 package dev.jacobandersen.bastion.micropub.service
 
 import com.github.slugify.Slugify
-import dev.jacobandersen.mf24j.Mf2Value
 import dev.jacobandersen.bastion.micropub.type.MicropubCommand
 import dev.jacobandersen.bastion.micropub.type.PostStatus
 import dev.jacobandersen.bastion.micropub.type.PostVisibility
+import dev.jacobandersen.mf24j.Mf2Value
 import org.springframework.stereotype.Service
 
 sealed interface MicropubCommandValue {

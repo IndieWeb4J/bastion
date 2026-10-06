@@ -1,10 +1,10 @@
 package dev.jacobandersen.bastion.webmention.service
 
-import dev.jacobandersen.mf24j.Mf2Parser
 import dev.jacobandersen.bastion.webmention.data.domain.ReceivedWebmentionAnalysis
 import dev.jacobandersen.bastion.webmention.data.domain.WebmentionInteraction.MENTION
 import dev.jacobandersen.bastion.webmention.data.service.ReceivedWebmentionService
 import dev.jacobandersen.bastion.webmention.http.WebmentionSourceFetcher
+import dev.jacobandersen.mf24j.Mf2Parser
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Service
 import java.util.UUID

@@ -1,10 +1,6 @@
 package dev.jacobandersen.bastion.micropub.service.post
 
 import com.github.slugify.Slugify
-import dev.jacobandersen.mf24j.Mf2Object
-import dev.jacobandersen.mf24j.Mf2Value
-import dev.jacobandersen.mf24j.firstText
-import dev.jacobandersen.mf24j.texts
 import dev.jacobandersen.bastion.micropub.data.service.PostService
 import dev.jacobandersen.bastion.micropub.media.FileUploadResult
 import dev.jacobandersen.bastion.micropub.media.FileUploadService
@@ -19,6 +15,10 @@ import dev.jacobandersen.bastion.url.UrlService
 import dev.jacobandersen.bastion.util.StringUtil.excerpt
 import dev.jacobandersen.bastion.webmention.service.WebmentionService
 import dev.jacobandersen.bastion.websub.service.WebsubPublisher
+import dev.jacobandersen.mf24j.Mf2Object
+import dev.jacobandersen.mf24j.Mf2Value
+import dev.jacobandersen.mf24j.firstText
+import dev.jacobandersen.mf24j.texts
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service

@@ -1,11 +1,5 @@
 package dev.jacobandersen.bastion.webmention.service
 
-import dev.jacobandersen.mf24j.Mf2Object
-import dev.jacobandersen.mf24j.Mf2ParseResult
-import dev.jacobandersen.mf24j.Mf2Value
-import dev.jacobandersen.mf24j.firstText
-import dev.jacobandersen.mf24j.htmls
-import dev.jacobandersen.mf24j.texts
 import dev.jacobandersen.bastion.webmention.data.domain.ReceivedWebmentionAnalysis
 import dev.jacobandersen.bastion.webmention.data.domain.WebmentionInteraction
 import dev.jacobandersen.bastion.webmention.data.domain.WebmentionInteraction.BOOKMARK
@@ -14,6 +8,12 @@ import dev.jacobandersen.bastion.webmention.data.domain.WebmentionInteraction.ME
 import dev.jacobandersen.bastion.webmention.data.domain.WebmentionInteraction.REPLY
 import dev.jacobandersen.bastion.webmention.data.domain.WebmentionInteraction.REPOST
 import dev.jacobandersen.bastion.webmention.data.domain.WebmentionInteraction.RSVP
+import dev.jacobandersen.mf24j.Mf2Object
+import dev.jacobandersen.mf24j.Mf2ParseResult
+import dev.jacobandersen.mf24j.Mf2Value
+import dev.jacobandersen.mf24j.firstText
+import dev.jacobandersen.mf24j.htmls
+import dev.jacobandersen.mf24j.texts
 
 /**
  * Analyzes a parsed source document for webmention purposes: picks the primary

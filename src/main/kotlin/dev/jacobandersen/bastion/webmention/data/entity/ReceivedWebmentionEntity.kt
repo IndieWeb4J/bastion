@@ -1,9 +1,9 @@
 package dev.jacobandersen.bastion.webmention.data.entity
 
-import dev.jacobandersen.mf24j.Mf2Object
 import dev.jacobandersen.bastion.webmention.data.domain.ReceivedWebmention
 import dev.jacobandersen.bastion.webmention.data.domain.ReceivedWebmentionState
 import dev.jacobandersen.bastion.webmention.data.domain.WebmentionInteraction
+import dev.jacobandersen.mf24j.Mf2Object
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType

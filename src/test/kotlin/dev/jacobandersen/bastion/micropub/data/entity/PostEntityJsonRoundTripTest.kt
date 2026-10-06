@@ -1,11 +1,11 @@
 package dev.jacobandersen.bastion.micropub.data.entity
 
 import dev.jacobandersen.bastion.TestcontainersConfiguration
-import dev.jacobandersen.mf24j.Mf2Object
-import dev.jacobandersen.mf24j.Mf2Value
 import dev.jacobandersen.bastion.micropub.data.repository.PostRepository
 import dev.jacobandersen.bastion.micropub.type.PostStatus
 import dev.jacobandersen.bastion.micropub.type.PostVisibility
+import dev.jacobandersen.mf24j.Mf2Object
+import dev.jacobandersen.mf24j.Mf2Value
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -47,7 +47,21 @@ class PostEntityJsonRoundTripTest {
                 children = null,
             )
 
-        val saved = repository.saveAndFlush(PostEntity(slug, PostStatus.PUBLISHED, PostVisibility.PUBLIC, false, obj))
+        val saved =
+            repository.saveAndFlush(
+                PostEntity(
+                    slug = slug,
+                    status = PostStatus.PUBLISHED,
+                    visibility = PostVisibility.PUBLIC,
+                    deleted = false,
+                    post = obj,
+                    h = "h-entry",
+                    type = "note",
+                    categories = emptyArray(),
+                    createdAtUtc = Instant.parse("2026-08-31T00:00:00Z"),
+                    updatedAtUtc = Instant.parse("2026-08-31T00:00:00Z"),
+                ),
+            )
         val reloaded = repository.findById(saved.id!!).orElseThrow()
 
         assertEquals(slug, reloaded.slug)

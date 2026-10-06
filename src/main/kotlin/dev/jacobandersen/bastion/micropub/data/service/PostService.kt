@@ -1,6 +1,5 @@
 package dev.jacobandersen.bastion.micropub.data.service
 
-import dev.jacobandersen.mf24j.Mf2Object
 import dev.jacobandersen.bastion.micropub.data.domain.Post
 import dev.jacobandersen.bastion.micropub.data.entity.PostEntity
 import dev.jacobandersen.bastion.micropub.data.repository.PostRepository
@@ -9,6 +8,9 @@ import dev.jacobandersen.bastion.micropub.type.PostStatus
 import dev.jacobandersen.bastion.micropub.type.PostTagFilter
 import dev.jacobandersen.bastion.micropub.type.PostVisibility
 import dev.jacobandersen.bastion.micropub.type.mf2Type
+import dev.jacobandersen.bastion.post.PostTypeDiscovery
+import dev.jacobandersen.mf24j.Mf2Object
+import dev.jacobandersen.mf24j.firstText
 import jakarta.persistence.criteria.Predicate
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
@@ -36,7 +38,9 @@ class PostService(
         post: Mf2Object,
     ): Post {
         val stamped = postTimeService.applyCreateTimestamps(post)
-        return repository.saveAndFlush(PostEntity(slug, status, visibility, deleted, stamped)).toDomain()
+        val entity = PostEntity(slug = slug, status = status, visibility = visibility, deleted = deleted, post = stamped)
+        applyDerived(entity)
+        return repository.saveAndFlush(entity).toDomain()
     }
 
     @Transactional(readOnly = true)
@@ -80,8 +84,26 @@ class PostService(
         entity.visibility = post.visibility
         entity.deleted = post.deleted
         entity.post = stamped
+        applyDerived(entity)
 
         return repository.saveAndFlush(entity).toDomain()
+    }
+
+    /**
+     * Recompute the application-managed derived columns from the mf2 document:
+     * the mf2 primary type (`h`), the discovered post type (`type`), the
+     * normalized category list, and the published/updated timestamps. Mirrors
+     * the former JSONB generated columns and PL/pgSQL post-type discovery.
+     */
+    private fun applyDerived(entity: PostEntity) {
+        val post = entity.post
+        entity.h = PostTypeDiscovery.primaryType(post) ?: "h-entry"
+        entity.type = PostTypeDiscovery.discover(post)
+        entity.categories = PostTypeDiscovery.categories(post).toTypedArray()
+        entity.createdAtUtc =
+            post.firstText("published")?.let(postTimeService::normalizeOrThrow)?.toInstant() ?: postTimeService.now().toInstant()
+        entity.updatedAtUtc =
+            post.firstText("updated")?.let(postTimeService::normalizeOrThrow)?.toInstant() ?: postTimeService.now().toInstant()
     }
 
     @Transactional(readOnly = true)

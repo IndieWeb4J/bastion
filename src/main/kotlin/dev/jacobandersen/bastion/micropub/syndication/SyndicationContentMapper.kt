@@ -1,9 +1,9 @@
 package dev.jacobandersen.bastion.micropub.syndication
 
+import dev.jacobandersen.bastion.micropub.data.domain.Post
 import dev.jacobandersen.mf24j.Mf2Object
 import dev.jacobandersen.mf24j.Mf2Value
 import dev.jacobandersen.mf24j.firstText
-import dev.jacobandersen.bastion.micropub.data.domain.Post
 
 /**
  * Builds the downstream copy of a post for syndication targets. The copy is an
