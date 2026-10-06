@@ -1,5 +1,21 @@
 # Changelog
 
+## [2.0.0](https://github.com/jacobsandersen/bastion/compare/v1.3.33...v2.0.0) (2026-10-06)
+
+
+### ⚠ BREAKING CHANGES
+
+* Bastion content authority + projection scaffold ([#75](https://github.com/jacobsandersen/bastion/issues/75))
+
+### Code Refactoring
+
+* Bastion content authority + projection scaffold ([#75](https://github.com/jacobsandersen/bastion/issues/75)) ([1c947c7](https://github.com/jacobsandersen/bastion/commit/1c947c76b44b935ece179b7aabc9033834a421d4))
+
+
+### Continuous Integration
+
+* use default semver versioning for release-please ([d381086](https://github.com/jacobsandersen/bastion/commit/d3810869fb18c148e4afd2a55e3877f97ba526b6))
+
 ## [1.3.33](https://github.com/jacobsandersen/bastion/compare/v1.3.32...v1.3.33) (2026-10-05)
 
 
