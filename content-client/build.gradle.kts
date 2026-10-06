@@ -21,7 +21,7 @@ dependencyManagement {
     }
 }
 
-extra["microformats2Version"] = "0.1.1"
+extra["microformats2Version"] = "0.1.2"
 
 dependencies {
     // Exposed API: the write/read boundary is mf2, so microformats2 types appear in DTOs.
