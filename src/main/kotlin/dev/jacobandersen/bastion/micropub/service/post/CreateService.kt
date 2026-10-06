@@ -1,10 +1,10 @@
 package dev.jacobandersen.bastion.micropub.service.post
 
 import com.github.slugify.Slugify
-import dev.jacobandersen.bastion.microformats2.Mf2Object
-import dev.jacobandersen.bastion.microformats2.Mf2Value
-import dev.jacobandersen.bastion.microformats2.firstText
-import dev.jacobandersen.bastion.microformats2.texts
+import dev.jacobandersen.mf24j.Mf2Object
+import dev.jacobandersen.mf24j.Mf2Value
+import dev.jacobandersen.mf24j.firstText
+import dev.jacobandersen.mf24j.texts
 import dev.jacobandersen.bastion.micropub.data.service.PostService
 import dev.jacobandersen.bastion.micropub.media.FileUploadResult
 import dev.jacobandersen.bastion.micropub.media.FileUploadService

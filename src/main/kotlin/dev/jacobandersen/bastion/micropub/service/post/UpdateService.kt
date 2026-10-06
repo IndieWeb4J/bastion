@@ -1,6 +1,6 @@
 package dev.jacobandersen.bastion.micropub.service.post
 
-import dev.jacobandersen.bastion.microformats2.Mf2Object
+import dev.jacobandersen.mf24j.Mf2Object
 import dev.jacobandersen.bastion.micropub.data.service.PostService
 import dev.jacobandersen.bastion.micropub.data.service.PostSyndicationService
 import dev.jacobandersen.bastion.micropub.service.MicropubCommandResolver

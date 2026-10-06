@@ -26,13 +26,22 @@ repositories {
         name = "SigilGitHubPackages"
         url = uri("https://maven.pkg.github.com/jacobsandersen/sigil")
         credentials {
-            username = System.getenv("GITHUB_ACTOR") ?: (project.findProperty("gpr.user") as String?)
-            password = System.getenv("GITHUB_TOKEN") ?: (project.findProperty("gpr.token") as String?)
+            username = project.findProperty("gpr.user") as String?
+            password = project.findProperty("gpr.token") as String?
+        }
+    }
+    maven {
+        name = "Mf24jGitHubPackages"
+        url = uri("https://maven.pkg.github.com/jacobsandersen/mf24j")
+        credentials {
+            username = project.findProperty("gpr.user") as String?
+            password = project.findProperty("gpr.token") as String?
         }
     }
 }
 
-extra["sigilVersion"] = "0.1.0"
+extra["sigilVersion"] = "0.2.0"
+extra["mf24jVersion"] = "0.1.0"
 
 dependencyManagement {
     imports {
@@ -50,6 +59,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json")
     implementation("org.jobrunr:jobrunr-spring-boot-4-starter:8.7.0")
     implementation("dev.jacobandersen:sigil-client:${property("sigilVersion")}")
+    implementation("dev.jacobandersen:mf24j:${property("mf24jVersion")}")
     implementation("tools.jackson.module:jackson-module-kotlin")
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.apache.logging.log4j:log4j-api")

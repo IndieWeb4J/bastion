@@ -8,9 +8,9 @@ import dev.jacobandersen.bastion.api.post.dto.PostResponse
 import dev.jacobandersen.bastion.api.post.dto.SyndicationDto
 import dev.jacobandersen.bastion.api.post.dto.WebmentionCounts
 import dev.jacobandersen.bastion.api.post.dto.WebmentionDto
-import dev.jacobandersen.bastion.microformats2.firstText
-import dev.jacobandersen.bastion.microformats2.htmls
-import dev.jacobandersen.bastion.microformats2.texts
+import dev.jacobandersen.mf24j.firstText
+import dev.jacobandersen.mf24j.htmls
+import dev.jacobandersen.mf24j.texts
 import dev.jacobandersen.bastion.micropub.data.domain.Post
 import dev.jacobandersen.bastion.micropub.data.service.PostSyndicationService
 import dev.jacobandersen.bastion.micropub.syndication.SyndicationConfig

@@ -1,6 +1,6 @@
 package dev.jacobandersen.bastion.webmention.data.entity
 
-import dev.jacobandersen.bastion.microformats2.Mf2Object
+import dev.jacobandersen.mf24j.Mf2Object
 import dev.jacobandersen.bastion.webmention.data.domain.ReceivedWebmention
 import dev.jacobandersen.bastion.webmention.data.domain.ReceivedWebmentionState
 import dev.jacobandersen.bastion.webmention.data.domain.WebmentionInteraction

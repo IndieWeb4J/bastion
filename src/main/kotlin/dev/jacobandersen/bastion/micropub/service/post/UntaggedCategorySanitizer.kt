@@ -1,8 +1,8 @@
 package dev.jacobandersen.bastion.micropub.service.post
 
-import dev.jacobandersen.bastion.microformats2.Mf2Object
-import dev.jacobandersen.bastion.microformats2.Mf2Value
-import dev.jacobandersen.bastion.microformats2.plainTextOrNull
+import dev.jacobandersen.mf24j.Mf2Object
+import dev.jacobandersen.mf24j.Mf2Value
+import dev.jacobandersen.mf24j.plainTextOrNull
 import dev.jacobandersen.bastion.micropub.type.PostTagFilter
 import dev.jacobandersen.bastion.micropub.type.req.MicropubUpdatePayload
 import java.util.Locale

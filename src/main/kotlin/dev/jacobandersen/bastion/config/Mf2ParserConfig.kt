@@ -1,7 +1,7 @@
 package dev.jacobandersen.bastion.config
 
-import dev.jacobandersen.bastion.microformats2.Mf2Parser
-import dev.jacobandersen.bastion.microformats2.Mf2ParserImpl
+import dev.jacobandersen.mf24j.Mf2Parser
+import dev.jacobandersen.mf24j.Mf2ParserImpl
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 

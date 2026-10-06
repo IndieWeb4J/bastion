@@ -1,8 +1,8 @@
 package dev.jacobandersen.bastion.micropub.syndication
 
-import dev.jacobandersen.bastion.microformats2.Mf2Object
-import dev.jacobandersen.bastion.microformats2.Mf2Value
-import dev.jacobandersen.bastion.microformats2.firstText
+import dev.jacobandersen.mf24j.Mf2Object
+import dev.jacobandersen.mf24j.Mf2Value
+import dev.jacobandersen.mf24j.firstText
 import dev.jacobandersen.bastion.micropub.data.domain.Post
 
 /**

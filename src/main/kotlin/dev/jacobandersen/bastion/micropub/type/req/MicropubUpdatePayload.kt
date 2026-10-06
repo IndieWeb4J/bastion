@@ -1,6 +1,6 @@
 package dev.jacobandersen.bastion.micropub.type.req
 
-import dev.jacobandersen.bastion.microformats2.Mf2Value
+import dev.jacobandersen.mf24j.Mf2Value
 
 data class MicropubUpdatePayload(
     val url: String,

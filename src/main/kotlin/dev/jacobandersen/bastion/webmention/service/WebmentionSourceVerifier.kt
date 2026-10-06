@@ -1,7 +1,7 @@
 package dev.jacobandersen.bastion.webmention.service
 
-import dev.jacobandersen.bastion.microformats2.Mf2ParseResult
-import dev.jacobandersen.bastion.microformats2.Mf2Parser
+import dev.jacobandersen.mf24j.Mf2ParseResult
+import dev.jacobandersen.mf24j.Mf2Parser
 import dev.jacobandersen.bastion.webmention.http.SourceFetch
 import dev.jacobandersen.bastion.webmention.util.HttpUtil
 import org.jsoup.Jsoup

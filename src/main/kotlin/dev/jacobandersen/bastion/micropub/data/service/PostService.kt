@@ -1,6 +1,6 @@
 package dev.jacobandersen.bastion.micropub.data.service
 
-import dev.jacobandersen.bastion.microformats2.Mf2Object
+import dev.jacobandersen.mf24j.Mf2Object
 import dev.jacobandersen.bastion.micropub.data.domain.Post
 import dev.jacobandersen.bastion.micropub.data.entity.PostEntity
 import dev.jacobandersen.bastion.micropub.data.repository.PostRepository

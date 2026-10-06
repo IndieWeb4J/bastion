@@ -1,7 +1,7 @@
 package dev.jacobandersen.bastion.api.post
 
 import dev.jacobandersen.bastion.api.post.dto.PostLookupResult
-import dev.jacobandersen.bastion.microformats2.firstText
+import dev.jacobandersen.mf24j.firstText
 import dev.jacobandersen.bastion.micropub.data.domain.Post
 import dev.jacobandersen.bastion.micropub.data.service.PostService
 import dev.jacobandersen.bastion.micropub.type.PostMf2Type

@@ -159,13 +159,13 @@ class ReceivedWebmentionServiceTest {
             )
         existing.authorName = "Jane"
         existing.rawMf2 =
-            dev.jacobandersen.bastion.microformats2.Mf2Object(
+            dev.jacobandersen.mf24j.Mf2Object(
                 type = listOf("h-entry"),
                 properties =
                     mapOf(
                         "content" to
                             listOf(
-                                dev.jacobandersen.bastion.microformats2.Mf2Value
+                                dev.jacobandersen.mf24j.Mf2Value
                                     .String("Nice post"),
                             ),
                     ),

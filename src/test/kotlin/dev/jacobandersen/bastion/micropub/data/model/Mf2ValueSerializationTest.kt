@@ -1,7 +1,7 @@
 package dev.jacobandersen.bastion.micropub.data.model
 
-import dev.jacobandersen.bastion.microformats2.Mf2Object
-import dev.jacobandersen.bastion.microformats2.Mf2Value
+import dev.jacobandersen.mf24j.Mf2Object
+import dev.jacobandersen.mf24j.Mf2Value
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import tools.jackson.databind.json.JsonMapper

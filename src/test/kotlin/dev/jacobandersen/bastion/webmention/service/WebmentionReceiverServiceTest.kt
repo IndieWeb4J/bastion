@@ -1,9 +1,9 @@
 package dev.jacobandersen.bastion.webmention.service
 
-import dev.jacobandersen.bastion.microformats2.Mf2Object
-import dev.jacobandersen.bastion.microformats2.Mf2ParseResult
-import dev.jacobandersen.bastion.microformats2.Mf2Parser
-import dev.jacobandersen.bastion.microformats2.Mf2Value
+import dev.jacobandersen.mf24j.Mf2Object
+import dev.jacobandersen.mf24j.Mf2ParseResult
+import dev.jacobandersen.mf24j.Mf2Parser
+import dev.jacobandersen.mf24j.Mf2Value
 import dev.jacobandersen.bastion.webmention.data.domain.WebmentionInteraction
 import dev.jacobandersen.bastion.webmention.data.service.ReceivedWebmentionService
 import dev.jacobandersen.bastion.webmention.http.SourceFetch

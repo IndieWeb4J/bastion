@@ -1,7 +1,7 @@
 package dev.jacobandersen.bastion.micropub.util
 
-import dev.jacobandersen.bastion.microformats2.Mf2Object
-import dev.jacobandersen.bastion.microformats2.Mf2Value
+import dev.jacobandersen.mf24j.Mf2Object
+import dev.jacobandersen.mf24j.Mf2Value
 
 /**
  * Converts a Micropub form-encoded parameter map into an [Mf2Object] with a

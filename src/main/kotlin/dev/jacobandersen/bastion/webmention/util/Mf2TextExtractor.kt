@@ -1,9 +1,9 @@
 package dev.jacobandersen.bastion.webmention.util
 
-import dev.jacobandersen.bastion.microformats2.Mf2Object
-import dev.jacobandersen.bastion.microformats2.Mf2Value
-import dev.jacobandersen.bastion.microformats2.htmlOrNull
-import dev.jacobandersen.bastion.microformats2.plainTextOrNull
+import dev.jacobandersen.mf24j.Mf2Object
+import dev.jacobandersen.mf24j.Mf2Value
+import dev.jacobandersen.mf24j.htmlOrNull
+import dev.jacobandersen.mf24j.plainTextOrNull
 
 /**
  * Extracts the URLs a microformat references as text, so webmentions can be

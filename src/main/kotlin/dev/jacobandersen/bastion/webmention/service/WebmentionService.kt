@@ -1,6 +1,6 @@
 package dev.jacobandersen.bastion.webmention.service
 
-import dev.jacobandersen.bastion.microformats2.Mf2Object
+import dev.jacobandersen.mf24j.Mf2Object
 import dev.jacobandersen.bastion.url.UrlExtractor
 import dev.jacobandersen.bastion.url.UrlService
 import dev.jacobandersen.bastion.webmention.config.WebmentionConfig

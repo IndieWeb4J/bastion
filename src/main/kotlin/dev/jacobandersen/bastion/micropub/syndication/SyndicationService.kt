@@ -1,7 +1,7 @@
 package dev.jacobandersen.bastion.micropub.syndication
 
-import dev.jacobandersen.bastion.microformats2.Mf2Value
-import dev.jacobandersen.bastion.microformats2.plainTextOrNull
+import dev.jacobandersen.mf24j.Mf2Value
+import dev.jacobandersen.mf24j.plainTextOrNull
 import dev.jacobandersen.bastion.micropub.data.domain.Post
 import dev.jacobandersen.bastion.micropub.data.service.PostService
 import dev.jacobandersen.bastion.micropub.data.service.PostSyndicationService
