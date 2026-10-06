@@ -12,10 +12,20 @@ Do not repeat what the codebase already shows; point to the authoritative file o
 Prefer rewriting or pruning existing entries over appending new ones.
 When updating this file, preserve this bar for all agents and keep entries concise.
 
+## Repository layout
+
+Multi-module: `content-client/` (the published content contract: read/write/media
+clients + `content.post.*` event schemas) and `bastion-app/` (the Spring Boot
+server, `bootJar` -> `bastion-app/build/libs/bastion.jar`). Bastion owns the
+content contract, so it is a module here (mirroring sigil-client/beacon-client),
+not a separate repo. `bastion-app` depends on `project(":content-client")`.
+
 ## Build and test
 
 - `./gradlew test` runs the full suite; the Spring Boot tests use Testcontainers (needs Docker).
 - `./gradlew ktlintCheck` runs the linter (ktlint 1.8.0).
+- `./gradlew :content-client:publishToMavenLocal` publishes the contract for
+  local consumers (Forge/Beacon); CI publishes it to Bastion's GitHub Packages on release.
 - Jackson 3 (`tools.jackson.*`) is used, not Jackson 2; `@JsonProperty` still comes from
   `com.fasterxml.jackson.annotation`.
 - JobRunr: methods invoked from a scheduled/enqueued job lambda must not use Kotlin default parameter values - JobRunr
